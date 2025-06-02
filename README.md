@@ -38,10 +38,10 @@ SchoolSports-Cpp/
 │   ├── Registration.cpp
 │   ├── Schedule.cpp
 │   ├── Result.cpp
-│   ├── DataManager.cpp
-│   └── main.cpp                // 主程序入口
+│   └── DataManager.cpp
 ├── data/                       // 数据文件目录 (例如: 备份文件, 初始配置文件)
-│   └── (空)                   // 初期为空
+│   └── (空)                    // 初期为空
+└── main.cpp                    // 主程序入口
 └── README.md                   // 项目说明文档
 
 ```
