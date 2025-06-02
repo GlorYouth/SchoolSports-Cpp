@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.31)
-project(project)
+project(SchoolSports-Cpp)
 
 set(CMAKE_CXX_STANDARD 26)
 
-add_executable(project main.cpp
+add_executable(SchoolSports-Cpp main.cpp
         include/CompetitionEvent.h
         include/Athlete.h
         include/Unit.h

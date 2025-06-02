@@ -18,13 +18,34 @@
 ## 目录结构
 
 ```
-SchoolSportsMeetManagementSystem/
+SchoolSports-Cpp/
 ├── include/                    // 头文件目录
+│   ├── Athlete.h               // 运动员类
+│   ├── CompetitionEvent.h      // 比赛项目类
+│   ├── Unit.h                  // 参赛单位类
+│   ├── ScoreRule.h             // 计分规则类
+│   ├── SystemSettings.h        // 系统设置类
+│   ├── Registration.h          // 报名管理类
+│   ├── Schedule.h              // 赛程管理类 (用于秩序册)
+│   ├── Result.h                // 成绩类
+│   ├── DataManager.h           // 数据管理类 (用于数据备份等)
+│   └── Constants.h             // 常量定义 (如性别、项目类型等)
 ├── src/                        // 源文件目录
+│   ├── Athlete.cpp
+│   ├── CompetitionEvent.cpp
+│   ├── Unit.cpp
+│   ├── ScoreRule.cpp
+│   ├── SystemSettings.cpp
+│   ├── Registration.cpp
+│   ├── Schedule.cpp
+│   ├── Result.cpp
+│   ├── DataManager.cpp
+│   └── main.cpp                // 主程序入口
 ├── data/                       // 数据文件目录 (例如: 备份文件, 初始配置文件)
+│   └── (空)                   // 初期为空
 └── README.md                   // 项目说明文档
-```
 
+```
 
 
 ## 核心模块说明
