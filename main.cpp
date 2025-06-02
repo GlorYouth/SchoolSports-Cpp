@@ -103,8 +103,6 @@ int main() {
             std::cin.get(); // 等待用户按 Enter
         }
     } while (choice != 0);
-
-    return 0;
 }
 
 void displayMainMenu() {
@@ -236,7 +234,6 @@ void manageSystemSettings(SystemSettings& settings) {
                 }
                 break;
             case 0: break;
-            case -1: break; // 已处理无效输入
             default: std::cout << "无效选择。" << std::endl;
         }
          if (choice != 0 && choice != -1) { // 如果不是退出或无效输入错误，则暂停
@@ -306,7 +303,6 @@ void manageRegistration(Registration& registration, SystemSettings& settings) {
                 registration.checkAndCancelEventsDueToLowParticipation();
                 break;
             case 0: break;
-            case -1: break; // 已处理无效输入
             default: std::cout << "无效选择。" << std::endl;
         }
         if (choice != 0 && choice != -1) {
@@ -354,7 +350,6 @@ void manageSchedule(Schedule& schedule, SystemSettings& settings) {
                 }
                 break;
             case 0: break;
-            case -1: break; // 已处理无效输入
             default: std::cout << "无效选择。" << std::endl;
         }
         if (choice != 0 && choice != -1) {
@@ -396,7 +391,6 @@ void manageResults(SystemSettings& settings) {
                 break;
             case 0:
                 break;
-            case -1: break; // 已处理无效输入
             default:
                 std::cout << "无效选择。" << std::endl;
         }
@@ -447,7 +441,6 @@ void manageData(DataManager& dataManager) {
             }
             break;
         case 0: break;
-        case -1: break; // 已处理无效输入
         default: std::cout << "无效选择。" << std::endl;
     }
 }
@@ -839,8 +832,8 @@ void viewUnitStandings(const SystemSettings& settings) {
 
     // 将 map 中的单位复制到 vector 以便排序
     std::vector<std::reference_wrapper<const Unit>> unitsVec;
-    for (const auto& pair : allUnitsMap) {
-        unitsVec.push_back(std::cref(pair.second));
+    for (const auto &val: allUnitsMap | std::views::values) {
+        unitsVec.push_back(std::cref(val));
     }
 
     // 按总分降序排序，分数相同则按单位名称升序
