@@ -56,9 +56,9 @@ public:
     void setGenderRequirement(Gender genderReq);
 
     // 添加参赛者ID
-    void addParticipant(int athleteId);
+    bool addParticipant(int athleteId);
     // 移除参赛者ID
-    void removeParticipant(int athleteId);
+    bool removeParticipant(int athleteId);
     // 获取参赛者ID列表
     [[nodiscard]] const std::vector<int>& getParticipantAthleteIds() const;
     // 获取参赛人数

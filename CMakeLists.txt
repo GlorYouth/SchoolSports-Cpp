@@ -22,4 +22,6 @@ add_executable(SchoolSports-Cpp main.cpp
         src/Registration.cpp
         src/Schedule.cpp
         src/Result.cpp
-        src/DataManager.cpp)
+        src/DataManager.cpp
+        src/AutoTest.cpp
+        include/AutoTest.h)

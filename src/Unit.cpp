@@ -20,7 +20,7 @@ void Unit::setName(const std::string& name) {
     this->name = name;
 }
 
-void Unit::addAthleteId(int athleteId) {
+void Unit::addAthleteId(const int athleteId) {
     // 可以检查是否已存在，避免重复添加
     if (std::ranges::find(athleteIds, athleteId) == athleteIds.end()) {
         athleteIds.push_back(athleteId);

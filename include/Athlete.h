@@ -47,7 +47,7 @@ public:
     // 报名参加项目 (只记录项目ID)
     bool registerForEvent(int eventId, int maxEventsAllowed);
     // 取消报名项目
-    void unregisterFromEvent(int eventId);
+    bool unregisterFromEvent(int eventId);
     // 获取已报名项目ID列表
     [[nodiscard]] const std::vector<int>& getRegisteredEventIds() const;
     // 检查是否已报名某项目

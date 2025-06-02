@@ -12,6 +12,7 @@
 #include "include/DataManager.h"
 #include "include/Constants.h" // 包含 genderToString, eventTypeToString
 #include "include/Result.h"   // 确保包含 Result.h 以便在 main 中访问 EventResults
+#include "include/AutoTest.h"
 
 // 函数声明
 void displayMainMenu();
@@ -92,6 +93,8 @@ int main() {
             case 8:
                 manageData(dataManager);
                 break;
+            case 9:
+                autoTest();
             case 0:
                 std::cout << "感谢使用学校运动会管理系统！正在退出..." << std::endl;
                 break;
@@ -115,6 +118,7 @@ void displayMainMenu() {
     std::cout << "6. 比赛成绩录入与查询" << std::endl; // 更新
     std::cout << "7. 比赛成绩统计 (单位排名)" << std::endl;   // 更新
     std::cout << "8. 数据备份与恢复 (部分实现)" << std::endl;
+    std::cout << "9. 自动测试" << std::endl;
     std::cout << "0. 退出系统" << std::endl;
     std::cout << "======================================" << std::endl;
 }

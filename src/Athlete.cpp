@@ -5,10 +5,11 @@
 #include "../include/Athlete.h"
 #include <algorithm> // For std::find and std::remove
 #include <utility>
+#include <iostream> // 用于调试输出
 
 std::atomic<int> Athlete::nextId(1); // 初始化静态成员, ID从1开始
 
-Athlete::Athlete(std::string name, Gender gender, int unitId)
+Athlete::Athlete(std::string name, const Gender gender, const int unitId)
     : name(std::move(name)), gender(gender), unitId(unitId) {
     id = nextId++; // 分配唯一ID
 }
@@ -43,19 +44,27 @@ void Athlete::setUnitId(int uId) {
 
 bool Athlete::registerForEvent(const int eventId, const int maxEventsAllowed) {
     if (registeredEventIds.size() >= static_cast<size_t>(maxEventsAllowed)) {
-        // 已达到最大报名项目数
-        return false;
+        // std::cerr << "调试: 运动员 " << name << " 已达到最大报名项目数 (" << maxEventsAllowed << ")。" << std::endl;
+        return false; // 已达到最大报名项目数
     }
-    if (std::ranges::find(registeredEventIds, eventId) == registeredEventIds.end()) {
-        registeredEventIds.push_back(eventId);
-        return true;
+    if (std::ranges::find(registeredEventIds, eventId) != registeredEventIds.end()) {
+        // std::cerr << "调试: 运动员 " << name << " 已报名项目ID " << eventId << "。" << std::endl;
+        return false; // 已报名该项目
     }
-    // 已报名该项目
-    return false;
+    registeredEventIds.push_back(eventId);
+    // std::cout << "调试: 运动员 " << name << " 成功报名项目ID " << eventId << "。当前报名数：" << registeredEventIds.size() << std::endl;
+    return true;
 }
 
-void Athlete::unregisterFromEvent(const int eventId) {
-    registeredEventIds.erase(std::ranges::remove(registeredEventIds, eventId).begin(), registeredEventIds.end());
+bool Athlete::unregisterFromEvent(const int eventId) {
+    auto it = std::ranges::find(registeredEventIds, eventId);
+    if (it != registeredEventIds.end()) {
+        registeredEventIds.erase(it);
+        // std::cout << "调试: 运动员 " << name << " 成功取消报名项目ID " << eventId << "。当前报名数：" << registeredEventIds.size() << std::endl;
+        return true;
+    }
+    // std::cerr << "调试: 运动员 " << name << " 未找到已报名的项目ID " << eventId << "，无法取消。" << std::endl;
+    return false; // 未报名该项目，或已取消
 }
 
 const std::vector<int>& Athlete::getRegisteredEventIds() const {
@@ -69,3 +78,4 @@ bool Athlete::isRegisteredForEvent(int eventId) const {
 int Athlete::getRegisteredEventsCount() const {
     return static_cast<int>(registeredEventIds.size());
 }
+
