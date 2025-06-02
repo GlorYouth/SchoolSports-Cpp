@@ -5,11 +5,12 @@
 #include "../include/CompetitionEvent.h"
 #include "../include/Athlete.h" // 需要访问 Athlete 的性别
 #include <algorithm> // For std::remove
+#include <utility>
 
 std::atomic<int> CompetitionEvent::nextId(1); // 初始化静态成员, ID从1开始
 
-CompetitionEvent::CompetitionEvent(const std::string& name, EventType type, Gender genderReq)
-    : name(name), type(type), genderRequirement(genderReq), scoreRuleId(-1), isCancelled(false) {
+CompetitionEvent::CompetitionEvent(std::string name, EventType type, Gender genderReq)
+    : name(std::move(name)), type(type), genderRequirement(genderReq), scoreRuleId(-1), isCancelled(false) {
     id = nextId++; // 分配唯一ID
 }
 
@@ -43,7 +44,7 @@ void CompetitionEvent::setGenderRequirement(Gender genderReq) {
 
 void CompetitionEvent::addParticipant(int athleteId) {
     // 可以检查是否已存在
-    if (std::find(participantAthleteIds.begin(), participantAthleteIds.end(), athleteId) == participantAthleteIds.end()) {
+    if (std::ranges::find(participantAthleteIds, athleteId) == participantAthleteIds.end()) {
         participantAthleteIds.push_back(athleteId);
     }
 }

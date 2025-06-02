@@ -23,7 +23,7 @@ private:
     double totalScore;              // 单位总分
 
 public:
-    explicit Unit(const std::string& name);
+    explicit Unit(std::string  name);
 
     // 获取单位ID
     [[nodiscard]] int getId() const;

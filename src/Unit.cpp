@@ -1,9 +1,10 @@
 #include "../include/Unit.h"
 #include <algorithm> // For std::remove
+#include <utility>
 
 std::atomic<int> Unit::nextId(1); // 初始化静态成员，ID从1开始
 
-Unit::Unit(const std::string& name) : name(name), totalScore(0.0) {
+Unit::Unit(std::string name) : name(std::move(name)), totalScore(0.0) {
     id = nextId++; // 分配唯一ID
 }
 
@@ -21,13 +22,13 @@ void Unit::setName(const std::string& name) {
 
 void Unit::addAthleteId(int athleteId) {
     // 可以检查是否已存在，避免重复添加
-    if (std::find(athleteIds.begin(), athleteIds.end(), athleteId) == athleteIds.end()) {
+    if (std::ranges::find(athleteIds, athleteId) == athleteIds.end()) {
         athleteIds.push_back(athleteId);
     }
 }
 
-void Unit::removeAthleteId(int athleteId) {
-    athleteIds.erase(std::remove(athleteIds.begin(), athleteIds.end(), athleteId), athleteIds.end());
+void Unit::removeAthleteId(const int athleteId) {
+    std::erase(athleteIds, athleteId);
 }
 
 const std::vector<int>& Unit::getAthleteIds() const {

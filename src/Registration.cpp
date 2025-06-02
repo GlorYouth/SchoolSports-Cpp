@@ -64,9 +64,9 @@ bool Registration::registerAthleteForEvent(int athleteId, int eventId) const {
     return false;
 }
 
-bool Registration::unregisterAthleteFromEvent(int athleteId, int eventId) const {
-    auto athlete = settings.getAthlete(athleteId);
-    auto event = settings.getCompetitionEvent(eventId);
+bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eventId) const {
+    const auto athlete = settings.getAthlete(athleteId);
+    const auto event = settings.getCompetitionEvent(eventId);
 
     if (!athlete.has_value()) {
         std::cerr << "取消报名失败: 运动员ID " << athleteId << " 不存在。" << std::endl;
@@ -104,8 +104,7 @@ void Registration::checkAndCancelEventsDueToLowParticipation() const {
     bool changed = false;
     for (const auto &key: settings.getAllCompetitionEvents() | std::views::keys) {
         if (auto event = settings.getCompetitionEvent(key); event.has_value() && !event.value().get().getIsCancelled()) {
-            auto event_ref = event.value().get();
-            if (event_ref.getParticipantCount() < settings.getMinParticipantsToHoldEvent()) {
+            if (auto event_ref = event.value().get(); event_ref.getParticipantCount() < settings.getMinParticipantsToHoldEvent()) {
                 event_ref.setCancelled(true);
                 std::cout << "项目 \"" << event_ref.getName() << "\" (ID: " << event_ref.getId()
                           << ") 因参赛人数 (" << event_ref.getParticipantCount()

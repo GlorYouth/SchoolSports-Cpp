@@ -20,7 +20,7 @@ private:
     std::map<int, double> scoresForRanks;   // 名次对应的分数 <名次, 分数> (例如: {1:7, 2:5, ...})
 
 public:
-    ScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
+    ScoreRule(std::string  desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
 
     // 获取规则ID
     [[nodiscard]] int getId() const;

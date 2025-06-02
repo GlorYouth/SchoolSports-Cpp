@@ -5,15 +5,15 @@
 #include "../include/SystemSettings.h"
 #include <iostream> // 用于演示输出
 #include <ranges>
+#include "../include/Result.h" // 确保 Result.h 被包含
 
 SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3), minParticipantsToHoldEvent(4) {
     // 构造函数中可以进行一些初始化
-    // 例如，加载默认配置或从文件加载配置
 }
 
 // --- 单位管理 ---
 bool SystemSettings::addUnit(const std::string& unitName) {
-    // 检查单位名是否已存在 (简单实现，实际可能需要更鲁棒的检查)
+    // 检查单位名是否已存在
     for (const auto &val: units | std::views::values) {
         if (val.getName() == unitName) {
             return false; // 单位名已存在
@@ -43,8 +43,7 @@ const std::map<int, Unit>& SystemSettings::getAllUnits() const {
 }
 
 bool SystemSettings::removeUnit(int unitId) {
-    // 注意：移除单位前，应处理该单位下的运动员 (例如：将其移至“未分配”或报错)
-    // 此处为简化实现
+    // 注意：移除单位前，应处理该单位下的运动员
     return units.erase(unitId) > 0;
 }
 
@@ -67,6 +66,14 @@ std::optional<std::reference_wrapper<Athlete>> SystemSettings::getAthlete(const 
     }
     return std::nullopt;
 }
+
+std::optional<std::reference_wrapper<const Athlete>> SystemSettings::getAthleteConst(const int athleteId) const {
+    if (const auto it = athletes.find(athleteId); it != athletes.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
 
 const std::map<int, Athlete>& SystemSettings::getAllAthletes() const {
     return athletes;
@@ -105,13 +112,20 @@ std::optional<std::reference_wrapper<CompetitionEvent>> SystemSettings::getCompe
     return std::nullopt;
 }
 
+std::optional<std::reference_wrapper<const CompetitionEvent>> SystemSettings::getCompetitionEventConst(int eventId) const {
+    const auto it = competitionEvents.find(eventId);
+    if (it != competitionEvents.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
 const std::map<int, CompetitionEvent>& SystemSettings::getAllCompetitionEvents() const {
     return competitionEvents;
 }
 
 bool SystemSettings::removeCompetitionEvent(const int eventId) {
-    // 注意：移除项目前，应处理已报名该项目的运动员 (例如：从运动员的报名列表中移除)
-    // 此处为简化实现
+    // 注意：移除项目前，应处理已报名该项目的运动员
     const auto event = getCompetitionEvent(eventId);
     if (!event) return false;
 
@@ -145,6 +159,7 @@ std::optional<std::reference_wrapper<const ScoreRule>> SystemSettings::getScoreR
     return std::nullopt;
 }
 
+
 const std::map<int, ScoreRule>& SystemSettings::getAllScoreRules() const {
     return scoreRules;
 }
@@ -175,9 +190,74 @@ int SystemSettings::getMinParticipantsToHoldEvent() const {
     return minParticipantsToHoldEvent;
 }
 
+// --- 比赛结果管理 ---
+bool SystemSettings::addOrUpdateEventResults(const EventResults& er) {
+    if (!competitionEvents.contains(er.getEventId())) {
+        std::cerr << "错误: 无法为不存在的项目ID " << er.getEventId() << " 添加成绩。" << std::endl;
+        return false;
+    }
+    eventResultsMap.insert_or_assign(er.getEventId(), er); // 插入或更新
+    return true;
+}
+
+std::optional<std::reference_wrapper<EventResults>> SystemSettings::getEventResults(int eventId) {
+    auto it = eventResultsMap.find(eventId);
+    if (it != eventResultsMap.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+std::optional<std::reference_wrapper<const EventResults>> SystemSettings::getEventResultsConst(int eventId) const {
+    auto it = eventResultsMap.find(eventId);
+    if (it != eventResultsMap.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+void SystemSettings::clearResultsForEvent(int eventId) {
+    auto it = eventResultsMap.find(eventId);
+    if (it != eventResultsMap.end()) {
+        const EventResults& oldResults = it->second;
+        // 从单位总分中扣除该项目之前产生的旧分数
+        for (const auto& result : oldResults.getResultsList()) {
+            auto athlete = getAthlete(result.getAthleteId());
+            if (athlete.has_value()) {
+                auto unit = getUnit(athlete.value().get().getUnitId());
+                if (unit.has_value()) {
+                    unit.value().get().addScore(-result.getPointsAwarded()); // 减去旧分数
+                }
+            }
+        }
+        eventResultsMap.erase(it); // 移除旧的成绩记录
+        // std::cout << "已清除项目ID " << eventId << " 的旧成绩及其对应单位分数。" << std::endl; // 可选: 此处输出可能过于频繁
+    }
+}
+
+void SystemSettings::resetAllUnitScores() {
+    for (auto& pair : units) {
+        pair.second.resetScore();
+    }
+    // std::cout << "所有单位分数已重置。" << std::endl; // 可选: 此处输出可能过于频繁
+}
+
+const std::map<int, EventResults>& SystemSettings::getAllEventResults() const {
+    return eventResultsMap;
+}
+
+
 // 初始化默认设置 (示例)
 void SystemSettings::initializeDefaultSettings() {
     std::cout << "正在初始化系统默认设置..." << std::endl;
+
+    // 清空现有数据以便全新初始化
+    units.clear();
+    athletes.clear();
+    competitionEvents.clear();
+    scoreRules.clear();
+    eventResultsMap.clear(); // 清空比赛结果
+
 
     // 1. 添加参赛单位
     addUnit("计算机学院");
@@ -202,11 +282,12 @@ void SystemSettings::initializeDefaultSettings() {
     // 规则2: 参赛人数 <= 6人 (且 >= 4人，因为不足4人取消), 取前3名
     std::map<int, double> scores2 = {{1, 5.0}, {2, 3.0}, {3, 2.0}};
     // 注意minParticipantsToHoldEvent是4，所以这里minP可以设为4
-    addScoreRule("4-6人取前3名", getMinParticipantsToHoldEvent(), 6, 3, scores2);
+    addScoreRule("4-6人取前3名", 4, 6, 3, scores2); // 规则的最小人数应与项目最少举行人数一致或相关
 
     // 5. 项目成立的最小参赛人数
     setMinParticipantsToHoldEvent(4); // 不足4人的项目将取消
 
+    resetAllUnitScores(); // 初始化后确保所有单位分数为0
+
     std::cout << "系统默认设置初始化完成。" << std::endl;
 }
-

@@ -46,7 +46,7 @@ bool Athlete::registerForEvent(const int eventId, const int maxEventsAllowed) {
         // 已达到最大报名项目数
         return false;
     }
-    if (std::find(registeredEventIds.begin(), registeredEventIds.end(), eventId) == registeredEventIds.end()) {
+    if (std::ranges::find(registeredEventIds, eventId) == registeredEventIds.end()) {
         registeredEventIds.push_back(eventId);
         return true;
     }
@@ -63,7 +63,7 @@ const std::vector<int>& Athlete::getRegisteredEventIds() const {
 }
 
 bool Athlete::isRegisteredForEvent(int eventId) const {
-    return std::find(registeredEventIds.begin(), registeredEventIds.end(), eventId) != registeredEventIds.end();
+    return std::ranges::find(registeredEventIds, eventId) != registeredEventIds.end();
 }
 
 int Athlete::getRegisteredEventsCount() const {

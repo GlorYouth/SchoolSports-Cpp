@@ -4,6 +4,7 @@
 
 #include "../include/Schedule.h"
 #include <iostream> // 用于打印等
+#include <ranges>
 
 Schedule::Schedule(SystemSettings& sysSettings) : settings(sysSettings) {}
 
@@ -18,9 +19,8 @@ bool Schedule::generateSchedule() {
     const auto& allEvents = settings.getAllCompetitionEvents();
     int day = 1;
     int count = 0;
-    for(const auto& pair : allEvents) {
-        const CompetitionEvent& event = pair.second;
-        if (!event.getIsCancelled()) {
+    for(const auto &val: allEvents | std::views::values) {
+        if (const CompetitionEvent& event = val; !event.getIsCancelled()) {
             ScheduleEntry entry;
             entry.eventId = event.getId();
             // 简陋的时间和场地分配

@@ -35,7 +35,7 @@ private:
     // std::string venue;
 
 public:
-    CompetitionEvent(const std::string& name, EventType type, Gender genderReq);
+    CompetitionEvent(std::string name, EventType type, Gender genderReq);
 
     // 获取项目ID
     [[nodiscard]] int getId() const;

@@ -3,12 +3,12 @@
 //
 
 #include "../include/ScoreRule.h"
-#include <limits> // Required for std::numeric_limits
+#include <utility>
 
 std::atomic<int> ScoreRule::nextId(1); // 初始化静态成员, ID从1开始
 
-ScoreRule::ScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores)
-    : description(desc), minParticipants(minP), maxParticipants(maxP), ranksToAward(ranks), scoresForRanks(scores) {
+ScoreRule::ScoreRule(std::string  desc, int minP, int maxP, int ranks, const std::map<int, double>& scores)
+    : description(std::move(desc)), minParticipants(minP), maxParticipants(maxP), ranksToAward(ranks), scoresForRanks(scores) {
     id = nextId++; // 分配唯一ID
 }
 
@@ -21,8 +21,8 @@ std::string ScoreRule::getDescription() const {
 }
 
 bool ScoreRule::appliesTo(int participantCount) const {
-    bool minMet = participantCount >= minParticipants;
-    bool maxMet = (maxParticipants == -1) ? true : (participantCount <= maxParticipants); // -1 表示无上限
+    const bool minMet = participantCount >= minParticipants;
+    const bool maxMet = (maxParticipants == -1) ? true : (participantCount <= maxParticipants); // -1 表示无上限
     return minMet && maxMet;
 }
 
@@ -31,8 +31,7 @@ int ScoreRule::getRanksToAward() const {
 }
 
 double ScoreRule::getScoreForRank(int rank) const {
-    auto it = scoresForRanks.find(rank);
-    if (it != scoresForRanks.end()) {
+    if (const auto it = scoresForRanks.find(rank); it != scoresForRanks.end()) {
         return it->second;
     }
     return 0.0; // 未找到该名次的得分，返回0

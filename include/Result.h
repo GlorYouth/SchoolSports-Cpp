@@ -54,6 +54,8 @@ private:
 public:
     explicit EventResults(int eventId);
 
+    [[nodiscard]] int getEventId() const; // 添加了 getter 方法
+
     void addResult(const Result& result);
     [[nodiscard]] const std::vector<Result>& getResultsList() const;
 

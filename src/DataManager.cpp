@@ -5,6 +5,7 @@
 #include "../include/DataManager.h"
 #include <fstream>
 #include <iostream> // 用于输出信息
+#include <ranges>
 
 // 注意：这是一个非常基础的实现，没有错误处理、版本控制或复杂数据结构的序列化。
 // 实际应用中需要更健壮的序列化/反序列化机制 (例如使用JSON, XML, 或自定义二进制格式)。
@@ -26,21 +27,21 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份单位
     outFile << "UnitsCount:" << settings.getAllUnits().size() << std::endl;
-    for (const auto& pair : settings.getAllUnits()) {
-        const Unit& unit = pair.second;
+    for (const auto &val: settings.getAllUnits() | std::views::values) {
+        const Unit& unit = val;
         outFile << "Unit:" << unit.getId() << "," << unit.getName() << std::endl;
         // 实际应用中，单位下的运动员ID列表等也需要备份，但这里简化
     }
 
     // 备份运动员
     outFile << "AthletesCount:" << settings.getAllAthletes().size() << std::endl;
-    for (const auto& pair : settings.getAllAthletes()) {
-        const Athlete& athlete = pair.second;
+    for (const auto &val: settings.getAllAthletes() | std::views::values) {
+        const Athlete& athlete = val;
         outFile << "Athlete:" << athlete.getId() << "," << athlete.getName() << ","
                 << static_cast<int>(athlete.getGender()) << "," << athlete.getUnitId() << std::endl;
         // 备份运动员报名的项目ID列表
         outFile << "RegisteredEventsCount:" << athlete.getRegisteredEventIds().size() << std::endl;
-        for (int eventId : athlete.getRegisteredEventIds()) {
+        for (const int eventId : athlete.getRegisteredEventIds()) {
             outFile << eventId << " ";
         }
         outFile << std::endl;
@@ -48,8 +49,8 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份比赛项目
     outFile << "CompetitionEventsCount:" << settings.getAllCompetitionEvents().size() << std::endl;
-    for (const auto& pair : settings.getAllCompetitionEvents()) {
-        const CompetitionEvent& event = pair.second;
+    for (const auto &val: settings.getAllCompetitionEvents() | std::views::values) {
+        const CompetitionEvent& event = val;
         outFile << "Event:" << event.getId() << "," << event.getName() << ","
                 << static_cast<int>(event.getEventType()) << ","
                 << static_cast<int>(event.getGenderRequirement()) << ","
@@ -64,8 +65,8 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份计分规则
     outFile << "ScoreRulesCount:" << settings.getAllScoreRules().size() << std::endl;
-    for (const auto& pair : settings.getAllScoreRules()) {
-        const ScoreRule& rule = pair.second;
+    for (const auto &val: settings.getAllScoreRules() | std::views::values) {
+        const ScoreRule& rule = val;
         outFile << "ScoreRule:" << rule.getId() << "," << rule.getDescription() << ","
                 << rule.appliesTo(0) /* 这是一个简化的示例，实际应存min/max participants */
                 << "," << rule.getRanksToAward() << std::endl;
