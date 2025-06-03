@@ -24,7 +24,7 @@ enum class EventType {
 };
 
 // 将性别枚举转换为字符串
-inline std::string genderToString(Gender gender) {
+inline std::string genderToString(const Gender gender) {
     switch (gender) {
         case Gender::MALE: return "男子";
         case Gender::FEMALE: return "女子";
@@ -33,7 +33,7 @@ inline std::string genderToString(Gender gender) {
 }
 
 // 将项目类型枚举转换为字符串
-inline std::string eventTypeToString(EventType type) {
+inline std::string eventTypeToString(const EventType type) {
     switch (type) {
         case EventType::TRACK: return "径赛";
         case EventType::FIELD: return "田赛";

@@ -65,11 +65,10 @@ int getFirstFemaleEventId(const SystemSettings& settings) {
 // 测试单位管理
 void testUnitManagement(SystemSettings& settings) {
     std::cout << "\n--- 开始测试单位管理 ---" << std::endl;
-    bool success;
-    int initialUnitCount = settings.getAllUnits().size();
+    const int initialUnitCount = settings.getAllUnits().size();
 
     // 1. 测试添加新单位
-    success = settings.addUnit("测试学院");
+    bool success = settings.addUnit("测试学院");
     printTestResult("添加新单位 '测试学院'", success && settings.getAllUnits().size() == initialUnitCount + 1);
 
     // 2. 测试添加同名单位 (应失败)
@@ -106,9 +105,8 @@ void testUnitManagement(SystemSettings& settings) {
 // 测试运动员管理
 void testAthleteManagement(SystemSettings& settings) {
     std::cout << "\n--- 开始测试运动员管理 ---" << std::endl;
-    bool success;
-    int initialAthleteCount = settings.getAllAthletes().size();
-    int unitId = getFirstUnitId(settings);
+    const int initialAthleteCount = settings.getAllAthletes().size();
+    const int unitId = getFirstUnitId(settings);
 
     if (unitId == -1) {
         std::cout << "运动员管理测试跳过：系统中没有单位可用于测试。" << std::endl;
@@ -116,7 +114,7 @@ void testAthleteManagement(SystemSettings& settings) {
     }
 
     // 1. 测试添加新运动员到有效单位
-    success = settings.addAthlete("测试男运动员", Gender::MALE, unitId);
+    bool success = settings.addAthlete("测试男运动员", Gender::MALE, unitId);
     printTestResult("添加新男运动员到有效单位", success && settings.getAllAthletes().size() == initialAthleteCount + 1);
     int maleAthleteId = -1;
     for(const auto& pair : settings.getAllAthletes()){
@@ -151,13 +149,13 @@ void testAthleteManagement(SystemSettings& settings) {
     if (maleAthleteId != -1) {
         success = settings.removeAthlete(maleAthleteId);
         printTestResult("删除男运动员", success && settings.getAllAthletes().size() == initialAthleteCount + 1);
-        auto athleteOpt = settings.getAthlete(maleAthleteId);
+        const auto athleteOpt = settings.getAthlete(maleAthleteId);
         printTestResult("确认男运动员已被删除", !athleteOpt.has_value());
     }
      if (femaleAthleteId != -1) {
         success = settings.removeAthlete(femaleAthleteId);
         printTestResult("删除女运动员", success && settings.getAllAthletes().size() == initialAthleteCount);
-        auto athleteOpt = settings.getAthlete(femaleAthleteId);
+        const auto athleteOpt = settings.getAthlete(femaleAthleteId);
         printTestResult("确认女运动员已被删除", !athleteOpt.has_value());
     }
 
@@ -167,11 +165,10 @@ void testAthleteManagement(SystemSettings& settings) {
 // 测试比赛项目管理
 void testCompetitionEventManagement(SystemSettings& settings) {
     std::cout << "\n--- 开始测试比赛项目管理 ---" << std::endl;
-    bool success;
-    int initialEventCount = settings.getAllCompetitionEvents().size();
+    const int initialEventCount = settings.getAllCompetitionEvents().size();
 
     // 1. 添加新项目
-    success = settings.addCompetitionEvent("测试男子跳远", EventType::FIELD, Gender::MALE);
+    bool success = settings.addCompetitionEvent("测试男子跳远", EventType::FIELD, Gender::MALE);
     printTestResult("添加新项目 '测试男子跳远'", success && settings.getAllCompetitionEvents().size() == initialEventCount + 1);
     int testEventId = -1;
     for(const auto& pair : settings.getAllCompetitionEvents()){
@@ -198,9 +195,8 @@ void testCompetitionEventManagement(SystemSettings& settings) {
 }
 
 // 测试报名管理
-void testRegistrationManagement(SystemSettings& settings, Registration& registration) {
+void testRegistrationManagement(SystemSettings& settings, const Registration& registration) {
     std::cout << "\n--- 开始测试报名管理 ---" << std::endl;
-    bool success;
 
     // 准备测试数据
     settings.addUnit("报名测试学院");
@@ -236,11 +232,11 @@ void testRegistrationManagement(SystemSettings& settings, Registration& registra
 
 
     // 1. 正常报名 - 男选手报男子项目
-    success = registration.registerAthleteForEvent(maleAthleteId, maleEventId);
+    bool success = registration.registerAthleteForEvent(maleAthleteId, maleEventId);
     printTestResult("男选手报名男子项目", success);
     if(success){
-        auto ath = settings.getAthlete(maleAthleteId);
-        auto evt = settings.getCompetitionEvent(maleEventId);
+        const auto ath = settings.getAthlete(maleAthleteId);
+        const auto evt = settings.getCompetitionEvent(maleEventId);
         printTestResult("男选手报名后项目数检查", ath.value().get().getRegisteredEventsCount() == 1);
         printTestResult("男子项目报名人数检查", evt.value().get().getParticipantCount() == 1);
     }

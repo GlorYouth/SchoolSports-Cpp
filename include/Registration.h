@@ -16,10 +16,10 @@ public:
 
     // 运动员报名参赛项目
     // 返回true表示报名成功，false表示失败 (例如超过项目限制、项目不存在、性别不符等)
-    bool registerAthleteForEvent(int athleteId, int eventId) const;
+    [[nodiscard]] bool registerAthleteForEvent(int athleteId, int eventId) const;
 
     // 运动员取消报名
-    bool unregisterAthleteFromEvent(int athleteId, int eventId) const;
+    [[nodiscard]] bool unregisterAthleteFromEvent(int athleteId, int eventId) const;
 
     // 检查项目是否因人数不足而需要取消
     void checkAndCancelEventsDueToLowParticipation() const;
