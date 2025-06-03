@@ -42,14 +42,14 @@ void ScheduleController::handleViewSchedule() {
     // 或者，UIManager 有一个 displaySchedule(const Schedule& schedule) 方法。
     // 为了简单起见，我们暂时假设 printSchedule 仍然打印，但这不符合完全分离的原则。
     // 理想情况:
-    // std::string scheduleContent = schedule_.getScheduleContentAsString();
-    // UIManager::showMessage(scheduleContent);
+    UIManager::showMessage("\n--- 查看秩序册 ---");
+    std::string scheduleContent = schedule_.getScheduleContentAsString(); // 从 Schedule 获取内容
+    UIManager::showMessage(scheduleContent);                             // UIManager 负责显示
     // 或:
     // UIManager::displaySchedule(schedule_);
 
     // 沿用原代码的模式，Schedule::printSchedule 内部会打印
-    UIManager::showMessage("\n--- 查看秩序册 ---");
-    schedule_.printSchedule(); // 假设这个方法现在使用 UIManager 或返回数据
+    // schedule_.printSchedule(); // 假设这个方法现在使用 UIManager 或返回数据
 }
 
 void ScheduleController::handleValidateSchedule() {

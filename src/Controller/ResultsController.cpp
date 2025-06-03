@@ -155,16 +155,7 @@ void ResultsController::handleRecordEventResults() {
         awardedAthleteIdsThisSession.push_back(athleteId_input);
 
         // 更新单位总分 (SystemSettings 应该提供一个方法来做这件事，以确保一致性)
-        // settings_.addScoreToUnit(rankedAthlete.getUnitId(), points);
-        // 模仿原代码，直接操作 Unit 对象
-        auto unitOpt = settings_.getUnit(rankedAthlete.getUnitId());
-        if (unitOpt) {
-            unitOpt.value().get().addScore(points);
-            UIManager::showMessage("运动员 " + rankedAthlete.getName() + " (单位: " + unitOpt.value().get().getName() +
-                                   ") 获得 " + std::to_string(points) + " 分。单位总分更新。");
-        } else {
-             UIManager::showErrorMessage("警告: 运动员 " + rankedAthlete.getName() + " 的单位ID (" + std::to_string(rankedAthlete.getUnitId()) + ") 无效，分数未计入单位。");
-        }
+        settings_.addScoreToUnit(rankedAthlete.getUnitId(), points);
     }
 
     newEventResults.finalizeResults(); // 内部可能排序或做其他处理

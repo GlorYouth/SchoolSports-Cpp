@@ -5,6 +5,7 @@
 #include "../../include/Components/Schedule.h"
 #include <iostream> // 用于打印等
 #include <ranges>
+#include <sstream>
 
 Schedule::Schedule(SystemSettings& sysSettings) : settings(sysSettings) {}
 
@@ -65,6 +66,40 @@ void Schedule::printSchedule() const {
         }
     }
     std::cout << "--------------------------" << std::endl;
+}
+
+// 新增：获取秩序册内容的字符串表示
+std::string Schedule::getScheduleContentAsString() const {
+    std::ostringstream oss;
+    oss << "\n---------- 秩序册 ----------\n"; // 使用中文标点和换行
+    if (scheduleEntries.empty()) {
+        oss << "秩序册为空或尚未生成。\n"; // 使用中文标点和换行
+        return oss.str();
+    }
+    for (const auto& entry : scheduleEntries) {
+        auto eventOpt = settings.getCompetitionEventConst(entry.eventId); // 使用 getCompetitionEventConst
+        if (eventOpt) { // 检查 optional 是否有值
+            const CompetitionEvent& event_ref = eventOpt.value().get();
+            oss << "项目: " << event_ref.getName() << " (ID: " << entry.eventId << ")"
+                << "\n  时间: " << entry.startTime << " - " << entry.endTime
+                << "\n  地点: " << entry.venue << "\n"; // 使用中文标点和换行
+            oss << "  参赛运动员: ";
+            if (event_ref.getParticipantCount() > 0) {
+                const auto& participantIds = event_ref.getParticipantAthleteIds();
+                for (size_t i = 0; i < participantIds.size(); ++i) {
+                    auto athOpt = settings.getAthleteConst(participantIds[i]); // 使用 getAthleteConst
+                    if (athOpt) { // 检查 optional 是否有值
+                        oss << athOpt.value().get().getName() << (i == participantIds.size() - 1 ? "" : ", ");
+                    }
+                }
+            } else {
+                oss << "无"; // 使用中文
+            }
+            oss << "\n\n"; // 两个换行以分隔条目
+        }
+    }
+    oss << "--------------------------\n"; // 使用中文标点和换行
+    return oss.str();
 }
 
 bool Schedule::validateSchedule() const {

@@ -69,6 +69,7 @@ public:
     [[nodiscard]] std::optional<std::reference_wrapper<const EventResults>> getEventResultsConst(int eventId) const;
     void clearResultsForEvent(int eventId); // 用于重新计算时清除旧成绩
     void resetAllUnitScores(); // 工具函数，重置所有单位分数
+    void addScoreToUnit(int unitId, double score); // 新增：为指定单位增加分数
     [[nodiscard]] const std::map<int, EventResults>& getAllEventResults() const; // 获取所有成绩的 getter 方法
 
 

@@ -258,39 +258,53 @@ std::optional<std::reference_wrapper<const EventResults>> SystemSettings::getEve
     return std::nullopt;
 }
 
-void SystemSettings::clearResultsForEvent(int eventId) {
-    auto it = eventResultsMap.find(eventId);
-    if (it != eventResultsMap.end()) {
-        const EventResults& oldResults = it->second;
-        // 从单位总分中扣除该项目之前产生的旧分数
-        for (const auto& result : oldResults.getResultsList()) {
-            auto athlete = getAthlete(result.getAthleteId());
-            if (athlete.has_value()) {
-                auto unit = getUnit(athlete.value().get().getUnitId());
-                if (unit.has_value()) {
-                    unit.value().get().addScore(-result.getPointsAwarded()); // 减去旧分数
+const std::map<int, EventResults>& SystemSettings::getAllEventResults() const {
+    return eventResultsMap;
+}
+
+
+// 清除特定项目的所有成绩，并尝试撤销已加到单位的总分
+void SystemSettings::clearResultsForEvent(const int eventId) {
+    if (const auto resultsIt = eventResultsMap.find(eventId); resultsIt != eventResultsMap.end()) {
+        const EventResults& results_ref = resultsIt->second;
+        for (const auto& result : results_ref.getResultsList()) {
+            if (auto athleteOpt = getAthleteConst(result.getAthleteId())) {
+                if (auto unitOpt = getUnit(athleteOpt.value().get().getUnitId())) {
+                    // 从单位分数中减去此成绩的分数
+                    unitOpt.value().get().addScore(-result.getPointsAwarded()); // 假设 addScore 可以接受负值
                 }
             }
         }
-        eventResultsMap.erase(it); // 移除旧的成绩记录
-        // std::cout << "已清除项目ID " << eventId << " 的旧成绩及其对应单位分数。" << std::endl; // 可选: 此处输出可能过于频繁
+        eventResultsMap.erase(resultsIt); // 移除项目成绩记录
+        // std::cout << "已清除项目ID " << eventId << " 的成绩及其对单位总分的影响。" << std::endl;
+    } else {
+        // std::cout << "项目ID " << eventId << " 没有成绩记录可清除。" << std::endl;
     }
-     // 确保项目本身的计分规则ID也被重置或标记为未计分状态
+
+    // 可选：如果项目本身还存在，可能需要重置其计分规则ID等状态
     auto eventOpt = getCompetitionEvent(eventId);
-    if(eventOpt.has_value()){
-        eventOpt.value().get().setScoreRuleId(-1); // 重置计分规则ID
+    if (eventOpt) {
+        eventOpt.value().get().setScoreRuleId(-1); // 假设-1表示未设置
     }
 }
 
 void SystemSettings::resetAllUnitScores() {
-    for (auto& pair : units) {
-        pair.second.resetScore();
+    for (auto &val : units | std::views::values) {
+        val.resetScore();
     }
-    // std::cout << "所有单位分数已重置。" << std::endl; // 可选: 此处输出可能过于频繁
+    // std::cout << "所有单位的总分已重置。" << std::endl;
 }
 
-const std::map<int, EventResults>& SystemSettings::getAllEventResults() const {
-    return eventResultsMap;
+// 新增：为指定单位增加分数
+void SystemSettings::addScoreToUnit(int unitId, double score) {
+    auto unitOpt = getUnit(unitId);
+    if (unitOpt) {
+        unitOpt.value().get().addScore(score);
+        // 可选: 可以在此处添加日志或成功消息，但通常调用方会处理用户反馈
+        // std::cout << "成功为单位ID " << unitId << " 增加了 " << score << " 分。" << std::endl;
+    } else {
+        std::cerr << "错误: 尝试为不存在的单位ID " << unitId << " 加分失败。" << std::endl;
+    }
 }
 
 

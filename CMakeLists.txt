@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.31)
 project(SchoolSports-Cpp)
-
-set(CMAKE_CXX_STANDARD 26)
+# 为 std::views 和 std::optional 设置 C++20 标准
+set(CMAKE_CXX_STANDARD 20)
+# 要求必须支持所设置的 C++ 标准，否则报错
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# 导出编译命令，方便使用 clangd 等工具
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# 禁用 GNU 特有的编译器扩展，提倡使用纯粹的 C++ 标准特性，这是一个好习惯
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(SchoolSports-Cpp main.cpp
         include/Components/CompetitionEvent.h

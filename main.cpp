@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm> // for std::sort for unit standings
 #include <functional> // for std::reference_wrapper
+#include <ranges>
 // #include <ranges> // for std::views::values - 如果需要但控制器内部处理了迭代
 
 // --- 原先的辅助函数，现在部分功能已移入控制器或保持为顶层菜单项 ---
@@ -27,9 +28,9 @@ void viewPublishedEvents(const SystemSettings& settings) {
     UIManager::showMessage("\n--- 当前发布的比赛项目 ---");
     std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
     bool found = false;
-    for (const auto& pair : settings.getAllCompetitionEvents()) {
-        if (!pair.second.getIsCancelled()) {
-             events_refs.push_back(std::cref(pair.second));
+    for (const auto& val : settings.getAllCompetitionEvents() | std::views::values) {
+        if (!val.getIsCancelled()) {
+             events_refs.push_back(std::cref(val));
              found = true;
         }
     }
@@ -50,11 +51,11 @@ void viewUnitStandingsOverall(const SystemSettings& settings) {
     }
 
     std::vector<std::reference_wrapper<const Unit>> unitsVec;
-    for (const auto& pair : allUnitsMap) {
-        unitsVec.push_back(std::cref(pair.second));
+    for (const auto& val : allUnitsMap | std::views::values) {
+        unitsVec.push_back(std::cref(val));
     }
 
-    std::sort(unitsVec.begin(), unitsVec.end(), [](const Unit& a, const Unit& b) {
+    std::ranges::sort(unitsVec, [](const Unit& a, const Unit& b) {
         if (std::abs(a.getTotalScore() - b.getTotalScore()) > 1e-5) { // 比较 double
             return a.getTotalScore() > b.getTotalScore();
         }

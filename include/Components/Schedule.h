@@ -40,6 +40,7 @@ public:
 
     // 打印或导出秩序册
     void printSchedule() const; // 或者 exportToFormat()
+    std::string getScheduleContentAsString() const; // 新增：获取秩序册内容的字符串表示
 
     // 验证赛程的有效性
     [[nodiscard]] bool validateSchedule() const;

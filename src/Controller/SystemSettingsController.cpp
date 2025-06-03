@@ -56,12 +56,6 @@ void SystemSettingsController::handleViewAllUnits() {
     for (const auto& pair : settings_.getAllUnits()) { // getAllUnits() 返回 const auto&
         units.push_back(std::cref(pair.second));
     }
-    // 如果不用 C++20 ranges, 或者 getAllUnits 返回 map 的拷贝:
-    // const auto& allUnitsMap = settings_.getAllUnits(); // 假设返回 const std::map<int, Unit>&
-    // std::vector<std::reference_wrapper<const Unit>> units;
-    // for (const auto& pair : allUnitsMap) {
-    //     units.push_back(std::cref(pair.second));
-    // }
     UIManager::displayUnits(units);
 }
 
