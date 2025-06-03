@@ -16,36 +16,67 @@
 
 ## 目录结构
 
-```
-SchoolSports-Cpp/
-├── include/                    // 头文件目录
-│   ├── Athlete.h               // 运动员类
-│   ├── CompetitionEvent.h      // 比赛项目类
-│   ├── Unit.h                  // 参赛单位类
-│   ├── ScoreRule.h             // 计分规则类
-│   ├── SystemSettings.h        // 系统设置类
-│   ├── Registration.h          // 报名管理类
-│   ├── Schedule.h              // 赛程管理类 (用于秩序册)
-│   ├── Result.h                // 成绩类
-│   ├── AutoTest.h              // 自动测试函数
-│   ├── DataManager.h           // 数据管理类 (用于数据备份等)
-│   └── Constants.h             // 常量定义 (如性别、项目类型等)
-├── src/                        // 源文件目录
-│   ├── Athlete.cpp
-│   ├── CompetitionEvent.cpp
-│   ├── Unit.cpp
-│   ├── ScoreRule.cpp
-│   ├── SystemSettings.cpp
-│   ├── Registration.cpp
-│   ├── Schedule.cpp
-│   ├── Result.cpp
-│   ├── AutoTest.cpp
-│   └── DataManager.cpp
-├── data/                       // 数据文件目录 (例如: 备份文件, 初始配置文件)
-│   └── (空)                    // 初期为空
-├── main.cpp                    // 主程序入口
-└── README.md                   // 项目说明文档
+```markdown
+SchoolSports-Cpp  # 项目根目录
+├─ .gitignore     # Git忽略文件配置
+├─ CMakeLists.txt # CMake构建配置文件
+├─ include        # 头文件目录
+│  ├─ Components  # 核心组件头文件
+│  │  ├─ Athlete.h          # 运动员类定义
+│  │  ├─ AutoTest.h         # 自动测试功能
+│  │  ├─ CompetitionEvent.h # 比赛项目类定义
+│  │  ├─ Constants.h        # 全局常量定义
+│  │  ├─ DataManager.h      # 数据管理与持久化
+│  │  ├─ Registration.h     # 报名管理类
+│  │  ├─ Result.h          # 比赛成绩类
+│  │  ├─ Schedule.h        # 赛程安排类
+│  │  ├─ ScoreRule.h       # 计分规则类
+│  │  ├─ SystemSettings.h  # 系统设置类
+│  │  └─ Unit.h           # 参赛单位类
+│  ├─ Controller  # 控制器层，处理业务逻辑
+│  │  ├─ DataManagementController.h  # 数据管理控制器
+│  │  ├─ QueryController.h          # 查询功能控制器
+│  │  ├─ RegistrationController.h   # 报名管理控制器
+│  │  ├─ ResultsController.h        # 成绩管理控制器
+│  │  ├─ ScheduleController.h       # 赛程管理控制器
+│  │  └─ SystemSettingsController.h # 系统设置控制器
+│  ├─ UI         # 用户界面层
+│  │  └─ UIManager.h  # UI管理器，处理所有界面交互
+│  └─ utils.h    # 通用工具函数
+├─ LICENSE       # 开源许可证文件
+├─ main.cpp      # 主程序入口
+├─ README.md     # 项目说明文档
+└─ src          # 源代码目录
+   ├─ Components # 核心组件实现
+   │  ├─ Athlete.cpp         # 运动员类实现
+   │  ├─ AutoTest.cpp        # 自动测试功能实现
+   │  ├─ CompetitionEvent.cpp # 比赛项目类实现
+   │  ├─ DataManager.cpp     # 数据管理实现
+   │  ├─ Registration.cpp    # 报名管理实现
+   │  ├─ Result.cpp         # 比赛成绩类实现
+   │  ├─ Schedule.cpp       # 赛程安排实现
+   │  ├─ ScoreRule.cpp      # 计分规则实现
+   │  ├─ SystemSettings.cpp # 系统设置实现
+   │  └─ Unit.cpp          # 参赛单位类实现
+   ├─ Controller # 控制器实现
+   │  ├─ DataManagementController.cpp # 数据管理控制器实现
+   │  ├─ QueryController.cpp         # 查询控制器实现
+   │  ├─ RegistrationController.cpp  # 报名控制器实现
+   │  ├─ ResultsController.cpp       # 成绩控制器实现
+   │  ├─ ScheduleController.cpp      # 赛程控制器实现
+   │  └─ SystemSettingsController.cpp # 系统设置控制器实现
+   └─ UI        # 用户界面实现
+      └─ UIManager.cpp # UI管理器实现
 
+项目采用三层架构设计：
+1. Components (模型层)：包含核心业务实体和数据模型
+2. Controller (控制器层)：处理业务逻辑和数据流
+3. UI (界面层)：负责用户交互和数据展示
+
+特殊文件说明：
+- utils.h：提供通用工具函数和辅助类
+- Constants.h：定义系统常量和配置参数
+- AutoTest：包含自动化测试功能
 ```
 
 

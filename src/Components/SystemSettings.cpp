@@ -277,8 +277,7 @@ void SystemSettings::clearResultsForEvent(const int eventId) {
     }
 
     // 可选：如果项目本身还存在，可能需要重置其计分规则ID等状态
-    auto eventOpt = getCompetitionEvent(eventId);
-    if (eventOpt) {
+    if (const auto eventOpt = getCompetitionEvent(eventId)) {
         eventOpt.value().get().setScoreRuleId(-1); // 假设-1表示未设置
     }
 }
@@ -292,8 +291,7 @@ void SystemSettings::resetAllUnitScores() {
 
 // 新增：为指定单位增加分数
 void SystemSettings::addScoreToUnit(int unitId, double score) {
-    auto unitOpt = getUnit(unitId);
-    if (unitOpt) {
+    if (const auto unitOpt = getUnit(unitId)) {
         unitOpt.value().get().addScore(score);
         // 可选: 可以在此处添加日志或成功消息，但通常调用方会处理用户反馈
         // std::cout << "成功为单位ID " << unitId << " 增加了 " << score << " 分。" << std::endl;
@@ -358,30 +356,30 @@ void SystemSettings::initializeDefaultSettings() {
     std::cout << "默认比赛项目添加完毕。" << std::endl;
 
     // 3. 添加运动员 (确保单位ID正确)
-    if (unitNameToId.count("计算机学院")) {
+    if (unitNameToId.contains("计算机学院")) {
         addAthlete("孙悟空", Gender::MALE, unitNameToId["计算机学院"]);
         addAthlete("白骨精", Gender::FEMALE, unitNameToId["计算机学院"]);
         addAthlete("猪八戒", Gender::MALE, unitNameToId["计算机学院"]);
     }
-    if (unitNameToId.count("外国语学院")) {
+    if (unitNameToId.contains("外国语学院")) {
         addAthlete("林黛玉", Gender::FEMALE, unitNameToId["外国语学院"]);
         addAthlete("贾宝玉", Gender::MALE, unitNameToId["外国语学院"]);
     }
-    if (unitNameToId.count("体育学院")) {
+    if (unitNameToId.contains("体育学院")) {
         addAthlete("刘翔", Gender::MALE, unitNameToId["体育学院"]);
         addAthlete("姚明", Gender::MALE, unitNameToId["体育学院"]);
         addAthlete("李娜", Gender::FEMALE, unitNameToId["体育学院"]);
         addAthlete("苏炳添", Gender::MALE, unitNameToId["体育学院"]);
     }
-    if (unitNameToId.count("理学院")) {
+    if (unitNameToId.contains("理学院")) {
         addAthlete("陈景润", Gender::MALE, unitNameToId["理学院"]);
         addAthlete("居里夫人", Gender::FEMALE, unitNameToId["理学院"]);
     }
-    if (unitNameToId.count("文学院")) {
+    if (unitNameToId.contains("文学院")) {
         addAthlete("鲁迅", Gender::MALE, unitNameToId["文学院"]);
         addAthlete("冰心", Gender::FEMALE, unitNameToId["文学院"]);
     }
-    if (unitNameToId.count("艺术学院")) {
+    if (unitNameToId.contains("艺术学院")) {
         addAthlete("梵高", Gender::MALE, unitNameToId["艺术学院"]);
         addAthlete("蒙娜丽莎", Gender::FEMALE, unitNameToId["艺术学院"]);
     }
