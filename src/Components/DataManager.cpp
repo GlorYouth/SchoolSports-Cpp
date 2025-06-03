@@ -57,8 +57,8 @@ bool DataManager::backupData(const std::string& filePath) const {
     }
 
     // 备份比赛项目
-    outFile << "CompetitionEventsCount:" << settings.getAllCompetitionEvents().size() << std::endl;
-    for (const auto &pair : settings.getAllCompetitionEvents()) {
+    outFile << "CompetitionEventsCount:" << settings.getAllCompetitionEventsConst().size() << std::endl;
+    for (const auto &pair : settings.getAllCompetitionEventsConst()) {
         const CompetitionEvent& event = pair.second;
         outFile << "Event:" << event.getId() << "," << event.getName() << ","
                 << static_cast<int>(event.getEventType()) << ","
@@ -141,40 +141,58 @@ bool DataManager::loadSampleData() {
     settings.clearCompetitionEvents();
     settings.clearAthletes();
     settings.clearUnits();
-    std::cout << "已清除旧的单位、运动员和比赛项目数据（计分规则已保留）。" << std::endl;
+    // 新增：清理场地表
+    std::set<std::string> oldVenues = settings.getAllVenues();
+    for (const auto& v : oldVenues) settings.removeVenue(v);
+    std::cout << "已清除旧的单位、运动员、比赛项目和场地数据（计分规则已保留）。" << std::endl;
 
-    // 添加示例单位 (SystemSettings 内部处理ID生成和存储)
-    // 注意: 后续使用的 unitIdXxx, eventIdXxx, athleteIdXxx 都是硬编码的ID。
-    // 这依赖于 SystemSettings 内部ID生成逻辑能恰好对应上这些ID，
-    // 或者 SystemSettings 的 addXxx 和 registerAthleteForEvent 方法能够通过这些ID找到实体。
-    // 这是一个简化，理想情况下 addXxx 方法应返回生成的ID，或提供按名称查找ID的方法。
+    // 添加示例场地
+    settings.addVenue("田径场A");
+    settings.addVenue("体育馆B");
+    settings.addVenue("投掷场C");
 
-    settings.addUnit("计算机学院");     // 预期内部ID 1 (或SystemSettings生成的第一个ID)
-    settings.addUnit("外国语学院");   // 预期内部ID 2 (或SystemSettings生成的第二个ID)
-    settings.addUnit("体育学院");       // 预期内部ID 3 (或SystemSettings生成的第三个ID)
-    // 为了演示，我们假设ID是从1开始顺序生成的
+    // 添加示例单位
+    settings.addUnit("计算机学院");     // 预期ID 1
+    settings.addUnit("外国语学院");   // 预期ID 2
+    settings.addUnit("体育学院");       // 预期ID 3
     int unitIdCompSci = 1; 
     int unitIdForeignLang = 2;
     int unitIdSports = 3;
-    // 更健壮的做法: int unitIdCompSci = settings.addUnit("计算机学院"); -> addUnit 返回ID
 
-    // 添加示例比赛项目 (使用能接受计分规则ID的 addCompetitionEvent 重载)
-    settings.addCompetitionEvent("男子100米", EventType::TRACK, Gender::MALE, defaultScoreRuleId);    // 预期内部ID 1
-    settings.addCompetitionEvent("女子跳远", EventType::FIELD, Gender::FEMALE, defaultScoreRuleId);  // 预期内部ID 2
-    settings.addCompetitionEvent("男子铅球", EventType::FIELD, Gender::MALE, defaultScoreRuleId);    // 预期内部ID 3
-    settings.addCompetitionEvent("女子200米", EventType::TRACK, Gender::FEMALE, defaultScoreRuleId); // 预期内部ID 4
+    // 添加示例比赛项目（带持续时间和场地）
+    settings.addCompetitionEvent("男子100米", EventType::TRACK, Gender::MALE, defaultScoreRuleId);    // 1
+    settings.addCompetitionEvent("女子跳远", EventType::FIELD, Gender::FEMALE, defaultScoreRuleId);  // 2
+    settings.addCompetitionEvent("男子铅球", EventType::FIELD, Gender::MALE, defaultScoreRuleId);    // 3
+    settings.addCompetitionEvent("女子200米", EventType::TRACK, Gender::FEMALE, defaultScoreRuleId); // 4
     int eventIdM100m = 1;
     int eventIdWLongJump = 2;
     int eventIdMShotPut = 3;
     int eventIdW200m = 4;
+    // 设置项目持续时间和场地
+    if (auto e = settings.getCompetitionEvent(eventIdM100m)) {
+        e.value().get().setDurationMinutes(10);
+        e.value().get().setVenue("田径场A");
+    }
+    if (auto e = settings.getCompetitionEvent(eventIdWLongJump)) {
+        e.value().get().setDurationMinutes(20);
+        e.value().get().setVenue("体育馆B");
+    }
+    if (auto e = settings.getCompetitionEvent(eventIdMShotPut)) {
+        e.value().get().setDurationMinutes(15);
+        e.value().get().setVenue("投掷场C");
+    }
+    if (auto e = settings.getCompetitionEvent(eventIdW200m)) {
+        e.value().get().setDurationMinutes(12);
+        e.value().get().setVenue("田径场A");
+    }
 
     // 添加示例运动员
-    settings.addAthlete("张三", Gender::MALE, unitIdCompSci);       // 预期内部ID 1
-    settings.addAthlete("李四", Gender::FEMALE, unitIdForeignLang);  // 预期内部ID 2
-    settings.addAthlete("王五", Gender::MALE, unitIdSports);          // 预期内部ID 3
-    settings.addAthlete("赵六", Gender::FEMALE, unitIdCompSci);     // 预期内部ID 4
-    settings.addAthlete("孙七", Gender::MALE, unitIdForeignLang);    // 预期内部ID 5
-    settings.addAthlete("周八", Gender::FEMALE, unitIdSports);        // 预期内部ID 6
+    settings.addAthlete("张三", Gender::MALE, unitIdCompSci);       // 1
+    settings.addAthlete("李四", Gender::FEMALE, unitIdForeignLang);  // 2
+    settings.addAthlete("王五", Gender::MALE, unitIdSports);          // 3
+    settings.addAthlete("赵六", Gender::FEMALE, unitIdCompSci);     // 4
+    settings.addAthlete("孙七", Gender::MALE, unitIdForeignLang);    // 5
+    settings.addAthlete("周八", Gender::FEMALE, unitIdSports);        // 6
     int athleteIdZhang = 1;
     int athleteIdLi = 2;
     int athleteIdWang = 3;
@@ -182,8 +200,7 @@ bool DataManager::loadSampleData() {
     int athleteIdSun = 5;
     int athleteIdZhou = 6;
 
-    // 为运动员报名项目 (使用 SystemSettings::registerAthleteForEvent)
-    // 注意：这里依赖 athleteIdXXX 和 eventIdXXX 与 SystemSettings 内部生成的 ID 一致
+    // 为运动员报名项目
     settings.registerAthleteForEvent(athleteIdZhang, eventIdM100m);
     settings.registerAthleteForEvent(athleteIdLi, eventIdWLongJump);
     settings.registerAthleteForEvent(athleteIdWang, eventIdM100m);
@@ -194,8 +211,9 @@ bool DataManager::loadSampleData() {
 
     std::cout << "示例数据导入成功。" << std::endl;
     std::cout << "当前单位数量: " << settings.getAllUnits().size() << std::endl;
-    std::cout << "当前比赛项目数量: " << settings.getAllCompetitionEvents().size() << std::endl;
+    std::cout << "当前比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << std::endl;
     std::cout << "当前运动员数量: " << settings.getAllAthletes().size() << std::endl;
+    std::cout << "当前场地数量: " << settings.getAllVenues().size() << std::endl;
 
     return true;
 }

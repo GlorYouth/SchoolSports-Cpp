@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <optional>
+#include <set>
 
 #include "Unit.h"
 #include "CompetitionEvent.h"
@@ -24,6 +25,15 @@ private:
 
     int athleteMaxEventsAllowed;                    // 运动员允许参加的最多项目数
     int minParticipantsToHoldEvent;                 // 项目成立的最小参赛人数
+    // 新增：赛程锁定标志
+    bool scheduleLocked = false;
+    // 新增：场地表
+    std::set<std::string> venues;                   // 所有可用场地
+    // 新增：上午/下午时间段，格式08:00
+    std::string morningSessionStart = "08:00";
+    std::string morningSessionEnd = "12:00";
+    std::string afternoonSessionStart = "14:00";
+    std::string afternoonSessionEnd = "18:00";
 
 public:
     SystemSettings();
@@ -49,7 +59,7 @@ public:
     bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
     std::optional<utils::Ref<CompetitionEvent>> getCompetitionEvent(int eventId);
     [[nodiscard]] std::optional<utils::RefConst<CompetitionEvent>> getCompetitionEventConst(int eventId) const; // 添加了 const 版本
-    [[nodiscard]] const std::map<int, CompetitionEvent>& getAllCompetitionEvents() const;
+    [[nodiscard]] std::map<int, utils::RefConst<CompetitionEvent>> getAllCompetitionEventsConst() const;
     bool removeCompetitionEvent(int eventId);
     void clearCompetitionEvents(); // 新增：清除所有项目数据
 
@@ -84,6 +94,29 @@ public:
 
     void initializeDefaultSettings(); // 初始化默认设置
     [[nodiscard]] std::vector<utils::RefConst<Athlete>> getAllAthlesConst() const;
+
+    // 赛程锁定相关
+    void lockSchedule();
+    void unlockSchedule();
+    bool isScheduleLocked() const;
+
+    // --- 场地管理 ---
+    // 添加场地
+    bool addVenue(const std::string& venueName);
+    // 移除场地
+    bool removeVenue(const std::string& venueName);
+    // 获取所有场地
+    const std::set<std::string>& getAllVenues() const;
+
+    // --- 上午/下午时间段管理 ---
+    // 设置上午时间段
+    void setMorningSession(const std::string& start, const std::string& end);
+    // 设置下午时间段
+    void setAfternoonSession(const std::string& start, const std::string& end);
+    // 获取上午时间段
+    std::pair<std::string, std::string> getMorningSession() const;
+    // 获取下午时间段
+    std::pair<std::string, std::string> getAfternoonSession() const;
 };
 
 #endif //SYSTEMSETTINGS_H

@@ -39,16 +39,16 @@ void ResultsController::manage() {
 
 void ResultsController::handleRecordEventResults() {
     UIManager::showMessage("\n--- 录入/修改项目成绩 ---");
-    if (settings_.getAllCompetitionEvents().empty()) {
+    if (settings_.getAllCompetitionEventsConst().empty()) {
         UIManager::showErrorMessage("系统中没有比赛项目，无法录入成绩。");
         return;
     }
 
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
-    for(const auto& pair : settings_.getAllCompetitionEvents()) {
+    for(const auto& [id, event_ref] : settings_.getAllCompetitionEventsConst()) {
         // 通常只为未取消且可能已结束的项目录入成绩
-        if (!pair.second.getIsCancelled()) { // 简单起见，只检查未取消
-            events_refs.push_back(std::cref(pair.second));
+        if (!event_ref.get().getIsCancelled()) { // 简单起见，只检查未取消
+            events_refs.push_back(std::cref(event_ref));
         }
     }
     if(events_refs.empty()){
@@ -171,13 +171,13 @@ void ResultsController::handleRecordEventResults() {
 
 void ResultsController::handleViewEventResults() {
     UIManager::showMessage("\n--- 查看项目成绩 ---");
-    if (settings_.getAllCompetitionEvents().empty()) {
+    if (settings_.getAllCompetitionEventsConst().empty()) {
         UIManager::showErrorMessage("系统中没有比赛项目。");
         return;
     }
 
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
-    for(const auto& val : settings_.getAllCompetitionEvents() | std::views::values) events_refs.push_back(std::cref(val));
+    for(const auto& val : settings_.getAllCompetitionEventsConst() | std::views::values) events_refs.push_back(std::cref(val));
     UIManager::displayEvents(events_refs, settings_);
 
     int eventId = UIManager::getIntInput("请输入要查看成绩的项目ID: ");

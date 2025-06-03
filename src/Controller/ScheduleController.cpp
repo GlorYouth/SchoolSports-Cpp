@@ -7,10 +7,10 @@
 ScheduleController::ScheduleController(Schedule& schedule, SystemSettings& settings)
     : schedule_(schedule), settings_(settings) {}
 
-void ScheduleController::manage() {
+void ScheduleController::manage(const SystemSettings& settings) {
     int choice;
     do {
-        UIManager::displayScheduleMenu();
+        UIManager::displayScheduleMenu(settings);
         choice = UIManager::getIntInput("«Î ‰»Îƒ˙µƒ—°‘Ò: ", 0, 3);
 
         switch (choice) {

@@ -6,10 +6,19 @@
 #include "../../include/Components/SystemSettings.h"
 #include "../../include/Components/Athlete.h"
 #include "../../include/Components/CompetitionEvent.h"
+#include "../../include/UI/UIManager.h"
 #include <iostream> // 用于输出信息
 #include <ranges>
 
 Registration::Registration(SystemSettings& sysSettings) : settings(sysSettings) {}
+
+// 辅助函数：将"HH:MM"字符串转为分钟数
+static int timeStringToMinutes(const std::string& timeStr) {
+    if (timeStr.size() != 5 || timeStr[2] != ':') return -1;
+    int hour = std::stoi(timeStr.substr(0, 2));
+    int min = std::stoi(timeStr.substr(3, 2));
+    return hour * 60 + min;
+}
 
 bool Registration::registerAthleteForEvent(const int athleteId, const int eventId) const { // 移除了 const
     const auto athleteOpt = settings.getAthlete(athleteId);
@@ -30,6 +39,38 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
     if (event_ref.getIsCancelled()){
         std::cerr << "报名失败: 项目 \"" << event_ref.getName() << "\" 已取消。" << std::endl;
         return false;
+    }
+
+    // 新增：报名时间冲突检测
+    // 仅检测有时间信息的项目
+    std::string newStart = event_ref.getStartTime();
+    std::string newEnd = event_ref.getEndTime();
+    int newStartMin = timeStringToMinutes(newStart);
+    int newEndMin = timeStringToMinutes(newEnd);
+    if (newStartMin >= 0 && newEndMin > newStartMin) {
+        for (int regEventId : athlete_ref.getRegisteredEventIds()) {
+            if (regEventId == eventId) continue; // 跳过自己
+            auto regEventOpt = settings.getCompetitionEventConst(regEventId);
+            if (!regEventOpt) continue;
+            const CompetitionEvent& regEvent = regEventOpt.value().get();
+            int regStartMin = timeStringToMinutes(regEvent.getStartTime());
+            int regEndMin = timeStringToMinutes(regEvent.getEndTime());
+            if (regStartMin >= 0 && regEndMin > regStartMin) {
+                // 检查时间重叠
+                if (!(newEndMin <= regStartMin || newStartMin >= regEndMin)) {
+                    // 有重叠，禁止报名
+                    std::string info = "与已报名项目[" + regEvent.getName() + "]时间重叠(" + regEvent.getStartTime() + "-" + regEvent.getEndTime() + ")，无法报名。";
+                    UIManager::showRegistrationConflictMessage(info);
+                    return false;
+                }
+                // 检查间隔
+                int interval = std::min(abs(newStartMin - regEndMin), abs(regStartMin - newEndMin));
+                if (interval < 30) {
+                    std::string warn = "与已报名项目[" + regEvent.getName() + "]间隔不足30分钟(" + std::to_string(interval) + "分钟)。";
+                    UIManager::showRegistrationIntervalWarning(warn);
+                }
+            }
+        }
     }
 
     // 1. 检查运动员性别是否符合项目要求
@@ -123,7 +164,7 @@ int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 
     // 当前 SystemSettings::getAllCompetitionEvents() 返回 const&
     // 所以我们需要通过ID获取非const的event对象来修改
     std::vector<int> eventIdsToCheck;
-    for(const auto& pair : settings.getAllCompetitionEvents()){
+    for(const auto& pair : settings.getAllCompetitionEventsConst()){
         eventIdsToCheck.push_back(pair.first);
     }
 

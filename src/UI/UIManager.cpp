@@ -77,7 +77,7 @@ void UIManager::showErrorMessage(const std::string& message) {
 
 
 // --- 菜单显示 ---
-void UIManager::displayMainMenu() {
+void UIManager::displayMainMenu(const SystemSettings& settings) {
     std::cout << "\n========== 学校运动会管理系统 ==========" << std::endl;
     std::cout << "1.  系统设置管理" << std::endl;
     std::cout << "2.  查看参赛项目" << std::endl;
@@ -91,6 +91,7 @@ void UIManager::displayMainMenu() {
     std::cout << "10. 自动测试" << std::endl;
     std::cout << "0.  退出系统" << std::endl;
     std::cout << "======================================" << std::endl;
+    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定（禁止修改项目时间/场地）" : "未锁定（可编辑项目时间/场地）") << std::endl;
 }
 
 void UIManager::displaySystemSettingsMenu(const SystemSettings& settings) {
@@ -105,6 +106,9 @@ void UIManager::displaySystemSettingsMenu(const SystemSettings& settings) {
     std::cout << "8. 查看所有计分规则" << std::endl;
     std::cout << "9. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
     std::cout << "10. 设置项目最少举行人数 (当前: " << settings.getMinParticipantsToHoldEvent() << ")" << std::endl;
+    std::cout << "11. 场地管理 (仅未锁定时可维护)" << std::endl;
+    std::cout << "12. 上午/下午时间段设置" << std::endl;
+    std::cout << "13. 赛程生成与查看" << std::endl;
     std::cout << "0. 返回主菜单" << std::endl;
 }
 
@@ -118,8 +122,9 @@ void UIManager::displayRegistrationMenu() {
     std::cout << "0. 返回主菜单" << std::endl;
 }
 
-void UIManager::displayScheduleMenu() {
+void UIManager::displayScheduleMenu(const SystemSettings& settings) {
     std::cout << "\n--- 秩序册管理 ---" << std::endl;
+    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定，禁止修改项目时间/场地" : "未锁定，可编辑项目时间/场地") << std::endl;
     std::cout << "1. 自动生成秩序册" << std::endl;
     std::cout << "2. 查看秩序册" << std::endl;
     std::cout << "3. 验证秩序册 (占位符)" << std::endl;
@@ -146,6 +151,35 @@ void UIManager::displayDataManagementMenu() {
     std::cout << "1. 备份数据" << std::endl;
     std::cout << "2. 恢复数据" << std::endl;
     std::cout << "0. 返回主菜单" << std::endl;
+}
+
+// 新增：场地管理菜单
+void UIManager::displayVenueManagementMenu() {
+    std::cout << "\n--- 场地管理 ---" << std::endl;
+    std::cout << "1. 添加场地" << std::endl;
+    std::cout << "2. 删除场地" << std::endl;
+    std::cout << "3. 查看所有场地" << std::endl;
+    std::cout << "0. 返回上一级菜单" << std::endl;
+}
+
+// 新增：上午/下午时间段设置菜单
+void UIManager::displaySessionSettingsMenu(const SystemSettings& settings) {
+    auto [morningStart, morningEnd] = settings.getMorningSession();
+    auto [afternoonStart, afternoonEnd] = settings.getAfternoonSession();
+    std::cout << "\n--- 上午/下午时间段设置 ---" << std::endl;
+    std::cout << "当前上午时间段: " << morningStart << " - " << morningEnd << std::endl;
+    std::cout << "当前下午时间段: " << afternoonStart << " - " << afternoonEnd << std::endl;
+    std::cout << "1. 设置上午时间段" << std::endl;
+    std::cout << "2. 设置下午时间段" << std::endl;
+    std::cout << "0. 返回上一级菜单" << std::endl;
+}
+
+// 新增：赛程生成菜单
+void UIManager::displayScheduleGenerationMenu() {
+    std::cout << "\n--- 赛程生成与查看 ---" << std::endl;
+    std::cout << "1. 自动生成赛程" << std::endl;
+    std::cout << "2. 查看当前赛程" << std::endl;
+    std::cout << "0. 返回上一级菜单" << std::endl;
 }
 
 
@@ -208,6 +242,7 @@ void UIManager::displayAthletes(const std::vector<utils::RefConst<Athlete>>& ath
 
 void UIManager::displayEvents(const std::vector<utils::RefConst<CompetitionEvent>>& events, const SystemSettings& settings) {
     std::cout << "\n--- 所有比赛项目 ---" << std::endl;
+    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定，禁止修改项目时间/场地" : "未锁定，可编辑项目时间/场地") << std::endl;
     if (events.empty()) {
         showMessage("暂无比赛项目。");
         return;
@@ -219,22 +254,28 @@ void UIManager::displayEvents(const std::vector<utils::RefConst<CompetitionEvent
               << std::setw(10) << "性别要求" << "| "
               << std::setw(6) << "人数" << "| "
               << std::setw(12) << "计分规则ID" << "| "
-              << "状态"
+              << std::setw(8) << "状态" << "| "
+              << std::setw(8) << "时长(分)" << "| "
+              << std::setw(10) << "场地" << "| "
+              << std::setw(8) << "开始时间" << "| "
+              << std::setw(8) << "结束时间"
               << std::endl;
-    std::cout << "-----|---------------------------|----------|------------|--------|--------------|--------" << std::endl;
+    std::cout << "-----|---------------------------|----------|------------|------|--------------|--------|--------|----------|--------|--------" << std::endl;
     for (const auto& event_ref : events) {
         const CompetitionEvent& event = event_ref.get();
-        // auto ruleOpt = settings.getScoreRuleConst(event.getScoreRuleId()); // 如果需要显示规则描述
-        // std::string ruleDescPart = (ruleOpt.has_value() ? " (" + ruleOpt.value().get().getDescription() + ")" : "");
-
+        std::string nameStr = event.getName();
         std::cout << std::left
                   << std::setw(5) << event.getId() << "| "
-                  << std::setw(25) << event.getName() << "| "
+                  << std::setw(25) << nameStr << "| "
                   << std::setw(8) << eventTypeToString(event.getEventType()) << "| "
                   << std::setw(10) << genderToString(event.getGenderRequirement()) << "| "
                   << std::setw(6) << event.getParticipantCount() << "| "
                   << std::setw(12) << (event.getScoreRuleId() != -1 ? std::to_string(event.getScoreRuleId()) : "未指定") << "| "
-                  << (event.getIsCancelled() ? "已取消" : "正常")
+                  << std::setw(8) << (event.getIsCancelled() ? "已取消" : "正常") << "| "
+                  << std::setw(8) << (event.getDurationMinutes() > 0 ? std::to_string(event.getDurationMinutes()) : "未设置") << "| "
+                  << std::setw(10) << (event.getVenue().empty() ? "未设置" : event.getVenue()) << "| "
+                  << std::setw(8) << (event.getStartTime().empty() ? "未设置" : event.getStartTime()) << "| "
+                  << std::setw(8) << (event.getEndTime().empty() ? "未设置" : event.getEndTime())
                   << std::endl;
     }
 }
@@ -341,6 +382,19 @@ void UIManager::displayUnitStandings(const std::vector<utils::RefConst<Unit>>& s
     }
 }
 
+// 新增：显示场地表
+void UIManager::displayVenues(const std::set<std::string>& venues) {
+    std::cout << "\n--- 场地表 ---" << std::endl;
+    if (venues.empty()) {
+        std::cout << "暂无场地。" << std::endl;
+        return;
+    }
+    int idx = 1;
+    for (const auto& v : venues) {
+        std::cout << idx++ << ". " << v << std::endl;
+    }
+}
+
 
 // --- 特定输入的辅助函数实现 ---
 Gender UIManager::getGenderInput(const std::string& prompt, bool allowUnspecified) {
@@ -363,4 +417,16 @@ EventType UIManager::getEventTypeInput(const std::string& prompt) {
         // 如果允许 UNSPECIFIED，可以在这里添加逻辑
         showErrorMessage("无效的项目类型选择。");
     }
+}
+
+void UIManager::showRegistrationLockedMessage() {
+    showErrorMessage("当前赛程未锁定，无法进行报名操作，请先生成并锁定赛程！");
+}
+
+void UIManager::showRegistrationConflictMessage(const std::string& conflictInfo) {
+    showErrorMessage("报名冲突：" + conflictInfo);
+}
+
+void UIManager::showRegistrationIntervalWarning(const std::string& warningInfo) {
+    showMessage("警告：" + warningInfo);
 }

@@ -182,9 +182,13 @@ std::optional<utils::RefConst<CompetitionEvent>> SystemSettings::getCompetitionE
     return std::nullopt;
 }
 
-const std::map<int, CompetitionEvent>& SystemSettings::getAllCompetitionEvents() const {
-    return competitionEvents;
-}
+    std::map<int, utils::RefConst<CompetitionEvent>> SystemSettings::getAllCompetitionEventsConst() const {
+        auto map = std::map<int, utils::RefConst<CompetitionEvent>>();
+        for (const auto& [fst, snd] : competitionEvents){
+            map.insert({fst, std::cref(snd)});
+        }
+        return map;
+    }
 
 bool SystemSettings::removeCompetitionEvent(const int eventId) {
     const auto eventIt = competitionEvents.find(eventId);
@@ -474,4 +478,38 @@ std::vector<utils::RefConst<Athlete>> SystemSettings::getAllAthlesConst() const 
         refs.push_back(std::cref(val)); // 从 pair 中取出 Athlete 对象
     }
     return refs;
+}
+
+// 赛程锁定相关
+void SystemSettings::lockSchedule() { scheduleLocked = true; }
+void SystemSettings::unlockSchedule() { scheduleLocked = false; }
+bool SystemSettings::isScheduleLocked() const { return scheduleLocked; }
+
+// --- 场地管理 ---
+bool SystemSettings::addVenue(const std::string& venueName) {
+    // 添加场地，若已存在则返回false
+    return venues.insert(venueName).second;
+}
+bool SystemSettings::removeVenue(const std::string& venueName) {
+    // 移除场地，若不存在则返回false
+    return venues.erase(venueName) > 0;
+}
+const std::set<std::string>& SystemSettings::getAllVenues() const {
+    return venues;
+}
+
+// --- 上午/下午时间段管理 ---
+void SystemSettings::setMorningSession(const std::string& start, const std::string& end) {
+    morningSessionStart = start;
+    morningSessionEnd = end;
+}
+void SystemSettings::setAfternoonSession(const std::string& start, const std::string& end) {
+    afternoonSessionStart = start;
+    afternoonSessionEnd = end;
+}
+std::pair<std::string, std::string> SystemSettings::getMorningSession() const {
+    return {morningSessionStart, morningSessionEnd};
+}
+std::pair<std::string, std::string> SystemSettings::getAfternoonSession() const {
+    return {afternoonSessionStart, afternoonSessionEnd};
 }

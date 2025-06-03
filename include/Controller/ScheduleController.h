@@ -13,7 +13,7 @@
 class ScheduleController {
 public:
     ScheduleController(Schedule& schedule, SystemSettings& settings);
-    void manage();
+    void manage(const SystemSettings& settings);
 
 private:
     Schedule& schedule_;

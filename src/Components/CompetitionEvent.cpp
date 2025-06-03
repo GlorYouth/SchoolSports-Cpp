@@ -102,3 +102,29 @@ void CompetitionEvent::resetNextId(int startId) {
     nextId.store(startId);
 }
 
+// ========== 新增：持续时间、场地、时间段相关方法 ==========
+void CompetitionEvent::setDurationMinutes(int minutes) {
+    durationMinutes = minutes;
+}
+int CompetitionEvent::getDurationMinutes() const {
+    return durationMinutes;
+}
+void CompetitionEvent::setVenue(const std::string& v) {
+    venue = v;
+}
+std::string CompetitionEvent::getVenue() const {
+    return venue;
+}
+void CompetitionEvent::setStartTime(const std::string& t) {
+    startTime = t;
+}
+void CompetitionEvent::setEndTime(const std::string& t) {
+    endTime = t;
+}
+std::string CompetitionEvent::getStartTime() const {
+    return startTime;
+}
+std::string CompetitionEvent::getEndTime() const {
+    return endTime;
+}
+

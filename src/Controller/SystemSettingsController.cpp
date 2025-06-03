@@ -8,8 +8,10 @@
 #include "../../include/Components/Athlete.h"
 #include "../../include/Components/CompetitionEvent.h"
 #include "../../include/Components/ScoreRule.h"
+#include "../../include/Components/Schedule.h"
 #include <algorithm> // for std::sort, std::find (如果需要)
 #include <ranges>    // for std::views::values (C++20)
+#include <limits>
 
 SystemSettingsController::SystemSettingsController(SystemSettings& settings)
     : settings_(settings) {}
@@ -18,7 +20,7 @@ void SystemSettingsController::manage() {
     int choice;
     do {
         UIManager::displaySystemSettingsMenu(settings_);
-        choice = UIManager::getIntInput("请输入您的选择: ", 0, 10);
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 13);
 
         switch (choice) {
             case 1: handleAddUnit(); break;
@@ -31,6 +33,19 @@ void SystemSettingsController::manage() {
             case 8: handleViewAllScoreRules(); break;
             case 9: handleSetAthleteMaxEvents(); break;
             case 10: handleSetMinParticipantsToHoldEvent(); break;
+            case 11:
+                if (!settings_.isScheduleLocked()) {
+                    handleVenueManagement();
+                } else {
+                    UIManager::showErrorMessage("赛程已锁定，无法维护场地表。");
+                }
+                break;
+            case 12:
+                handleSessionSettings();
+                break;
+            case 13:
+                handleScheduleGeneration();
+                break;
             case 0: UIManager::showMessage("返回主菜单..."); break;
             default: UIManager::showErrorMessage("无效选择，请重新输入。"); break; // 理论上 getIntInput 已经处理了范围
         }
@@ -73,7 +88,7 @@ void SystemSettingsController::handleAddEvent() {
 
 void SystemSettingsController::handleViewAllEvents() {
     std::vector<utils::RefConst<CompetitionEvent>> events;
-     for (const auto& val : settings_.getAllCompetitionEvents() | std::views::values) {
+     for (const auto& val : settings_.getAllCompetitionEventsConst() | std::views::values) {
         events.push_back(std::cref(val));
     }
     UIManager::displayEvents(events, settings_); // 可能需要 settings 来获取计分规则描述
@@ -146,4 +161,110 @@ void SystemSettingsController::handleSetMinParticipantsToHoldEvent() {
     int minParticipants = UIManager::getIntInput("请输入新的项目最少举行人数: ", 1, 100); // 假设范围1-100
     settings_.setMinParticipantsToHoldEvent(minParticipants); // 假设此方法存在且不直接打印
     UIManager::showSuccessMessage("项目最少举行人数已更新为: " + std::to_string(minParticipants));
+}
+
+void SystemSettingsController::handleVenueManagement() {
+    int choice;
+    do {
+        UIManager::displayVenueManagementMenu();
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 3);
+        switch (choice) {
+            case 1: {
+                std::string venueName = UIManager::getStringInput("请输入新场地名称: ");
+                if (settings_.addVenue(venueName)) {
+                    UIManager::showSuccessMessage("场地添加成功。");
+                } else {
+                    UIManager::showErrorMessage("场地已存在，添加失败。");
+                }
+                break;
+            }
+            case 2: {
+                std::string venueName = UIManager::getStringInput("请输入要删除的场地名称: ");
+                if (settings_.removeVenue(venueName)) {
+                    UIManager::showSuccessMessage("场地删除成功。");
+                } else {
+                    UIManager::showErrorMessage("未找到该场地，删除失败。");
+                }
+                break;
+            }
+            case 3: {
+                UIManager::displayVenues(settings_.getAllVenues());
+                break;
+            }
+            case 0:
+                UIManager::showMessage("返回上一级菜单...");
+                break;
+            default:
+                UIManager::showErrorMessage("无效选择。");
+                break;
+        }
+        if (choice != 0) {
+            UIManager::pressEnterToContinue();
+        }
+    } while (choice != 0);
+}
+
+void SystemSettingsController::handleSessionSettings() {
+    int choice;
+    do {
+        UIManager::displaySessionSettingsMenu(settings_);
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 2);
+        switch (choice) {
+            case 1: {
+                std::string start = UIManager::getStringInput("请输入上午开始时间(格式08:00): ");
+                std::string end = UIManager::getStringInput("请输入上午结束时间(格式12:00): ");
+                settings_.setMorningSession(start, end);
+                UIManager::showSuccessMessage("上午时间段设置成功。");
+                break;
+            }
+            case 2: {
+                std::string start = UIManager::getStringInput("请输入下午开始时间(格式14:00): ");
+                std::string end = UIManager::getStringInput("请输入下午结束时间(格式18:00): ");
+                settings_.setAfternoonSession(start, end);
+                UIManager::showSuccessMessage("下午时间段设置成功。");
+                break;
+            }
+            case 0:
+                UIManager::showMessage("返回上一级菜单...");
+                break;
+            default:
+                UIManager::showErrorMessage("无效选择。");
+                break;
+        }
+        if (choice != 0) {
+            UIManager::pressEnterToContinue();
+        }
+    } while (choice != 0);
+}
+
+void SystemSettingsController::handleScheduleGeneration() {
+    Schedule schedule(settings_);
+    int choice;
+    do {
+        UIManager::displayScheduleGenerationMenu();
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 2);
+        switch (choice) {
+            case 1: {
+                if (schedule.generateSchedule()) {
+                    UIManager::showSuccessMessage("赛程生成成功！");
+                } else {
+                    UIManager::showErrorMessage("赛程生成失败，请检查项目、场地和时间段设置。");
+                }
+                break;
+            }
+            case 2: {
+                schedule.printSchedule();
+                break;
+            }
+            case 0:
+                UIManager::showMessage("返回上一级菜单...");
+                break;
+            default:
+                UIManager::showErrorMessage("无效选择。");
+                break;
+        }
+        if (choice != 0) {
+            UIManager::pressEnterToContinue();
+        }
+    } while (choice != 0);
 }

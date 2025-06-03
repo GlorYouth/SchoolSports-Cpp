@@ -28,8 +28,8 @@ void viewPublishedEvents(const SystemSettings& settings) {
     UIManager::showMessage("\n--- 当前发布的比赛项目 ---");
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     bool found = false;
-    for (const auto& val : settings.getAllCompetitionEvents() | std::views::values) {
-        if (!val.getIsCancelled()) {
+    for (const auto& val : settings.getAllCompetitionEventsConst() | std::views::values) {
+        if (!val.get().getIsCancelled()) {
              events_refs.push_back(std::cref(val));
              found = true;
         }
@@ -85,7 +85,7 @@ int main() {
 
     int choice;
     do {
-        UIManager::displayMainMenu();
+        UIManager::displayMainMenu(settings);
         choice = UIManager::getIntInput("请输入您的选择: ", 0, 10);
 
         switch (choice) {
@@ -103,7 +103,7 @@ int main() {
                 queryCtrl.manage();
                 break;
             case 5:
-                scheduleCtrl.manage();
+                scheduleCtrl.manage(settings);
                 break;
             case 6:
                 resultsCtrl.manage();

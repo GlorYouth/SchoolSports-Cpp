@@ -26,13 +26,17 @@ private:
     std::vector<int> participantAthleteIds; // 参赛运动员ID列表
     int scoreRuleId;                // 应用的计分规则ID (规则由 SystemSettings 管理)
     bool isCancelled;               // 项目是否因人数不足而取消
+    // 新增字段
+    int durationMinutes;            // 持续时间（分钟），必须手动设置
+    std::string venue;              // 场地
+    std::string startTime;          // 比赛开始时间（如 "08:00"）
+    std::string endTime;            // 比赛结束时间（如 "08:30"）
 
     // 比赛结果相关，可以考虑用 Result 类来管理
     // std::vector<Result> results; // 存储比赛名次和成绩
 
     // 秩序册相关信息 (后续添加)
     // std::string scheduledTime;
-    // std::string venue;
 
 public:
     CompetitionEvent(std::string name, EventType type, Gender genderReq);
@@ -79,6 +83,16 @@ public:
 
     // 新增：重置静态ID计数器的方法，用于测试
     static void resetNextId(int startId = 1);
+
+    // 新增setter/getter
+    void setDurationMinutes(int minutes);
+    int getDurationMinutes() const;
+    void setVenue(const std::string& v);
+    std::string getVenue() const;
+    void setStartTime(const std::string& t);
+    void setEndTime(const std::string& t);
+    std::string getStartTime() const;
+    std::string getEndTime() const;
 };
 
 #endif //COMPETITIONEVENT_H

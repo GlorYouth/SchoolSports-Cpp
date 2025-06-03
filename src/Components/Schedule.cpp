@@ -10,31 +10,117 @@
 Schedule::Schedule(SystemSettings& sysSettings) : settings(sysSettings) {}
 
 bool Schedule::generateSchedule() {
-    // 秩序册自动生成的核心算法将在此实现
-    // 这是一个复杂的问题，通常需要启发式算法或约束满足算法
-    // 当前版本仅为框架，不实现具体逻辑
-    std::cout << "正在尝试生成秩序册 (当前为占位符)..." << std::endl;
-
-    // 示例：简单地将所有未取消的项目添加到赛程中，无时间安排
+    std::cout << "正在智能生成秩序册..." << std::endl;
     scheduleEntries.clear();
-    const auto& allEvents = settings.getAllCompetitionEvents();
-    int day = 1;
-    int count = 0;
-    for(const auto &val: allEvents | std::views::values) {
-        if (const CompetitionEvent& event = val; !event.getIsCancelled()) {
-            ScheduleEntry entry;
-            entry.eventId = event.getId();
-            // 简陋的时间和场地分配
-            entry.startTime = "Day" + std::to_string(day) + " " + (count % 2 == 0 ? "09:00" : "14:00");
-            entry.endTime = "Day" + std::to_string(day) + " " + (count % 2 == 0 ? "11:00" : "16:00");
-            entry.venue = (event.getEventType() == EventType::TRACK ? "田径场" : "体育馆场地A");
-            scheduleEntries.push_back(entry);
-            count++;
-            if (count % 4 == 0) day++; // 每4个项目换一天（非常粗略）
+    // 1. 收集所有未取消项目，按持续时间降序排序
+    std::vector<CompetitionEvent> events;
+    for (const auto& event : settings.getAllCompetitionEventsConst() | std::views::values) {
+        if (!event.get().getIsCancelled()) {
+            events.push_back(event);
         }
     }
-    std::cout << "秩序册初步条目已生成 (未优化)。" << std::endl;
-    return !scheduleEntries.empty();
+    std::sort(events.begin(), events.end(), [](utils::RefConst<CompetitionEvent> a, utils::RefConst<CompetitionEvent> b) {
+        return a.get().getDurationMinutes() > b.get().getDurationMinutes();
+    });
+    // 2. 获取所有场地
+    const auto& venues = settings.getAllVenues();
+    if (venues.empty()) {
+        std::cout << "错误：场地表为空，请先添加场地。" << std::endl;
+        return false;
+    }
+    // 3. 获取上午/下午时间段
+    auto [morningStart, morningEnd] = settings.getMorningSession();
+    auto [afternoonStart, afternoonEnd] = settings.getAfternoonSession();
+    // 辅助函数：时间字符串转分钟
+    auto timeToMin = [](const std::string& t) -> int {
+        if (t.size() != 5 || t[2] != ':') return -1;
+        return std::stoi(t.substr(0,2))*60 + std::stoi(t.substr(3,2));
+    };
+    int morningStartMin = timeToMin(morningStart), morningEndMin = timeToMin(morningEnd);
+    int afternoonStartMin = timeToMin(afternoonStart), afternoonEndMin = timeToMin(afternoonEnd);
+    if (morningStartMin < 0 || morningEndMin <= morningStartMin || afternoonStartMin < 0 || afternoonEndMin <= afternoonStartMin) {
+        std::cout << "错误：上午/下午时间段设置不合法。" << std::endl;
+        return false;
+    }
+    // 4. 维护每个场地每天的上午/下午已排时间表
+    struct Slot { int start, end; };
+    using VenueDayKey = std::tuple<std::string, int, bool>; // 场地, 天, isMorning
+    std::map<VenueDayKey, std::vector<Slot>> venueSchedule;
+    int day = 1;
+    // 5. 依次为每个项目分配时间
+    for (CompetitionEvent event : events) {
+        int duration = event.getDurationMinutes();
+        bool scheduled = false;
+        // 尝试从第1天开始，直到找到可排入的空隙
+        for (day = 1; day < 100; ++day) { // 最多排100天
+            for (const auto& venue : venues) {
+                for (int isMorning = 0; isMorning <= 1; ++isMorning) {
+                    int sessionStart = isMorning ? morningStartMin : afternoonStartMin;
+                    int sessionEnd = isMorning ? morningEndMin : afternoonEndMin;
+                    auto& slots = venueSchedule[{venue, day, isMorning}];
+                    // 查找该场地该天该时段的可用空隙
+                    int lastEnd = sessionStart;
+                    bool found = false;
+                    // 按已排slot排序
+                    std::sort(slots.begin(), slots.end(), [](const Slot& a, const Slot& b){ return a.start < b.start; });
+                    for (const auto& slot : slots) {
+                        if (slot.start - lastEnd >= duration) {
+                            // 找到空隙
+                            int s = lastEnd, e = lastEnd + duration;
+                            // 分配
+                            event.setVenue(venue);
+                            char bufS[6], bufE[6];
+                            snprintf(bufS, 6, "%02d:%02d", s/60, s%60);
+                            snprintf(bufE, 6, "%02d:%02d", e/60, e%60);
+                            event.setStartTime(bufS);
+                            event.setEndTime(bufE);
+                            slots.push_back({s, e});
+                            // 记录到赛程表
+                            ScheduleEntry entry;
+                            entry.eventId = event.getId();
+                            entry.venue = venue;
+                            entry.startTime = bufS;
+                            entry.endTime = bufE;
+                            scheduleEntries.push_back(entry);
+                            found = true;
+                            scheduled = true;
+                            break;
+                        }
+                        lastEnd = slot.end;
+                    }
+                    // 检查最后一个空隙
+                    if (!found && sessionEnd - lastEnd >= duration) {
+                        int s = lastEnd, e = lastEnd + duration;
+                        event.setVenue(venue);
+                        char bufS[6], bufE[6];
+                        snprintf(bufS, 6, "%02d:%02d", s/60, s%60);
+                        snprintf(bufE, 6, "%02d:%02d", e/60, e%60);
+                        event.setStartTime(bufS);
+                        event.setEndTime(bufE);
+                        slots.push_back({s, e});
+                        ScheduleEntry entry;
+                        entry.eventId = event.getId();
+                        entry.venue = venue;
+                        entry.startTime = bufS;
+                        entry.endTime = bufE;
+                        scheduleEntries.push_back(entry);
+                        scheduled = true;
+                        break;
+                    }
+                    if (scheduled) break;
+                }
+                if (scheduled) break;
+            }
+            if (scheduled) break;
+        }
+        if (!scheduled) {
+            std::cout << "错误：项目[" << event.getName() << "]无法排入赛程，请检查场地和时间段设置。" << std::endl;
+            return false;
+        }
+    }
+    std::cout << "赛程智能生成成功！共安排" << scheduleEntries.size() << "个项目。" << std::endl;
+    settings.lockSchedule();
+    return true;
 }
 
 const std::vector<ScheduleEntry>& Schedule::getScheduleEntries() const {
