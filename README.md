@@ -27,6 +27,7 @@ SchoolSports-Cpp/
 │   ├── Registration.h          // 报名管理类
 │   ├── Schedule.h              // 赛程管理类 (用于秩序册)
 │   ├── Result.h                // 成绩类
+│   ├── AutoTest.h              // 自动测试函数
 │   ├── DataManager.h           // 数据管理类 (用于数据备份等)
 │   └── Constants.h             // 常量定义 (如性别、项目类型等)
 ├── src/                        // 源文件目录
@@ -38,6 +39,7 @@ SchoolSports-Cpp/
 │   ├── Registration.cpp
 │   ├── Schedule.cpp
 │   ├── Result.cpp
+│   ├── AutoTest.cpp
 │   └── DataManager.cpp
 ├── data/                       // 数据文件目录 (例如: 备份文件, 初始配置文件)
 │   └── (空)                    // 初期为空
