@@ -2,8 +2,8 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../include/CompetitionEvent.h"
-#include "../include/Athlete.h" // 需要访问 Athlete 的性别
+#include "../../include/Components/CompetitionEvent.h"
+#include "../../include/Components/Athlete.h"
 #include <algorithm> // For std::remove, std::find
 #include <utility>
 #include <iostream> // 用于调试输出

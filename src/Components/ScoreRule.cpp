@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../include/ScoreRule.h"
+#include "../../include/Components/ScoreRule.h"
 #include <utility>
 
 std::atomic<int> ScoreRule::nextId(1); // 初始化静态成员, ID从1开始

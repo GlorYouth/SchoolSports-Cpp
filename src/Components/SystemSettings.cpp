@@ -2,13 +2,13 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../include/SystemSettings.h"
+#include "../../include/Components/SystemSettings.h"
 #include <iostream> // 用于演示输出
 #include <ranges>
 #include <string>
 #include <vector>
 #include <map>
-#include "../include/Result.h" // 确保 Result.h 被包含
+#include "../../include/Components/Result.h"
 
 SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3), minParticipantsToHoldEvent(4) {
     // 构造函数中可以进行一些初始化
@@ -397,4 +397,13 @@ void SystemSettings::initializeDefaultSettings() {
     resetAllUnitScores(); // 初始化后确保所有单位分数为0
 
     std::cout << "系统默认设置初始化完成。" << std::endl;
+}
+
+std::vector<std::reference_wrapper<const Athlete>> SystemSettings::getAllAthlesConst() const {
+    std::vector<std::reference_wrapper<const Athlete>> refs;
+    refs.reserve(athletes.size()); // athletes_ 是 std::map<int, Athlete> m_athletes;
+    for (const auto& val : athletes | std::views::values) {
+        refs.push_back(std::cref(val)); // 从 pair 中取出 Athlete 对象
+    }
+    return refs;
 }

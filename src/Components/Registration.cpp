@@ -2,10 +2,10 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../include/Registration.h"
-#include "../include/SystemSettings.h"
-#include "../include/Athlete.h"
-#include "../include/CompetitionEvent.h"
+#include "../../include/Components/Registration.h"
+#include "../../include/Components/SystemSettings.h"
+#include "../../include/Components/Athlete.h"
+#include "../../include/Components/CompetitionEvent.h"
 #include <iostream> // 用于输出信息
 #include <ranges>
 
@@ -115,7 +115,7 @@ bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eve
     return true;
 }
 
-void Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 const
+int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 const
     std::cout << "\n正在检查并处理因人数不足而需取消的项目..." << std::endl;
     bool changed = false;
     // 需要迭代 map 的 value，并且可能修改它，所以不能用 range-based for loop 直接在 const map 上
@@ -127,6 +127,7 @@ void Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了
         eventIdsToCheck.push_back(pair.first);
     }
 
+    int eventToCancelCount = 0;
     for (const int eventId : eventIdsToCheck) {
         if (auto eventOpt = settings.getCompetitionEvent(eventId); eventOpt.has_value()) {
             if (CompetitionEvent& event_ref = eventOpt.value().get(); !event_ref.getIsCancelled()) { // 只检查未被取消的项目
@@ -137,6 +138,7 @@ void Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了
                               << ") 少于最少要求 (" << settings.getMinParticipantsToHoldEvent()
                               << ") 已被取消。" << std::endl;
                     changed = true;
+                    eventToCancelCount++;
                 }
             }
         }
@@ -144,4 +146,5 @@ void Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了
     if (!changed) {
         std::cout << "没有项目因人数不足而需要取消。" << std::endl;
     }
+    return eventToCancelCount;
 }

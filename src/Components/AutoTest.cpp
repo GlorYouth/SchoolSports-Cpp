@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/3.
 //
 
-#include "../include/AutoTest.h"
+#include "../../include/Components/AutoTest.h"
 
 
 #include <iostream>
@@ -14,16 +14,16 @@
 #include <cassert>   // For basic assertions
 
 // 包含项目所需的所有头文件
-#include "../include/SystemSettings.h"
-#include "../include/Registration.h"
-#include "../include/Schedule.h" // 虽然秩序册生成是占位符，但头文件可能被其他部分间接需要
-#include "../include/DataManager.h" // 数据管理功能是占位符，但可以测试接口调用
-#include "../include/Constants.h"
-#include "../include/Unit.h"
-#include "../include/Athlete.h"
-#include "../include/CompetitionEvent.h"
-#include "../include/ScoreRule.h"
-#include "../include/Result.h"
+#include "../../include/Components/SystemSettings.h"
+#include "../../include/Components/Registration.h"
+#include "../../include/Components/Schedule.h"
+#include "../../include/Components/DataManager.h"
+#include "../../include/Components/Constants.h"
+#include "../../include/Components/Unit.h"
+#include "../../include/Components/Athlete.h"
+#include "../../include/Components/CompetitionEvent.h"
+#include "../../include/Components/ScoreRule.h"
+#include "../../include/Components/Result.h"
 
 // 定义一个简单的测试结果打印函数
 void printTestResult(const std::string& testName, bool success) {

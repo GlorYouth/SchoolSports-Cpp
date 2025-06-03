@@ -6,7 +6,7 @@
 #define DATAMANAGER_H
 
 #include <string>
-#include "SystemSettings.h" // 需要备份和恢复系统中的所有数据
+#include "SystemSettings.h"
 
 // 数据管理类 (负责数据持久化，如备份和恢复)
 class DataManager {

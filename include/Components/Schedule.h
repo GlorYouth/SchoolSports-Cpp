@@ -7,8 +7,8 @@
 
 #include <vector>
 #include <string>
-#include "CompetitionEvent.h" // 需要访问比赛项目信息
-#include "SystemSettings.h"   // 可能需要访问系统总体设置
+#include "CompetitionEvent.h"
+#include "SystemSettings.h"
 
 // 单个赛程条目
 struct ScheduleEntry {

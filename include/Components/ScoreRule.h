@@ -36,5 +36,7 @@ public:
     [[nodiscard]] double getScoreForRank(int rank) const;
     // 获取所有名次和分数
     [[nodiscard]] const std::map<int, double>& getAllScoresForRanks() const;
+    [[nodiscard]] int getMinParticipants() const { return minParticipants; }
+    [[nodiscard]] int getMaxParticipants() const { return maxParticipants; }
 };
 #endif //SCORERULE_H

@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../include/DataManager.h"
+#include "../../include/Components/DataManager.h"
 #include <fstream>
 #include <iostream> // 用于输出信息
 #include <ranges>

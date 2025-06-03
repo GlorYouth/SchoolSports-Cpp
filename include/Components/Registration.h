@@ -22,7 +22,7 @@ public:
     [[nodiscard]] bool unregisterAthleteFromEvent(int athleteId, int eventId) const;
 
     // 检查项目是否因人数不足而需要取消
-    void checkAndCancelEventsDueToLowParticipation() const;
+    int checkAndCancelEventsDueToLowParticipation() const;
 
     // 其他报名相关功能...
 };

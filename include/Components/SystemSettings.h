@@ -10,7 +10,7 @@
 #include "CompetitionEvent.h"
 #include "Athlete.h"
 #include "ScoreRule.h"
-#include "Result.h" // 引入 Result.h 以使用 EventResults
+#include "Result.h"
 
 // 系统设置类，负责管理全局配置信息
 class SystemSettings {
@@ -73,6 +73,7 @@ public:
 
 
     void initializeDefaultSettings(); // 初始化默认设置
+    [[nodiscard]] std::vector<std::reference_wrapper<const Athlete>> getAllAthlesConst() const;
 };
 
 #endif //SYSTEMSETTINGS_H

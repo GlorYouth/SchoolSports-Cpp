@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <atomic> // 用于生成唯一ID
-#include "Constants.h" // 包含性别、项目类型等定义
+#include "Constants.h"
 
 // 前向声明
 class Athlete;

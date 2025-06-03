@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../include/Schedule.h"
+#include "../../include/Components/Schedule.h"
 #include <iostream> // 用于打印等
 #include <ranges>
 
