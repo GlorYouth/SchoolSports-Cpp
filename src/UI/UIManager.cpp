@@ -149,7 +149,7 @@ void UIManager::displayDataManagementMenu() {
 
 
 // --- 数据列表显示 ---
-void UIManager::displayUnits(const std::vector<std::reference_wrapper<const Unit>>& units) {
+void UIManager::displayUnits(const std::vector<utils::RefConst<Unit>>& units) {
     std::cout << "\n--- 所有参赛单位 ---" << std::endl;
     if (units.empty()) {
         showMessage("暂无参赛单位。");
@@ -169,7 +169,7 @@ void UIManager::displayUnits(const std::vector<std::reference_wrapper<const Unit
     }
 }
 
-void UIManager::displayAthletes(const std::vector<std::reference_wrapper<const Athlete>>& athletes, const SystemSettings& settings) {
+void UIManager::displayAthletes(const std::vector<utils::RefConst<Athlete>>& athletes, const SystemSettings& settings) {
     std::cout << "\n--- 所有运动员 ---" << std::endl;
     if (athletes.empty()) {
         showMessage("暂无运动员。");
@@ -205,7 +205,7 @@ void UIManager::displayAthletes(const std::vector<std::reference_wrapper<const A
     }
 }
 
-void UIManager::displayEvents(const std::vector<std::reference_wrapper<const CompetitionEvent>>& events, const SystemSettings& settings) {
+void UIManager::displayEvents(const std::vector<utils::RefConst<CompetitionEvent>>& events, const SystemSettings& settings) {
     std::cout << "\n--- 所有比赛项目 ---" << std::endl;
     if (events.empty()) {
         showMessage("暂无比赛项目。");
@@ -238,7 +238,7 @@ void UIManager::displayEvents(const std::vector<std::reference_wrapper<const Com
     }
 }
 
-void UIManager::displayScoreRules(const std::vector<std::reference_wrapper<const ScoreRule>>& rules) {
+void UIManager::displayScoreRules(const std::vector<utils::RefConst<ScoreRule>>& rules) {
     std::cout << "\n--- 所有计分规则 ---" << std::endl;
     if (rules.empty()) {
         showMessage("暂无计分规则。");
@@ -312,7 +312,7 @@ void UIManager::displayEventResultsDetails(const CompetitionEvent& event,
     }
 }
 
-void UIManager::displayUnitStandings(const std::vector<std::reference_wrapper<const Unit>>& sortedUnits) {
+void UIManager::displayUnitStandings(const std::vector<utils::RefConst<Unit>>& sortedUnits) {
     std::cout << "\n--- 单位得分排名 ---" << std::endl;
     if (sortedUnits.empty()) {
         showMessage("系统中没有单位。");

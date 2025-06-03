@@ -29,14 +29,14 @@ bool SystemSettings::addUnit(const std::string& unitName) {
     return true;
 }
 
-std::optional<std::reference_wrapper<Unit>> SystemSettings::getUnit(const int unitId) {
+std::optional<utils::Ref<Unit>> SystemSettings::getUnit(const int unitId) {
     if (const auto it = units.find(unitId); it != units.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<const Unit>> SystemSettings::getUnitConst(const int unitId) const {
+std::optional<utils::RefConst<Unit>> SystemSettings::getUnitConst(const int unitId) const {
     if (const auto it = units.find(unitId); it != units.end()) {
         return it->second;
     }
@@ -78,14 +78,14 @@ bool SystemSettings::addAthlete(const std::string& name, Gender gender, int unit
     return true;
 }
 
-std::optional<std::reference_wrapper<Athlete>> SystemSettings::getAthlete(const int athleteId) {
+std::optional<utils::Ref<Athlete>> SystemSettings::getAthlete(const int athleteId) {
     if (const auto it = athletes.find(athleteId); it != athletes.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<const Athlete>> SystemSettings::getAthleteConst(const int athleteId) const {
+std::optional<utils::RefConst<Athlete>> SystemSettings::getAthleteConst(const int athleteId) const {
     if (const auto it = athletes.find(athleteId); it != athletes.end()) {
         return it->second;
     }
@@ -130,17 +130,15 @@ bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType
     return true;
 }
 
-std::optional<std::reference_wrapper<CompetitionEvent>> SystemSettings::getCompetitionEvent(int eventId) {
-    const auto it = competitionEvents.find(eventId);
-    if (it != competitionEvents.end()) {
+std::optional<utils::Ref<CompetitionEvent>> SystemSettings::getCompetitionEvent(int eventId) {
+    if (const auto it = competitionEvents.find(eventId); it != competitionEvents.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<const CompetitionEvent>> SystemSettings::getCompetitionEventConst(int eventId) const {
-    const auto it = competitionEvents.find(eventId);
-    if (it != competitionEvents.end()) {
+std::optional<utils::RefConst<CompetitionEvent>> SystemSettings::getCompetitionEventConst(int eventId) const {
+    if (const auto it = competitionEvents.find(eventId); it != competitionEvents.end()) {
         return it->second;
     }
     return std::nullopt;
@@ -177,16 +175,15 @@ bool SystemSettings::addScoreRule(const std::string& desc, int minP, int maxP, i
     return true;
 }
 
-std::optional<std::reference_wrapper<ScoreRule>> SystemSettings::getScoreRule(int ruleId) {
+std::optional<utils::Ref<ScoreRule>> SystemSettings::getScoreRule(int ruleId) {
     if (const auto it = scoreRules.find(ruleId); it != scoreRules.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<const ScoreRule>> SystemSettings::getScoreRuleConst(const int ruleId) const {
-    auto it = scoreRules.find(ruleId);
-    if (it != scoreRules.end()) {
+std::optional<utils::RefConst<ScoreRule>> SystemSettings::getScoreRuleConst(const int ruleId) const {
+    if (const auto it = scoreRules.find(ruleId); it != scoreRules.end()) {
         return it->second;
     }
     return std::nullopt;
@@ -197,7 +194,7 @@ const std::map<int, ScoreRule>& SystemSettings::getAllScoreRules() const {
     return scoreRules;
 }
 
-std::optional<std::reference_wrapper<ScoreRule>> SystemSettings::findAppropriateScoreRule(int participantCount) {
+std::optional<utils::Ref<ScoreRule>> SystemSettings::findAppropriateScoreRule(int participantCount) {
     for (auto &val : scoreRules | std::views::values) {
         if (val.appliesTo(participantCount)) {
             return val;
@@ -242,17 +239,15 @@ bool SystemSettings::addOrUpdateEventResults(const EventResults& er) {
     return true;
 }
 
-std::optional<std::reference_wrapper<EventResults>> SystemSettings::getEventResults(int eventId) {
-    auto it = eventResultsMap.find(eventId);
-    if (it != eventResultsMap.end()) {
+std::optional<utils::Ref<EventResults>> SystemSettings::getEventResults(int eventId) {
+    if (const auto it = eventResultsMap.find(eventId); it != eventResultsMap.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<const EventResults>> SystemSettings::getEventResultsConst(int eventId) const {
-    auto it = eventResultsMap.find(eventId);
-    if (it != eventResultsMap.end()) {
+std::optional<utils::RefConst<EventResults>> SystemSettings::getEventResultsConst(int eventId) const {
+    if (const auto it = eventResultsMap.find(eventId); it != eventResultsMap.end()) {
         return it->second;
     }
     return std::nullopt;
@@ -413,8 +408,8 @@ void SystemSettings::initializeDefaultSettings() {
     std::cout << "系统默认设置初始化完成。" << std::endl;
 }
 
-std::vector<std::reference_wrapper<const Athlete>> SystemSettings::getAllAthlesConst() const {
-    std::vector<std::reference_wrapper<const Athlete>> refs;
+std::vector<utils::RefConst<Athlete>> SystemSettings::getAllAthlesConst() const {
+    std::vector<utils::RefConst<Athlete>> refs;
     refs.reserve(athletes.size()); // athletes_ 是 std::map<int, Athlete> m_athletes;
     for (const auto& val : athletes | std::views::values) {
         refs.push_back(std::cref(val)); // 从 pair 中取出 Athlete 对象

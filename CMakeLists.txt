@@ -44,4 +44,5 @@ add_executable(SchoolSports-Cpp main.cpp
         src/Controller/QueryController.cpp
         include/Controller/QueryController.h
         src/Controller/DataManagementController.cpp
-        include/Controller/DataManagementController.h)
+        include/Controller/DataManagementController.h
+        include/utils.h)

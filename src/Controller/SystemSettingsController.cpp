@@ -40,8 +40,8 @@ void SystemSettingsController::manage() {
     } while (choice != 0);
 }
 
-void SystemSettingsController::handleAddUnit() {
-    std::string name = UIManager::getStringInput("请输入单位名称: ");
+void SystemSettingsController::handleAddUnit() const{
+    const std::string name = UIManager::getStringInput("请输入单位名称: ");
     if (settings_.addUnit(name)) { // 假设 addUnit 返回 bool 并且不再打印
         UIManager::showSuccessMessage("单位 '" + name + "' 添加成功。");
     } else {
@@ -52,9 +52,9 @@ void SystemSettingsController::handleAddUnit() {
 void SystemSettingsController::handleViewAllUnits() {
     // 从 settings_ 获取数据
     // C++20 ranges approach:
-    std::vector<std::reference_wrapper<const Unit>> units;
-    for (const auto& pair : settings_.getAllUnits()) { // getAllUnits() 返回 const auto&
-        units.push_back(std::cref(pair.second));
+    std::vector<utils::RefConst<Unit>> units;
+    for (const auto& val : settings_.getAllUnits() | std::views::values) { // getAllUnits() 返回 const auto&
+        units.push_back(std::cref(val));
     }
     UIManager::displayUnits(units);
 }
@@ -72,9 +72,9 @@ void SystemSettingsController::handleAddEvent() {
 }
 
 void SystemSettingsController::handleViewAllEvents() {
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events;
-     for (const auto& pair : settings_.getAllCompetitionEvents()) {
-        events.push_back(std::cref(pair.second));
+    std::vector<utils::RefConst<CompetitionEvent>> events;
+     for (const auto& val : settings_.getAllCompetitionEvents() | std::views::values) {
+        events.push_back(std::cref(val));
     }
     UIManager::displayEvents(events, settings_); // 可能需要 settings 来获取计分规则描述
 }
@@ -102,9 +102,9 @@ void SystemSettingsController::handleAddAthlete() {
 }
 
 void SystemSettingsController::handleViewAllAthletes() {
-    std::vector<std::reference_wrapper<const Athlete>> athletes;
-    for (const auto& pair : settings_.getAllAthletes()) {
-        athletes.push_back(std::cref(pair.second));
+    std::vector<utils::RefConst<Athlete>> athletes;
+    for (const auto& val : settings_.getAllAthletes() | std::views::values) {
+        athletes.push_back(std::cref(val));
     }
     UIManager::displayAthletes(athletes, settings_);
 }
@@ -129,9 +129,9 @@ void SystemSettingsController::handleAddScoreRule() {
 }
 
 void SystemSettingsController::handleViewAllScoreRules() {
-     std::vector<std::reference_wrapper<const ScoreRule>> rules;
-     for (const auto& pair : settings_.getAllScoreRules()) {
-        rules.push_back(std::cref(pair.second));
+     std::vector<utils::RefConst<ScoreRule>> rules;
+     for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
+        rules.push_back(std::cref(val));
     }
     UIManager::displayScoreRules(rules);
 }

@@ -27,6 +27,7 @@ class SystemSettings; // 包含以访问如 getMaxEventsAllowed 等设置
 
 // 假设 Constants.h 中的枚举和转换函数在此可用或已移至更合适的位置
 #include "../Components/Constants.h"
+#include "../utils.h"
 
 class UIManager {
 public:
@@ -62,21 +63,21 @@ public:
 
 
     // --- 数据列表显示 ---
-    // 注意：这里参数类型改为 const std::vector<std::reference_wrapper<const T>>&
+    // 注意：这里参数类型改为 const std::vector<utils::RefConst T>>&
     // 以便传递从 map 中获取的对象的引用集合，避免拷贝，同时保持 const 正确性。
     // 或者，可以直接传递 SystemSettings& settings 和相应的 getter 方法名或 lambda。
     // 为简化，这里假设控制器已经准备好了要显示的数据。
 
-    static void displayUnits(const std::vector<std::reference_wrapper<const Unit>>& units);
-    static void displayAthletes(const std::vector<std::reference_wrapper<const Athlete>>& athletes, const SystemSettings& settings);
-    static void displayEvents(const std::vector<std::reference_wrapper<const CompetitionEvent>>& events, const SystemSettings& settings);
-    static void displayScoreRules(const std::vector<std::reference_wrapper<const ScoreRule>>& rules);
+    static void displayUnits(const std::vector<utils::RefConst<Unit>>& units);
+    static void displayAthletes(const std::vector<utils::RefConst<Athlete>>& athletes, const SystemSettings& settings);
+    static void displayEvents(const std::vector<utils::RefConst<CompetitionEvent>>& events, const SystemSettings& settings);
+    static void displayScoreRules(const std::vector<utils::RefConst<ScoreRule>>& rules);
 
     // 成绩相关显示
     static void displayEventResultsDetails(const CompetitionEvent& event,
                                            const EventResults* results, // 可能为 nullptr
                                            const SystemSettings& settings); // 用于查找运动员姓名等
-    static void displayUnitStandings(const std::vector<std::reference_wrapper<const Unit>>& sortedUnits);
+    static void displayUnitStandings(const std::vector<utils::RefConst<Unit>>& sortedUnits);
 
 
     // --- 特定输入的辅助函数 ---

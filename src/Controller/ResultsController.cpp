@@ -12,6 +12,9 @@
 #include <string>
 #include <algorithm> // For std::find, std::sort
 #include <map>       // For scoresMap in rule
+#include <ranges>
+
+#include "../../include/utils.h"
 
 ResultsController::ResultsController(SystemSettings& settings)
     : settings_(settings) {}
@@ -41,7 +44,7 @@ void ResultsController::handleRecordEventResults() {
         return;
     }
 
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
+    std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     for(const auto& pair : settings_.getAllCompetitionEvents()) {
         // 通常只为未取消且可能已结束的项目录入成绩
         if (!pair.second.getIsCancelled()) { // 简单起见，只检查未取消
@@ -173,8 +176,8 @@ void ResultsController::handleViewEventResults() {
         return;
     }
 
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
-    for(const auto& pair : settings_.getAllCompetitionEvents()) events_refs.push_back(std::cref(pair.second));
+    std::vector<utils::RefConst<CompetitionEvent>> events_refs;
+    for(const auto& val : settings_.getAllCompetitionEvents() | std::views::values) events_refs.push_back(std::cref(val));
     UIManager::displayEvents(events_refs, settings_);
 
     int eventId = UIManager::getIntInput("请输入要查看成绩的项目ID: ");

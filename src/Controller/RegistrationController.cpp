@@ -46,13 +46,13 @@ void RegistrationController::handleRegisterAthleteForEvent() {
     }
 
     UIManager::showMessage("\n--- 运动员列表 ---");
-    std::vector<std::reference_wrapper<const Athlete>> athletes_refs;
-    for(const auto& pair : settings_.getAllAthletes()) athletes_refs.push_back(std::cref(pair.second));
+    std::vector<utils::RefConst<Athlete>> athletes_refs;
+    for(const auto& val : settings_.getAllAthletes() | std::views::values) athletes_refs.push_back(std::cref(val));
     UIManager::displayAthletes(athletes_refs, settings_);
-    int athleteId = UIManager::getIntInput("请输入要报名的运动员ID: ");
+    const int athleteId = UIManager::getIntInput("请输入要报名的运动员ID: ");
 
     UIManager::showMessage("\n--- 项目列表 ---");
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
+    std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     for(const auto& pair : settings_.getAllCompetitionEvents()) {
         if (!pair.second.getIsCancelled()) { // 通常只报名未取消的项目
              events_refs.push_back(std::cref(pair.second));
@@ -90,10 +90,10 @@ void RegistrationController::handleUnregisterAthleteFromEvent() {
         return;
     }
      UIManager::showMessage("\n--- 运动员列表 ---");
-    std::vector<std::reference_wrapper<const Athlete>> athletes_refs;
-    for(const auto& pair : settings_.getAllAthletes()) athletes_refs.push_back(std::cref(pair.second));
+    std::vector<utils::RefConst<Athlete>> athletes_refs;
+    for(const auto& val : settings_.getAllAthletes() | std::views::values) athletes_refs.push_back(std::cref(val));
     UIManager::displayAthletes(athletes_refs, settings_);
-    int athleteId = UIManager::getIntInput("请输入要取消报名的运动员ID: ");
+    const int athleteId = UIManager::getIntInput("请输入要取消报名的运动员ID: ");
 
     // 优化：可以只列出该运动员已报名的项目
     auto athleteOpt = settings_.getAthleteConst(athleteId);
@@ -108,11 +108,10 @@ void RegistrationController::handleUnregisterAthleteFromEvent() {
     }
 
     UIManager::showMessage("\n--- 运动员 " + athlete.getName() + " 已报名的项目 ---");
-    std::vector<std::reference_wrapper<const CompetitionEvent>> registered_events_refs;
+    std::vector<utils::RefConst<CompetitionEvent>> registered_events_refs;
     bool hasEvents = false;
     for (int eventId : athlete.getRegisteredEventIds()) {
-        auto eventOpt = settings_.getCompetitionEventConst(eventId);
-        if (eventOpt) {
+        if (auto eventOpt = settings_.getCompetitionEventConst(eventId)) {
             registered_events_refs.push_back(eventOpt.value());
             hasEvents = true;
         }
@@ -121,8 +120,8 @@ void RegistrationController::handleUnregisterAthleteFromEvent() {
          UIManager::showMessage("未能获取该运动员已报名项目的详细信息，或其报名的项目已被删除。");
          // 或者列出所有项目作为备选
          UIManager::showMessage("\n--- 所有项目列表 (供参考) ---");
-         std::vector<std::reference_wrapper<const CompetitionEvent>> all_events_refs;
-         for(const auto& pair : settings_.getAllCompetitionEvents()) all_events_refs.push_back(std::cref(pair.second));
+         std::vector<utils::RefConst<CompetitionEvent>> all_events_refs;
+         for(const auto& val : settings_.getAllCompetitionEvents() | std::views::values) all_events_refs.push_back(std::cref(val));
          UIManager::displayEvents(all_events_refs, settings_);
     } else {
         UIManager::displayEvents(registered_events_refs, settings_);
@@ -154,7 +153,7 @@ void RegistrationController::handleViewEventRegistrations() {
         UIManager::showMessage("暂无比赛项目。");
         return;
     }
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
+    std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     for(const auto& val : settings_.getAllCompetitionEvents() | std::views::values) events_refs.push_back(std::cref(val));
     UIManager::displayEvents(events_refs, settings_); // UIManager::displayEvents 已包含报名人数
 }

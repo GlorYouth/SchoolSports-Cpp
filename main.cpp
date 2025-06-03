@@ -26,7 +26,7 @@
 // 查看已发布项目 (原主菜单选项2) - 这个保持在 main 中，因为它是一个直接的查看操作
 void viewPublishedEvents(const SystemSettings& settings) {
     UIManager::showMessage("\n--- 当前发布的比赛项目 ---");
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
+    std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     bool found = false;
     for (const auto& val : settings.getAllCompetitionEvents() | std::views::values) {
         if (!val.getIsCancelled()) {
@@ -50,7 +50,7 @@ void viewUnitStandingsOverall(const SystemSettings& settings) {
         return;
     }
 
-    std::vector<std::reference_wrapper<const Unit>> unitsVec;
+    std::vector<utils::RefConst<Unit>> unitsVec;
     for (const auto& val : allUnitsMap | std::views::values) {
         unitsVec.push_back(std::cref(val));
     }

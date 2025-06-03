@@ -38,7 +38,7 @@ void QueryController::handleViewUnits() {
         UIManager::showMessage("暂无参赛单位。");
         return;
     }
-    std::vector<std::reference_wrapper<const Unit>> units_refs;
+    std::vector<utils::RefConst<Unit>> units_refs;
     for(const auto& pair : allUnitsMap) units_refs.push_back(std::cref(pair.second));
     UIManager::displayUnits(units_refs);
 }
@@ -50,7 +50,7 @@ void QueryController::handleViewEvents() {
         UIManager::showMessage("暂无比赛项目。");
         return;
     }
-    std::vector<std::reference_wrapper<const CompetitionEvent>> events_refs;
+    std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     for(const auto& pair : allEventsMap) events_refs.push_back(std::cref(pair.second));
     UIManager::displayEvents(events_refs, settings_);
 }

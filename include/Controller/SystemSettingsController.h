@@ -21,7 +21,7 @@ private:
     SystemSettings& settings_; // 引用系统设置对象
 
     // --- 各子菜单项对应的处理函数 ---
-    void handleAddUnit();
+    void handleAddUnit() const;
     void handleViewAllUnits();
     void handleAddEvent();
     void handleViewAllEvents();

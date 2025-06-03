@@ -12,8 +12,8 @@
 Registration::Registration(SystemSettings& sysSettings) : settings(sysSettings) {}
 
 bool Registration::registerAthleteForEvent(const int athleteId, const int eventId) const { // 移除了 const
-    auto athleteOpt = settings.getAthlete(athleteId);
-    auto eventOpt = settings.getCompetitionEvent(eventId);
+    const auto athleteOpt = settings.getAthlete(athleteId);
+    const auto eventOpt = settings.getCompetitionEvent(eventId);
 
     if (!athleteOpt.has_value()) {
         std::cerr << "报名失败: 运动员ID " << athleteId << " 不存在。" << std::endl;
@@ -70,8 +70,8 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
 }
 
 bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eventId) const { // 移除了 const
-    auto athleteOpt = settings.getAthlete(athleteId);
-    auto eventOpt = settings.getCompetitionEvent(eventId);
+    const auto athleteOpt = settings.getAthlete(athleteId);
+    const auto eventOpt = settings.getCompetitionEvent(eventId);
 
     if (!athleteOpt.has_value()) {
         std::cerr << "取消报名失败: 运动员ID " << athleteId << " 不存在。" << std::endl;

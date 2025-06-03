@@ -47,7 +47,7 @@ bool EventResults::isFinalized() const {
     return finalized;
 }
 
-std::optional<std::reference_wrapper<Result>> EventResults::getResultForAthlete(int athleteId) {
+std::optional<utils::Ref<Result>> EventResults::getResultForAthlete(int athleteId) {
     for (auto& res : resultsList) {
         if (res.getAthleteId() == athleteId) {
             return res;

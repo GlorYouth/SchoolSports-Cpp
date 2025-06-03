@@ -10,6 +10,7 @@
 #include <vector>
 #include <map> // 用于存储成绩，可能是<名次, 运动员ID> 或更复杂的结构
 #include <optional>
+#include "../../include/utils.h"
 
 // 前向声明
 class Athlete;
@@ -66,7 +67,7 @@ public:
     [[nodiscard]] bool isFinalized() const;
 
     // 根据运动员ID查询成绩
-    std::optional<std::reference_wrapper<Result>> getResultForAthlete(int athleteId);
+    std::optional<utils::Ref<Result>> getResultForAthlete(int athleteId);
 };
 
 
