@@ -40,3 +40,8 @@ double ScoreRule::getScoreForRank(int rank) const {
 const std::map<int, double>& ScoreRule::getAllScoresForRanks() const {
     return scoresForRanks;
 }
+
+// 实现静态方法：重置ID计数器
+void ScoreRule::resetNextId(int startId) {
+    nextId.store(startId);
+}

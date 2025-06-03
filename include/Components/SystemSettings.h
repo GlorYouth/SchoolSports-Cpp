@@ -34,6 +34,7 @@ public:
     [[nodiscard]] std::optional<utils::RefConst<Unit>> getUnitConst(int unitId) const;
     [[nodiscard]] const std::map<int, Unit>& getAllUnits() const;
     bool removeUnit(int unitId);
+    void clearUnits(); // 新增：清除所有单位数据
 
     // --- 运动员管理 ---
     bool addAthlete(const std::string& name, Gender gender, int unitId);
@@ -41,13 +42,16 @@ public:
     [[nodiscard]] std::optional<utils::RefConst<Athlete>> getAthleteConst(int athleteId) const; // 添加了 const 版本
     [[nodiscard]] const std::map<int, Athlete>& getAllAthletes() const;
     bool removeAthlete(int athleteId);
+    void clearAthletes(); // 新增：清除所有运动员数据
 
     // --- 项目管理 ---
     bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq);
+    bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
     std::optional<utils::Ref<CompetitionEvent>> getCompetitionEvent(int eventId);
     [[nodiscard]] std::optional<utils::RefConst<CompetitionEvent>> getCompetitionEventConst(int eventId) const; // 添加了 const 版本
     [[nodiscard]] const std::map<int, CompetitionEvent>& getAllCompetitionEvents() const;
     bool removeCompetitionEvent(int eventId);
+    void clearCompetitionEvents(); // 新增：清除所有项目数据
 
     // --- 计分规则管理 ---
     bool addScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
@@ -55,6 +59,7 @@ public:
     [[nodiscard]] std::optional<utils::RefConst<ScoreRule>> getScoreRuleConst(int ruleId) const;
     std::optional<utils::Ref<ScoreRule>> findAppropriateScoreRule(int participantCount);
     [[nodiscard]] const std::map<int, ScoreRule>& getAllScoreRules() const;
+    void clearScoreRules(); // 新增：清除所有计分规则
 
 
     // --- 系统参数设置 ---
@@ -72,7 +77,10 @@ public:
     void resetAllUnitScores(); // 工具函数，重置所有单位分数
     void addScoreToUnit(int unitId, double score); // 新增：为指定单位增加分数
     [[nodiscard]] const std::map<int, EventResults>& getAllEventResults() const; // 获取所有成绩的 getter 方法
+    void clearAllEventResults(); // 新增：清除所有项目的成绩记录
 
+    // --- 交互操作 ---
+    bool registerAthleteForEvent(int athleteId, int eventId);
 
     void initializeDefaultSettings(); // 初始化默认设置
     [[nodiscard]] std::vector<utils::RefConst<Athlete>> getAllAthlesConst() const;

@@ -54,6 +54,9 @@ public:
     [[nodiscard]] bool isRegisteredForEvent(int eventId) const;
     // 获取已报名项目数量
     [[nodiscard]] int getRegisteredEventsCount() const;
+
+    // 新增：重置静态ID计数器的方法，用于测试
+    static void resetNextId(int startId = 1);
 };
 
 

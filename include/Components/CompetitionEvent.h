@@ -76,6 +76,9 @@ public:
 
     // 检查运动员是否可以报名此项目 (性别符合)
     [[nodiscard]] bool canAthleteRegister(Gender athleteGender) const;
+
+    // 新增：重置静态ID计数器的方法，用于测试
+    static void resetNextId(int startId = 1);
 };
 
 #endif //COMPETITIONEVENT_H

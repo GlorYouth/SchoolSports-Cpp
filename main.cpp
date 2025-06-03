@@ -34,8 +34,8 @@ void viewPublishedEvents(const SystemSettings& settings) {
              found = true;
         }
     }
-    if (!found){ // 改为检查 found 标志
-        UIManager::showMessage("当前没有已发布的比赛项目，或者所有项目都已被取消。");
+    if (!found){
+        UIManager::showMessage("当前没有已发布的比赛项目，或所有项目均已被取消。");
     } else {
         UIManager::displayEvents(events_refs, settings);
     }
@@ -43,10 +43,10 @@ void viewPublishedEvents(const SystemSettings& settings) {
 
 // 查看单位排名 (原主菜单选项7) - 这个也保持在 main 中
 void viewUnitStandingsOverall(const SystemSettings& settings) {
-    UIManager::showMessage("\n--- 比赛成绩统计 (单位排名) ---");
+    UIManager::showMessage("\n--- 总成绩统计 (单位排名) ---");
     const auto& allUnitsMap = settings.getAllUnits();
     if (allUnitsMap.empty()) {
-        UIManager::showMessage("系统中没有单位。");
+        UIManager::showMessage("系统中没有单位信息。");
         return;
     }
 
@@ -86,7 +86,7 @@ int main() {
     int choice;
     do {
         UIManager::displayMainMenu();
-        choice = UIManager::getIntInput("请输入您的选择: ", 0, 9);
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 10);
 
         switch (choice) {
             case 1:
@@ -116,16 +116,21 @@ int main() {
                 dataManagementCtrl.manage();
                 break;
             case 9:
+                dataManager.loadSampleData();
+                UIManager::showMessage("示例数据导入完成。");
+                UIManager::pressEnterToContinue();
+                break;
+            case 10:
                 autoTest();
-                UIManager::showMessage("自动测试执行完毕。"); // 假设 autoTest 本身不产生UI输出
+                UIManager::showMessage("自动测试执行完毕。");
                 UIManager::pressEnterToContinue();
                 break;
             case 0:
-                UIManager::showMessage("感谢使用学校运动会管理系统！正在退出...");
+                UIManager::showMessage("感谢使用学校运动会管理系统，正在退出...");
                 break;
             default:
-                // UIManager::getIntInput 已经处理了无效数字输入
-                // 此 default 理论上不应触发，除非 getIntInput 逻辑改变
+                // UIManager::getIntInput 已经处理了无效输入范围
+                // 此 default 分支理论上不应轻易触发，除非 getIntInput 逻辑有变
                 UIManager::showErrorMessage("无效选择，请重新输入。");
                 UIManager::pressEnterToContinue();
                 break;

@@ -66,39 +66,44 @@ int getFirstFemaleEventId(const SystemSettings& settings) {
 void testUnitManagement(SystemSettings& settings) {
     std::cout << "\n--- 开始测试单位管理 ---" << std::endl;
     const int initialUnitCount = settings.getAllUnits().size();
+    const std::string testUnitName = " UNIQUE_TEST_COLLEGE_123 "; // 使用一个唯一的名字以避免与示例数据冲突
 
     // 1. 测试添加新单位
-    bool success = settings.addUnit("测试学院");
-    printTestResult("添加新单位 '测试学院'", success && settings.getAllUnits().size() == initialUnitCount + 1);
+    bool success = settings.addUnit(testUnitName);
+    printTestResult("单位管理：添加新单位 " + testUnitName, success && settings.getAllUnits().size() == initialUnitCount + 1);
 
     // 2. 测试添加同名单位 (应失败)
-    success = !settings.addUnit("测试学院"); // 期望返回false
-    printTestResult("添加同名单位 '测试学院'", success && settings.getAllUnits().size() == initialUnitCount + 1);
+    success = !settings.addUnit(testUnitName); // 期望返回false
+    printTestResult("单位管理：尝试添加同名单位 " + testUnitName, success && settings.getAllUnits().size() == initialUnitCount + 1);
 
     // 3. 获取刚添加的单位
     int testUnitId = -1;
+    bool foundByName = false;
     for(const auto& pair : settings.getAllUnits()){
-        if(pair.second.getName() == "测试学院"){
+        if(pair.second.getName() == testUnitName){
             testUnitId = pair.first;
+            foundByName = true;
             break;
         }
     }
+    printTestResult("单位管理：通过名称找到新添加的单位 " + testUnitName, foundByName);
+    
     auto unitOpt = settings.getUnit(testUnitId);
-    printTestResult("获取存在的单位 '测试学院'", unitOpt.has_value() && unitOpt.value().get().getName() == "测试学院");
+    printTestResult("单位管理：通过ID获取新添加的单位 " + testUnitName, unitOpt.has_value() && unitOpt.value().get().getName() == testUnitName);
 
     // 4. 测试删除单位
     if (testUnitId != -1) {
         success = settings.removeUnit(testUnitId);
-        printTestResult("删除单位 '测试学院'", success && settings.getAllUnits().size() == initialUnitCount);
+        printTestResult("单位管理：删除新添加的单位 " + testUnitName, success && settings.getAllUnits().size() == initialUnitCount);
         unitOpt = settings.getUnit(testUnitId);
-        printTestResult("确认单位 '测试学院' 已被删除", !unitOpt.has_value());
+        printTestResult("单位管理：确认单位 " + testUnitName + " 已被删除", !unitOpt.has_value());
     } else {
-        printTestResult("删除单位 '测试学院' (前置条件失败，未找到ID)", false);
+        printTestResult("单位管理：删除单位前未能获取其ID (测试逻辑问题)", false);
     }
 
     // 5. 测试删除不存在的单位
     success = !settings.removeUnit(99999); // 假设99999是一个不存在的ID
-    printTestResult("删除不存在的单位ID 99999", success);
+    printTestResult("单位管理：尝试删除不存在的单位ID 99999", success);
     std::cout << "--- 单位管理测试结束 ---\n";
 }
 
@@ -291,7 +296,7 @@ void testRegistrationManagement(SystemSettings& settings, const Registration& re
     // 创建一个新项目，报名1人，然后取消报名，看项目是否被取消
     settings.addCompetitionEvent("人数不足测试项目", EventType::TRACK, Gender::MALE);
     int lowPartEventId = -1;
-    for(const auto& e : settings.getAllCompetitionEvents()){ if(e.second.getName() == "人数不足测试项目") lowPartEventId = e.first; }
+    for(const auto& [eventId, competition] : settings.getAllCompetitionEvents()){ if(competition.getName() == "人数不足测试项目") lowPartEventId = eventId; }
 
     settings.addAthlete("临时选手", Gender::MALE, testUnitId);
     int tempAthleteId = -1;
@@ -401,7 +406,7 @@ void testResultManagement(SystemSettings& settings) {
     printTestResult("查看已录入的项目成绩", storedResultsOpt.has_value() && storedResultsOpt.value().get().getResultsList().size() == 5);
 
     // 4. 清除项目成绩
-    double scoreBeforeClear = unitOpt.value().get().getTotalScore();
+    const double scoreBeforeClear = unitOpt.value().get().getTotalScore();
     settings.clearResultsForEvent(eventId); // 这个函数会扣除单位分数
     printTestResult("清除项目成绩后单位分数检查 (应为0)", unitOpt.has_value() && unitOpt.value().get().getTotalScore() == (scoreBeforeClear - expectedScore));
     storedResultsOpt = settings.getEventResultsConst(eventId);
@@ -416,28 +421,129 @@ void testResultManagement(SystemSettings& settings) {
     std::cout << "--- 成绩管理测试结束 ---\n";
 }
 
+// ================== SampleData 导入辅助函数 ==================
+// 直接操作SystemSettings，生成标准演示数据
+void importSampleData(SystemSettings& settings) {
+    // 1. 添加单位
+    std::vector<std::string> unitNames = {"计算机学院", "外国语学院", "体育学院"};
+    std::vector<int> unitIds;
+    for (const auto& name : unitNames) {
+        settings.addUnit(name);
+        // 获取刚添加的单位ID
+        for (const auto& pair : settings.getAllUnits()) {
+            if (pair.second.getName() == name) {
+                unitIds.push_back(pair.first);
+                break;
+            }
+        }
+    }
+
+    // 2. 添加运动员
+    settings.addAthlete("张三", Gender::MALE, unitIds[0]);
+    settings.addAthlete("李四", Gender::FEMALE, unitIds[1]);
+    settings.addAthlete("王五", Gender::MALE, unitIds[2]);
+    settings.addAthlete("赵六", Gender::FEMALE, unitIds[0]);
+    settings.addAthlete("孙七", Gender::MALE, unitIds[1]);
+    settings.addAthlete("周八", Gender::FEMALE, unitIds[2]);
+    std::vector<int> athleteIds;
+    for (const auto& pair : settings.getAllAthletes()) {
+        athleteIds.push_back(pair.first);
+    }
+
+    // 3. 添加比赛项目
+    settings.addCompetitionEvent("男子100米", EventType::TRACK, Gender::MALE);
+    settings.addCompetitionEvent("女子跳远", EventType::FIELD, Gender::FEMALE);
+    settings.addCompetitionEvent("男子铅球", EventType::FIELD, Gender::MALE);
+    settings.addCompetitionEvent("女子200米", EventType::TRACK, Gender::FEMALE);
+    std::vector<int> eventIds;
+    for (const auto& pair : settings.getAllCompetitionEvents()) {
+        eventIds.push_back(pair.first);
+    }
+
+    // 4. 报名关系
+    settings.registerAthleteForEvent(athleteIds[0], eventIds[0]); // 张三报男子100米
+    settings.registerAthleteForEvent(athleteIds[1], eventIds[1]); // 李四报女子跳远
+    settings.registerAthleteForEvent(athleteIds[2], eventIds[0]); // 王五报男子100米
+    settings.registerAthleteForEvent(athleteIds[2], eventIds[2]); // 王五报男子铅球
+    settings.registerAthleteForEvent(athleteIds[3], eventIds[3]); // 赵六报女子200米
+    settings.registerAthleteForEvent(athleteIds[5], eventIds[1]); // 周八报女子跳远
+    settings.registerAthleteForEvent(athleteIds[5], eventIds[3]); // 周八报女子200米
+}
+
+// ================== 默认计分规则测试 ==================
+void testDefaultScoreRules(SystemSettings& settings) {
+    std::cout << "\n--- 测试默认计分规则 ---" << std::endl;
+    // 检查规则1
+    auto rule1 = settings.findAppropriateScoreRule(7);
+    printTestResult("7人参赛应使用规则1", rule1.has_value() && rule1.value().get().getRanksToAward() == 5 && rule1.value().get().getScoreForRank(1) == 7.0);
+
+    // 检查规则2
+    auto rule2 = settings.findAppropriateScoreRule(5);
+    printTestResult("5人参赛应使用规则2", rule2.has_value() && rule2.value().get().getRanksToAward() == 3 && rule2.value().get().getScoreForRank(1) == 5.0);
+
+    // 检查项目取消逻辑（<4人）
+    auto ruleNone = settings.findAppropriateScoreRule(3);
+    printTestResult("3人参赛应无可用规则", !ruleNone.has_value());
+}
 
 int autoTest() {
     std::cout << "========== 学校运动会管理系统 - 自动化测试 ==========" << std::endl;
 
-    SystemSettings settings;
-    Registration registration(settings); // Registration 需要 SystemSettings
+    SystemSettings settings; // 在 autoTest 开始时创建
+    DataManager dataManager(settings); // DataManager 需要 settings
+    Registration registration(settings); // Registration 也需要 settings
 
-    // 步骤 0: 初始化默认设置
-    std::cout << "\n--- 步骤 0: 初始化系统默认设置 ---" << std::endl;
-    settings.initializeDefaultSettings();
-    printTestResult("默认设置初始化", !settings.getAllUnits().empty() && !settings.getAllCompetitionEvents().empty());
-    if (settings.getAllUnits().empty() || settings.getAllCompetitionEvents().empty()){
-        std::cerr << "错误：默认设置初始化失败，部分核心数据为空，后续测试可能无法进行。" << std::endl;
-        return 1;
+    // --- 步骤 -1: 测试前彻底清理环境 ---
+    std::cout << "\n--- 步骤 -1: 测试前彻底清理环境 --- " << std::endl;
+    // 重置所有实体类的ID计数器，确保每次测试ID从1开始，与loadSampleData中的硬编码ID预期一致
+    Unit::resetNextId();
+    Athlete::resetNextId();
+    CompetitionEvent::resetNextId();
+    ScoreRule::resetNextId();
+    std::cout << "所有实体类的ID计数器已重置为1。" << std::endl;
+
+    // 清空 SystemSettings 中的所有数据容器
+    settings.clearUnits();
+    settings.clearAthletes();
+    settings.clearCompetitionEvents();
+    settings.clearScoreRules();       // 清除所有计分规则
+    settings.clearAllEventResults();  // 清除所有比赛结果和单位累计分数
+    std::cout << "SystemSettings中的所有现有数据已清除。" << std::endl;
+
+    // --- 步骤 0: 初始化系统默认核心设置 (计分规则和参数) ---
+    std::cout << "\n--- 步骤 0: 初始化系统默认核心设置 ---" << std::endl;
+    settings.initializeDefaultSettings(); // 此函数现在只设置核心规则和参数
+
+    // 检查核心设置是否成功初始化，例如默认计分规则ID为1的是否存在
+    bool coreSettingsOk = settings.getScoreRuleConst(1).has_value();
+    printTestResult("核心设置初始化 (默认计分规则ID=1存在)", coreSettingsOk);
+
+    if (!coreSettingsOk) {
+        std::cerr << "错误：核心设置初始化失败（例如，未找到ID为1的默认计分规则）。后续测试可能无法正确进行。" << std::endl;
+        //可以选择在这里返回，或者继续尝试其他不依赖此特定规则的测试
+        // return 1; // 如果认为这是关键失败点，则提前退出
     }
-    std::cout << "默认单位数量: " << settings.getAllUnits().size() << std::endl;
-    std::cout << "默认运动员数量: " << settings.getAllAthletes().size() << std::endl;
-    std::cout << "默认项目数量: " << settings.getAllCompetitionEvents().size() << std::endl;
-    std::cout << "默认计分规则数量: " << settings.getAllScoreRules().size() << std::endl;
+    std::cout << "当前计分规则数量: " << settings.getAllScoreRules().size() << std::endl;
+    std::cout << "运动员最大报名项目数: " << settings.getAthleteMaxEventsAllowed() << std::endl;
+    std::cout << "项目最少举行人数: " << settings.getMinParticipantsToHoldEvent() << std::endl;
+    // 此时，单位、运动员、项目列表应该是空的，由后续步骤或 loadSampleData 填充
+    std::cout << "初始化后单位数量: " << settings.getAllUnits().size() << " (预期为0)" << std::endl;
+    std::cout << "初始化后运动员数量: " << settings.getAllAthletes().size() << " (预期为0)" << std::endl;
+    std::cout << "初始化后比赛项目数量: " << settings.getAllCompetitionEvents().size() << " (预期为0)" << std::endl;
 
+    // --- 步骤 0.1: 导入标准SampleData ---
+    std::cout << "\n--- 步骤 0.1: 导入标准SampleData --- " << std::endl;
+    importSampleData(settings);
+    printTestResult("导入标准SampleData", !settings.getAllUnits().empty() && !settings.getAllAthletes().empty() && !settings.getAllCompetitionEvents().empty());
+    std::cout << "SampleData导入后单位数量: " << settings.getAllUnits().size() << std::endl;
+    std::cout << "SampleData导入后运动员数量: " << settings.getAllAthletes().size() << std::endl;
+    std::cout << "SampleData导入后比赛项目数量: " << settings.getAllCompetitionEvents().size() << std::endl;
 
-    // 执行各个模块的测试
+    // --- 步骤 0.2: 测试默认计分规则 ---
+    testDefaultScoreRules(settings);
+
+    // 执行各功能模块的测试 (这些测试现在将基于 loadSampleData 加载的数据运行)
+    std::cout << "\n--- 开始执行各模块具体测试 --- " << std::endl;
     testUnitManagement(settings);
     testAthleteManagement(settings);
     testCompetitionEventManagement(settings);
@@ -451,6 +557,20 @@ int autoTest() {
 
 
     std::cout << "\n========== 自动化测试全部完成 ==========" << std::endl;
+
+    // --- 步骤 N: 测试后彻底清理环境 ---
+    std::cout << "\n--- 步骤 N: 测试后彻底清理环境 --- " << std::endl;
+    // 再次重置ID计数器和清空数据，确保不影响下一次可能的运行或手动操作
+    Unit::resetNextId();
+    Athlete::resetNextId();
+    CompetitionEvent::resetNextId();
+    ScoreRule::resetNextId();
+    settings.clearUnits();
+    settings.clearAthletes();
+    settings.clearCompetitionEvents();
+    settings.clearScoreRules();
+    settings.clearAllEventResults();
+    std::cout << "测试后环境清理完成。" << std::endl;
 
     // 提示用户按键退出，以便查看控制台输出
     std::cout << "\n按 Enter 键退出测试程序...";

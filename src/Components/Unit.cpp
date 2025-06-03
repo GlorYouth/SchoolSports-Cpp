@@ -46,3 +46,8 @@ double Unit::getTotalScore() const {
 void Unit::resetScore() {
     totalScore = 0.0;
 }
+
+// 实现静态方法：重置ID计数器
+void Unit::resetNextId(int startId) {
+    nextId.store(startId); // 设置原子变量的值
+}

@@ -79,3 +79,8 @@ int Athlete::getRegisteredEventsCount() const {
     return static_cast<int>(registeredEventIds.size());
 }
 
+// 实现静态方法：重置ID计数器
+void Athlete::resetNextId(int startId) {
+    nextId.store(startId);
+}
+

@@ -38,5 +38,8 @@ public:
     [[nodiscard]] const std::map<int, double>& getAllScoresForRanks() const;
     [[nodiscard]] int getMinParticipants() const { return minParticipants; }
     [[nodiscard]] int getMaxParticipants() const { return maxParticipants; }
+
+    // 新增：重置静态ID计数器的方法，用于测试
+    static void resetNextId(int startId = 1);
 };
 #endif //SCORERULE_H

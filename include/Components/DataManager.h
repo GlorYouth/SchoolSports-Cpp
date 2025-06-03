@@ -25,6 +25,11 @@ public:
     // 返回true表示恢复成功，false表示失败
     bool restoreData(const std::string& filePath);
 
+    // 导入示例数据到系统
+    // 此方法会向系统中添加预定义的单位、运动员、比赛项目等
+    // 注意：此方法不应清除已由 SystemSettings::initializeDefaultSettings 设置的默认计分规则
+    bool loadSampleData();
+
     // 其他数据管理功能，如导入导出特定格式数据等
 };
 

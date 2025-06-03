@@ -47,6 +47,9 @@ public:
     // 重置分数
     void resetScore();
 
+    // 新增：重置静态ID计数器的方法，用于测试
+    static void resetNextId(int startId = 1);
+
     // 为了简化，这里不直接存储 Athlete 和 CompetitionEvent 对象指针
     // 而是通过ID关联，具体对象由中心管理器（如 SystemSettings 或专门的管理器）管理
 };

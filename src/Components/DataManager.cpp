@@ -6,6 +6,16 @@
 #include <fstream>
 #include <iostream> // 用于输出信息
 #include <ranges>
+#include <vector>   // 为 std::vector
+
+// 包含业务实体头文件以及SystemSettings中方法可能涉及的类型
+#include "../../include/Components/SystemSettings.h" // 包含完整的SystemSettings定义以访问其所有方法
+#include "../../include/Components/Unit.h"
+#include "../../include/Components/Athlete.h"
+#include "../../include/Components/CompetitionEvent.h"
+#include "../../include/Components/ScoreRule.h"      // utils::RefConst<ScoreRule> in getScoreRuleConst
+#include "../../include/Components/Constants.h"     // 为了 EventType, Gender 等
+#include "../../include/utils.h" // For utils::RefConst
 
 // 注意：这是一个非常基础的实现，没有错误处理、版本控制或复杂数据结构的序列化。
 // 实际应用中需要更健壮的序列化/反序列化机制 (例如使用JSON, XML, 或自定义二进制格式)。
@@ -27,16 +37,15 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份单位
     outFile << "UnitsCount:" << settings.getAllUnits().size() << std::endl;
-    for (const auto &val: settings.getAllUnits() | std::views::values) {
-        const Unit& unit = val;
+    for (const auto &pair : settings.getAllUnits()) {
+        const Unit& unit = pair.second;
         outFile << "Unit:" << unit.getId() << "," << unit.getName() << std::endl;
-        // 实际应用中，单位下的运动员ID列表等也需要备份，但这里简化
     }
 
     // 备份运动员
     outFile << "AthletesCount:" << settings.getAllAthletes().size() << std::endl;
-    for (const auto &val: settings.getAllAthletes() | std::views::values) {
-        const Athlete& athlete = val;
+    for (const auto &pair : settings.getAllAthletes()) {
+        const Athlete& athlete = pair.second;
         outFile << "Athlete:" << athlete.getId() << "," << athlete.getName() << ","
                 << static_cast<int>(athlete.getGender()) << "," << athlete.getUnitId() << std::endl;
         // 备份运动员报名的项目ID列表
@@ -49,8 +58,8 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份比赛项目
     outFile << "CompetitionEventsCount:" << settings.getAllCompetitionEvents().size() << std::endl;
-    for (const auto &val: settings.getAllCompetitionEvents() | std::views::values) {
-        const CompetitionEvent& event = val;
+    for (const auto &pair : settings.getAllCompetitionEvents()) {
+        const CompetitionEvent& event = pair.second;
         outFile << "Event:" << event.getId() << "," << event.getName() << ","
                 << static_cast<int>(event.getEventType()) << ","
                 << static_cast<int>(event.getGenderRequirement()) << ","
@@ -65,11 +74,11 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份计分规则
     outFile << "ScoreRulesCount:" << settings.getAllScoreRules().size() << std::endl;
-    for (const auto &val: settings.getAllScoreRules() | std::views::values) {
-        const ScoreRule& rule = val;
+    for (const auto &pair : settings.getAllScoreRules()) {
+        const ScoreRule& rule = pair.second;
         outFile << "ScoreRule:" << rule.getId() << "," << rule.getDescription() << ","
-                << rule.appliesTo(0) /* 这是一个简化的示例，实际应存min/max participants */
-                << "," << rule.getRanksToAward() << std::endl;
+                << rule.getMinParticipants() << "," << rule.getMaxParticipants() << "," // 使用实际的 min/max
+                << rule.getRanksToAward() << std::endl;
         // 备份名次和分数
         outFile << "ScoresForRanksCount:" << rule.getAllScoresForRanks().size() << std::endl;
         for(const auto& scorePair : rule.getAllScoresForRanks()){
@@ -114,4 +123,79 @@ bool DataManager::restoreData(const std::string& filePath) {
     // 返回false因为没有实际恢复
     std::cerr << "警告: 数据恢复功能尚未完全实现。" << std::endl;
     return false;
+}
+
+// 实现导入示例数据的方法
+bool DataManager::loadSampleData() {
+    std::cout << "开始导入示例数据..." << std::endl;
+
+    // 检查默认计分规则是否存在 (ID为1)
+    std::optional<utils::RefConst<ScoreRule>> defaultRuleOpt = settings.getScoreRuleConst(1);
+    if (!defaultRuleOpt) {
+        std::cerr << "错误：未找到ID为1的默认计分规则。请确保已初始化。" << std::endl;
+        return false;
+    }
+    int defaultScoreRuleId = 1;
+
+    // 清理现有数据 (计分规则除外)
+    settings.clearCompetitionEvents();
+    settings.clearAthletes();
+    settings.clearUnits();
+    std::cout << "已清除旧的单位、运动员和比赛项目数据（计分规则已保留）。" << std::endl;
+
+    // 添加示例单位 (SystemSettings 内部处理ID生成和存储)
+    // 注意: 后续使用的 unitIdXxx, eventIdXxx, athleteIdXxx 都是硬编码的ID。
+    // 这依赖于 SystemSettings 内部ID生成逻辑能恰好对应上这些ID，
+    // 或者 SystemSettings 的 addXxx 和 registerAthleteForEvent 方法能够通过这些ID找到实体。
+    // 这是一个简化，理想情况下 addXxx 方法应返回生成的ID，或提供按名称查找ID的方法。
+
+    settings.addUnit("计算机学院");     // 预期内部ID 1 (或SystemSettings生成的第一个ID)
+    settings.addUnit("外国语学院");   // 预期内部ID 2 (或SystemSettings生成的第二个ID)
+    settings.addUnit("体育学院");       // 预期内部ID 3 (或SystemSettings生成的第三个ID)
+    // 为了演示，我们假设ID是从1开始顺序生成的
+    int unitIdCompSci = 1; 
+    int unitIdForeignLang = 2;
+    int unitIdSports = 3;
+    // 更健壮的做法: int unitIdCompSci = settings.addUnit("计算机学院"); -> addUnit 返回ID
+
+    // 添加示例比赛项目 (使用能接受计分规则ID的 addCompetitionEvent 重载)
+    settings.addCompetitionEvent("男子100米", EventType::TRACK, Gender::MALE, defaultScoreRuleId);    // 预期内部ID 1
+    settings.addCompetitionEvent("女子跳远", EventType::FIELD, Gender::FEMALE, defaultScoreRuleId);  // 预期内部ID 2
+    settings.addCompetitionEvent("男子铅球", EventType::FIELD, Gender::MALE, defaultScoreRuleId);    // 预期内部ID 3
+    settings.addCompetitionEvent("女子200米", EventType::TRACK, Gender::FEMALE, defaultScoreRuleId); // 预期内部ID 4
+    int eventIdM100m = 1;
+    int eventIdWLongJump = 2;
+    int eventIdMShotPut = 3;
+    int eventIdW200m = 4;
+
+    // 添加示例运动员
+    settings.addAthlete("张三", Gender::MALE, unitIdCompSci);       // 预期内部ID 1
+    settings.addAthlete("李四", Gender::FEMALE, unitIdForeignLang);  // 预期内部ID 2
+    settings.addAthlete("王五", Gender::MALE, unitIdSports);          // 预期内部ID 3
+    settings.addAthlete("赵六", Gender::FEMALE, unitIdCompSci);     // 预期内部ID 4
+    settings.addAthlete("孙七", Gender::MALE, unitIdForeignLang);    // 预期内部ID 5
+    settings.addAthlete("周八", Gender::FEMALE, unitIdSports);        // 预期内部ID 6
+    int athleteIdZhang = 1;
+    int athleteIdLi = 2;
+    int athleteIdWang = 3;
+    int athleteIdZhao = 4;
+    int athleteIdSun = 5;
+    int athleteIdZhou = 6;
+
+    // 为运动员报名项目 (使用 SystemSettings::registerAthleteForEvent)
+    // 注意：这里依赖 athleteIdXXX 和 eventIdXXX 与 SystemSettings 内部生成的 ID 一致
+    settings.registerAthleteForEvent(athleteIdZhang, eventIdM100m);
+    settings.registerAthleteForEvent(athleteIdLi, eventIdWLongJump);
+    settings.registerAthleteForEvent(athleteIdWang, eventIdM100m);
+    settings.registerAthleteForEvent(athleteIdWang, eventIdMShotPut);
+    settings.registerAthleteForEvent(athleteIdZhao, eventIdW200m);
+    settings.registerAthleteForEvent(athleteIdZhou, eventIdWLongJump);
+    settings.registerAthleteForEvent(athleteIdZhou, eventIdW200m);
+
+    std::cout << "示例数据导入成功。" << std::endl;
+    std::cout << "当前单位数量: " << settings.getAllUnits().size() << std::endl;
+    std::cout << "当前比赛项目数量: " << settings.getAllCompetitionEvents().size() << std::endl;
+    std::cout << "当前运动员数量: " << settings.getAllAthletes().size() << std::endl;
+
+    return true;
 }

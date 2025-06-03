@@ -79,16 +79,17 @@ void UIManager::showErrorMessage(const std::string& message) {
 // --- 菜单显示 ---
 void UIManager::displayMainMenu() {
     std::cout << "\n========== 学校运动会管理系统 ==========" << std::endl;
-    std::cout << "1. 系统设置管理" << std::endl;
-    std::cout << "2. 查看参赛项目" << std::endl;
-    std::cout << "3. 运动员报名登记与管理" << std::endl;
-    std::cout << "4. 参赛信息查询" << std::endl;
-    std::cout << "5. 秩序册生成与查看" << std::endl;
-    std::cout << "6. 比赛成绩管理" << std::endl;
-    std::cout << "7. 比赛成绩统计 (单位排名)" << std::endl;
-    std::cout << "8. 数据备份与恢复" << std::endl;
-    std::cout << "9. 自动测试" << std::endl;
-    std::cout << "0. 退出系统" << std::endl;
+    std::cout << "1.  系统设置管理" << std::endl;
+    std::cout << "2.  查看参赛项目" << std::endl;
+    std::cout << "3.  运动员报名登记与管理" << std::endl;
+    std::cout << "4.  参赛信息查询" << std::endl;
+    std::cout << "5.  秩序册生成与查看" << std::endl;
+    std::cout << "6.  比赛成绩管理" << std::endl;
+    std::cout << "7.  比赛成绩统计 (单位排名)" << std::endl;
+    std::cout << "8.  数据备份与恢复" << std::endl;
+    std::cout << "9.  导入示例数据" << std::endl;
+    std::cout << "10. 自动测试" << std::endl;
+    std::cout << "0.  退出系统" << std::endl;
     std::cout << "======================================" << std::endl;
 }
 

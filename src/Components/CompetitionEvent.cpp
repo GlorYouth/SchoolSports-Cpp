@@ -97,3 +97,8 @@ bool CompetitionEvent::canAthleteRegister(Gender athleteGender) const {
     return this->genderRequirement == athleteGender;
 }
 
+// 实现静态方法：重置ID计数器
+void CompetitionEvent::resetNextId(int startId) {
+    nextId.store(startId);
+}
+
