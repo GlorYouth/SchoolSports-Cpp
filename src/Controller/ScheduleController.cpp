@@ -74,40 +74,45 @@ void ScheduleController::handleLockSchedule() {
     }
 
     // 前置检查：所有未取消的项目是否都有持续时间和场地
-    bool allEventsReady = true;
-    for (const auto& pair : settings_.getAllCompetitionEventsConst()) {
-        const CompetitionEvent& event = pair.second.get();
-        if (!event.getIsCancelled()) {
-            if (event.getDurationMinutes() <= 0) {
-                UIManager::showErrorMessage("项目 \"" + event.getName() + "\" (ID: " + std::to_string(event.getId()) + ") 缺少有效的持续时间。无法锁定赛程。");
-                allEventsReady = false;
-                break;
-            }
-            if (event.getVenue().empty()) {
-                UIManager::showErrorMessage("项目 \"" + event.getName() + "\" (ID: " + std::to_string(event.getId()) + ") 缺少场地信息。无法锁定赛程。");
-                allEventsReady = false;
-                break;
-            }
-        }
-    }
-
-    if (!allEventsReady) {
+    if (!validateEventsForScheduling()) {
         UIManager::showMessage("请先为所有未取消的项目设置有效的持续时间和场地信息后再锁定赛程。");
         return;
     }
 
     // 自动生成赛程
-    UIManager::showMessage("正在为即将开始的报名阶段自动生成赛程...");
-    if (schedule_.generateSchedule()) {
-        UIManager::showSuccessMessage("赛程已成功生成！");
-    } else {
-        UIManager::showErrorMessage("赛程生成失败，无法进入报名阶段。请检查项目、场地和时间段设置。");
+    UIManager::showInfoMessage("正在为即将开始的报名阶段自动生成赛程...");
+    bool scheduleGenerated = schedule_.generateSchedule();
+    
+    if (!scheduleGenerated) {
+        UIManager::showOperationResult(false, "赛程生成", "无法进入报名阶段。请检查项目、场地和时间段设置");
         return; // 如果赛程生成失败，不进行锁定
     }
+
+    UIManager::showSuccessMessage("赛程已成功生成！");
 
     // 锁定赛程（这会自动将阶段切换为REGISTRATION_OPEN）
     settings_.lockSchedule();
     UIManager::showSuccessMessage("赛程已成功锁定，系统已进入运动员报名阶段。");
+}
+
+// 添加辅助函数，用于验证项目是否都设置了持续时间和场地
+bool ScheduleController::validateEventsForScheduling() {
+    for (const auto& pair : settings_.getAllCompetitionEventsConst()) {
+        const CompetitionEvent& event = pair.second.get();
+        if (!event.getIsCancelled()) {
+            if (event.getDurationMinutes() <= 0) {
+                UIManager::showErrorMessage("项目 \"" + event.getName() + "\" (ID: " + 
+                    std::to_string(event.getId()) + ") 缺少有效的持续时间。无法锁定赛程。");
+                return false;
+            }
+            if (event.getVenue().empty()) {
+                UIManager::showErrorMessage("项目 \"" + event.getName() + "\" (ID: " + 
+                    std::to_string(event.getId()) + ") 缺少场地信息。无法锁定赛程。");
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void ScheduleController::handleUnlockSchedule() {

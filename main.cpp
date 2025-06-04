@@ -25,9 +25,16 @@
 // 如果 AutoTest.h 定义了全局 autoTest()，则取消下面的注释
 // void autoTest(); // 声明，如果 autoTest 在别处定义
 
-// 查看已发布项目 (旧主菜单选项2的逻辑)
+// 函数声明
+void viewPublishedEvents(const SystemSettings& settings);
+void viewUnitStandingsOverall(const SystemSettings& settings);
+int checkAndCancelLowParticipationEvents(Registration& registration);
+bool generateFinalSchedule(Schedule& schedule);
+void endRegistrationProcess(Registration& registration, Schedule& schedule, SystemSettings& settings);
+
+// 函数实现
 void viewPublishedEvents(const SystemSettings& settings) {
-    UIManager::showMessage("\n--- 当前已发布的比赛项目 ---");
+    UIManager::showTitleMessage("当前已发布的比赛项目");
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     bool found = false;
     // 使用 getAllCompetitionEventsConst() 返回的是 std::map<int, utils::RefConst<CompetitionEvent>>
@@ -40,7 +47,7 @@ void viewPublishedEvents(const SystemSettings& settings) {
         }
     }
     if (!found){
-        UIManager::showMessage("当前没有已发布的比赛项目，或所有项目均已被取消。");
+        UIManager::showInfoMessage("当前没有已发布的比赛项目，或所有项目均已被取消。");
     } else {
         UIManager::displayEvents(events_refs, settings);
     }
@@ -48,10 +55,10 @@ void viewPublishedEvents(const SystemSettings& settings) {
 
 // 查看单位总分排名 (旧主菜单选项7的逻辑)
 void viewUnitStandingsOverall(const SystemSettings& settings) {
-    UIManager::showMessage("\n--- 总成绩统计 (单位排名) ---");
+    UIManager::showTitleMessage("总成绩统计 (单位排名)");
     const auto& allUnitsMap = settings.getAllUnits(); // 返回 const std::map<int, Unit>&
     if (allUnitsMap.empty()) {
-        UIManager::showMessage("系统中没有单位信息。");
+        UIManager::showInfoMessage("系统中没有单位信息。");
         return;
     }
 
@@ -75,29 +82,43 @@ void viewUnitStandingsOverall(const SystemSettings& settings) {
 
 // 结束报名流程函数
 void endRegistrationProcess(Registration& registration, Schedule& schedule, SystemSettings& settings) {
-    UIManager::showMessage("正在结束报名流程...");
+    UIManager::showTitleMessage("结束报名流程");
     
     // 检查并取消人数不足的项目
-    int cancelledEvents = registration.checkAndCancelEventsDueToLowParticipation();
-    if (cancelledEvents > 0) {
-        UIManager::showMessage("已取消 " + std::to_string(cancelledEvents) + " 个报名人数不足的项目。");
-    }
+    checkAndCancelLowParticipationEvents(registration);
     
     // 自动生成秩序册
-    UIManager::showMessage("正在生成最终赛程安排...");
-    bool scheduleGenerated = schedule.generateSchedule();
-    if (scheduleGenerated) {
-        UIManager::showSuccessMessage("秩序册已成功生成！");
-        // 显示生成的秩序册
-        std::string scheduleContent = schedule.getScheduleContentAsString();
-        UIManager::showMessage(scheduleContent);
+    UIManager::showInfoMessage("正在生成最终赛程安排...");
+    if (generateFinalSchedule(schedule)) {
+        // 处理成功情况：显示秩序册内容并进入下一阶段
+        UIManager::showMessage(schedule.getScheduleContentAsString());
         
         // 进入下一阶段
         settings.setWorkflowStage(WorkflowStage::COMPETITION_RUNNING);
         UIManager::showSuccessMessage("报名已结束。工作流程已进入比赛管理阶段。");
     } else {
-        UIManager::showErrorMessage("秩序册生成失败，请检查项目和场地设置。");
+        // 显示错误信息已经在生成秩序册函数中处理
     }
+}
+
+// 检查并取消报名人数不足的项目
+int checkAndCancelLowParticipationEvents(Registration& registration) {
+    int cancelledEvents = registration.checkAndCancelEventsDueToLowParticipation();
+    if (cancelledEvents > 0) {
+        UIManager::showInfoMessage("已取消 " + std::to_string(cancelledEvents) + " 个报名人数不足的项目。");
+    }
+    return cancelledEvents;
+}
+
+// 生成最终的赛程安排
+bool generateFinalSchedule(Schedule& schedule) {
+    bool scheduleGenerated = schedule.generateSchedule();
+    if (scheduleGenerated) {
+        UIManager::showSuccessMessage("秩序册已成功生成！");
+    } else {
+        UIManager::showOperationResult(false, "秩序册生成", "请检查项目和场地设置");
+    }
+    return scheduleGenerated;
 }
 
 // 声明 AutoTest::runAllTests 如果它是静态成员函数

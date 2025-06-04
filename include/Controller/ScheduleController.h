@@ -28,6 +28,9 @@ private:
     // 原私有声明移至 public
     // void handleLockSchedule();
     // void handleUnlockSchedule();
+    
+    // 添加新的辅助方法
+    bool validateEventsForScheduling();
 };
 
 

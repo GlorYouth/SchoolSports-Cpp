@@ -75,6 +75,33 @@ void UIManager::showErrorMessage(const std::string& message) {
     std::cout << "[错误] " << message << std::endl;
 }
 
+// 添加更多结构化的消息类型
+void UIManager::showWarningMessage(const std::string& message) {
+    std::cout << "[警告] " << message << std::endl;
+}
+
+void UIManager::showInfoMessage(const std::string& message) {
+    std::cout << "[信息] " << message << std::endl;
+}
+
+void UIManager::showTitleMessage(const std::string& title) {
+    std::cout << "\n--- " << title << " ---" << std::endl;
+}
+
+// 用于状态信息的格式化函数
+void UIManager::showStatusMessage(const std::string& status, const std::string& message) {
+    std::cout << status << ": " << message << std::endl;
+}
+
+// 用于通用的操作结果反馈
+void UIManager::showOperationResult(bool success, const std::string& operation, const std::string& details) {
+    if (success) {
+        showSuccessMessage(operation + "成功" + (details.empty() ? "" : "：" + details));
+    } else {
+        showErrorMessage(operation + "失败" + (details.empty() ? "" : "：" + details));
+    }
+}
+
 // 获取浮点数输入
 double UIManager::getDoubleInput(const std::string& prompt) {
     double input;
@@ -135,45 +162,73 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
 
     std::cout << "\n========== 学校运动会管理系统 ==========" << std::endl;
     std::cout << "当前阶段: ";
+    
+    // 根据当前工作流阶段显示不同的菜单
     switch (currentStage) {
         case WorkflowStage::SETUP_EVENTS:
-            std::cout << "项目与赛程设置" << std::endl;
-            std::cout << "--------------------------------------" << std::endl;
-            std::cout << "1.  系统设置与项目管理 (添加单位/运动员/项目/规则等)" << std::endl;
-            // 选项 1 内部会调用 SystemSettingsController::manage()，其中已有赛程锁定时部分功能禁用的逻辑
-            std::cout << "2.  场地管理" << std::endl;             // 指向 SystemSettingsController::handleVenueManagement
-            std::cout << "3.  上下午时间段设置" << std::endl;     // 指向 SystemSettingsController::handleSessionSettings
-            std::cout << "4.  完成项目设置并锁定赛程 (进入运动员报名阶段)" << std::endl; // 新的流程控制选项
+            displaySetupEventsMenu(settings);
             break;
         case WorkflowStage::REGISTRATION_OPEN:
-            std::cout << "运动员报名" << std::endl;
-            std::cout << "--------------------------------------" << std::endl;
-            std::cout << "1.  运动员报名与管理 (报名/取消/查看)" << std::endl; // 指向 RegistrationController::manage
-            std::cout << "2.  查看所有比赛项目 (已锁定)" << std::endl;      // 指向 SystemSettingsController::handleViewAllEvents
-            std::cout << "3.  查看当前赛程安排" << std::endl;              // 新选项，用于查看已生成的赛程安排
-            std::cout << "4.  结束报名并生成秩序册 (进入比赛管理阶段)" << std::endl; // 新的流程控制选项
-            // std::cout << "4.  返回项目设置阶段 (解锁赛程)" << std::endl; // 可选，需要 ScheduleController::handleUnlockSchedule
+            displayRegistrationOpenMenu(settings);
             break;
         case WorkflowStage::COMPETITION_RUNNING:
-            std::cout << "比赛与成绩管理" << std::endl;
-            std::cout << "--------------------------------------" << std::endl;
-            std::cout << "1.  系统设置与查询" << std::endl;           // 更改名称，表示此阶段的系统设置菜单是查询为主
-            std::cout << "2.  秩序册管理 (查看/验证)" << std::endl;   // 指向 ScheduleController::manage (主要用于查看)
-            std::cout << "3.  比赛成绩管理 (录入/查看)" << std::endl; // 指向 ResultsController::manage
-            std::cout << "4.  查看单位总分排名" << std::endl;         // 指向一个专门的统计功能
-            std::cout << "5.  数据备份与恢复" << std::endl;           // 指向 DataManagementController::manage
+            displayCompetitionRunningMenu();
             break;
     }
+    
+    // 显示通用选项和警告信息
+    displayCommonMenuOptions(settings);
+}
+
+// 显示第一阶段（项目与赛程设置）菜单
+void UIManager::displaySetupEventsMenu(const SystemSettings& settings) {
+    std::cout << "项目与赛程设置" << std::endl;
     std::cout << "--------------------------------------" << std::endl;
-    // 通用选项
+    std::cout << "1.  系统设置与项目管理 (添加单位/运动员/项目/规则等)" << std::endl;
+    // 选项 1 内部会调用 SystemSettingsController::manage()，其中已有赛程锁定时部分功能禁用的逻辑
+    std::cout << "2.  场地管理" << std::endl;             // 指向 SystemSettingsController::handleVenueManagement
+    std::cout << "3.  上下午时间段设置" << std::endl;     // 指向 SystemSettingsController::handleSessionSettings
+    std::cout << "4.  完成项目设置并锁定赛程 (进入运动员报名阶段)" << std::endl; // 新的流程控制选项
+}
+
+// 显示第二阶段（运动员报名）菜单
+void UIManager::displayRegistrationOpenMenu(const SystemSettings& settings) {
+    std::cout << "运动员报名" << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+    std::cout << "1.  运动员报名与管理 (报名/取消/查看)" << std::endl; // 指向 RegistrationController::manage
+    std::cout << "2.  查看所有比赛项目 (已锁定)" << std::endl;      // 指向 SystemSettingsController::handleViewAllEvents
+    std::cout << "3.  查看当前赛程安排" << std::endl;              // 新选项，用于查看已生成的赛程安排
+    std::cout << "4.  结束报名并生成秩序册 (进入比赛管理阶段)" << std::endl; // 新的流程控制选项
+    // std::cout << "4.  返回项目设置阶段 (解锁赛程)" << std::endl; // 可选，需要 ScheduleController::handleUnlockSchedule
+}
+
+// 显示第三阶段（比赛与成绩管理）菜单
+void UIManager::displayCompetitionRunningMenu() {
+    std::cout << "比赛与成绩管理" << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+    std::cout << "1.  系统设置与查询" << std::endl;           // 更改名称，表示此阶段的系统设置菜单是查询为主
+    std::cout << "2.  秩序册管理 (查看/验证)" << std::endl;   // 指向 ScheduleController::manage (主要用于查看)
+    std::cout << "3.  比赛成绩管理 (录入/查看)" << std::endl; // 指向 ResultsController::manage
+    std::cout << "4.  查看单位总分排名" << std::endl;         // 指向一个专门的统计功能
+    std::cout << "5.  数据备份与恢复" << std::endl;           // 指向 DataManagementController::manage
+}
+
+// 显示所有阶段通用的菜单选项和警告
+void UIManager::displayCommonMenuOptions(const SystemSettings& settings) {
+    std::cout << "--------------------------------------" << std::endl;
+    
+    // 显示警告和状态信息
+    WorkflowStage currentStage = settings.getCurrentWorkflowStage();
     if (currentStage == WorkflowStage::SETUP_EVENTS && settings.isScheduleLocked()) {
-        std::cout << "(注意: 赛程已锁定，部分项目设置可能受限。如需修改，请先在赛程管理中解锁)" << std::endl;
+        showWarningMessage("赛程已锁定，部分项目设置可能受限。如需修改，请先在赛程管理中解锁");
     }
+    
     if (currentStage == WorkflowStage::REGISTRATION_OPEN && !settings.isScheduleLocked()) {
         // 理论上此状态下赛程必锁定，若非，则是个逻辑问题
-        std::cout << "(警告: 运动员报名阶段但赛程未锁定，请检查系统状态！)" << std::endl;
+        showWarningMessage("运动员报名阶段但赛程未锁定，请检查系统状态！");
     }
 
+    // 通用选项
     std::cout << "9.  分阶段导入示例数据" << std::endl;
     std::cout << "10. 自动测试 (辅助功能)" << std::endl;
     std::cout << "0.  退出系统" << std::endl;

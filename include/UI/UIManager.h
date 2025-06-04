@@ -59,9 +59,22 @@ public:
     // 显示错误消息
     static void showErrorMessage(const std::string& message);
 
+    // 新增加的消息类型函数
+    static void showWarningMessage(const std::string& message);
+    static void showInfoMessage(const std::string& message);
+    static void showTitleMessage(const std::string& title);
+    static void showStatusMessage(const std::string& status, const std::string& message);
+    static void showOperationResult(bool success, const std::string& operation, const std::string& details = "");
+
     // --- 菜单显示 ---
     static void displayMainMenu(const SystemSettings& settings);
-    // 根据当前工作流阶段显示不同的系统设置菜单
+    
+    // 新增的菜单显示辅助方法
+    static void displaySetupEventsMenu(const SystemSettings& settings);
+    static void displayRegistrationOpenMenu(const SystemSettings& settings);
+    static void displayCompetitionRunningMenu();
+    static void displayCommonMenuOptions(const SystemSettings& settings);
+    
     static void displaySystemSettingsMenu(const SystemSettings& settings, WorkflowStage currentStage);
     static void displayRegistrationMenu();
     static void displayScheduleMenu(const SystemSettings& settings);
