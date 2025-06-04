@@ -174,7 +174,7 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
         std::cout << "(警告: 运动员报名阶段但赛程未锁定，请检查系统状态！)" << std::endl;
     }
 
-    std::cout << "9.  导入示例数据 (辅助功能)" << std::endl;
+    std::cout << "9.  分阶段导入示例数据" << std::endl;
     std::cout << "10. 自动测试 (辅助功能)" << std::endl;
     std::cout << "0.  退出系统" << std::endl;
     std::cout << "======================================" << std::endl;
@@ -253,6 +253,7 @@ void UIManager::displayDataManagementMenu() {
     std::cout << "\n--- 数据管理 ---" << std::endl;
     std::cout << "1. 备份数据" << std::endl;
     std::cout << "2. 恢复数据" << std::endl;
+    std::cout << "3. 导入示例数据" << std::endl;
     std::cout << "0. 返回主菜单" << std::endl;
 }
 

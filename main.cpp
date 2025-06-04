@@ -139,8 +139,7 @@ int main() {
             UIManager::showMessage("感谢使用学校运动会管理系统，正在退出...");
             choiceHandled = true;
         } else if (choice == 9) {
-            dataManager.loadSampleData(); // 现在 DataManager 构造时传入了 settings
-            UIManager::showMessage("示例数据导入完成。");
+            dataManagementCtrl.handleLoadSampleData(); // 重定向到DataManagementController的分阶段导入
             UIManager::pressEnterToContinue();
             choiceHandled = true;
         } else if (choice == 10) {
