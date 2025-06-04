@@ -141,6 +141,16 @@ public:
      */
     bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
     /**
+     * @brief 添加一个增强的添加项目方法，包含计分规则ID和持续时间
+     * @param eventName 项目名称。
+     * @param type 项目类型。
+     * @param genderReq 项目性别要求。
+     * @param scoreRuleId 要关联的计分规则ID。
+     * @param durationMinutes 持续时间（分钟）。
+     * @return 如果项目名称未重复且指定的计分规则存在，则成功添加并返回 true；否则返回 false。
+     */
+    bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId, int durationMinutes);
+    /**
      * @brief 根据项目ID获取比赛项目对象的可修改引用。
      * @param eventId 要查找的项目ID。
      * @return 如果找到，返回一个包含 CompetitionEvent 引用的 std::optional；否则返回 std::nullopt。

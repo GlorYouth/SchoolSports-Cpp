@@ -10,8 +10,8 @@
 
 std::atomic<int> CompetitionEvent::nextId(1); // 初始化静态成员, ID从1开始
 
-CompetitionEvent::CompetitionEvent(std::string name, const EventType type, const Gender genderReq)
-    : name(std::move(name)), type(type), genderRequirement(genderReq), scoreRuleId(-1), isCancelled(false) {
+CompetitionEvent::CompetitionEvent(std::string name, const EventType type, const Gender genderReq, const int scoreRuleId, const int durationMinutes)
+    : name(std::move(name)), type(type), genderRequirement(genderReq), scoreRuleId(scoreRuleId), isCancelled(false), durationMinutes(durationMinutes) {
     id = nextId++; // 分配唯一ID
 }
 

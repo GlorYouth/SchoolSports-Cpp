@@ -128,12 +128,42 @@ void SystemSettingsController::handleAddEvent() {
         UIManager::showErrorMessage("赛程已锁定，无法添加新项目。");
         return;
     }
+    
+    // 获取项目基本信息
     std::string name = UIManager::getStringInput("请输入项目名称: ");
     EventType eventType = UIManager::getEventTypeInput("请选择项目类型");
     Gender gender = UIManager::getGenderInput("请选择性别要求", true); // true 表示允许不限性别
-
-    if (settings_.addCompetitionEvent(name, eventType, gender)) {
-        UIManager::showSuccessMessage("项目 '" + name + "' 添加成功。");
+    
+    // 显示所有可用的计分规则
+    UIManager::showTitleMessage("可用的计分规则");
+    std::vector<utils::RefConst<ScoreRule>> rules;
+    for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
+        rules.push_back(std::cref(val));
+    }
+    
+    if (rules.empty()) {
+        UIManager::showErrorMessage("系统中没有可用的计分规则，请先添加计分规则。");
+        return;
+    }
+    
+    UIManager::displayScoreRules(rules);
+    
+    // 让用户选择计分规则
+    int scoreRuleId = UIManager::getIntInput("请选择要应用的计分规则ID: ");
+    
+    // 验证计分规则ID是否存在
+    if (!settings_.getScoreRuleConst(scoreRuleId).has_value()) {
+        UIManager::showErrorMessage("所选计分规则ID不存在，项目添加失败。");
+        return;
+    }
+    
+    // 获取项目持续时间
+    int durationMinutes = UIManager::getIntInput("请输入项目持续时间（分钟）: ", 1, 1440);  // 最多24小时
+    
+    // 使用新的方法添加项目
+    if (settings_.addCompetitionEvent(name, eventType, gender, scoreRuleId, durationMinutes)) {
+        UIManager::showSuccessMessage("项目 '" + name + "' 添加成功。计分规则ID: " + std::to_string(scoreRuleId) + 
+                                      ", 持续时间: " + std::to_string(durationMinutes) + "分钟");
     } else {
         UIManager::showErrorMessage("项目添加失败。");
     }

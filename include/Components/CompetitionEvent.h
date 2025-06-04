@@ -52,8 +52,10 @@ public:
      * @param name 项目名称。
      * @param type 项目类型 (EventType::TRACK 或 EventType::FIELD)。
      * @param genderReq 项目性别要求 (Gender::MALE, Gender::FEMALE, 或 Gender::MIXED)。
+     * @param scoreRuleId 应用的计分规则ID，默认为-1（未指定）。
+     * @param durationMinutes 项目持续时间（分钟），默认为0（未设置）。
      */
-    CompetitionEvent(std::string name, EventType type, Gender genderReq);
+    CompetitionEvent(std::string name, EventType type, Gender genderReq, int scoreRuleId = -1, int durationMinutes = 0);
 
     /**
      * @brief 获取项目的唯一ID。
@@ -162,7 +164,7 @@ public:
      * @brief 获取项目的预计持续时间（分钟）。
      * @return 返回持续时间（分钟）。
      */
-    int getDurationMinutes() const;
+    [[nodiscard]] int getDurationMinutes() const;
     /**
      * @brief 设置项目的比赛场地。
      * @param v 场地名称或描述。
@@ -172,7 +174,7 @@ public:
      * @brief 获取项目的比赛场地。
      * @return 返回场地名称或描述。
      */
-    std::string getVenue() const;
+    [[nodiscard]] std::string getVenue() const;
     /**
      * @brief 设置项目的计划开始时间。
      * @param t 开始时间字符串，例如 "08:00"。

@@ -160,7 +160,8 @@ void SystemSettings::clearAthletes() {
 
 // --- 项目管理 ---
 bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq) {
-    CompetitionEvent newEvent(eventName, type, genderReq);
+    // 使用带默认参数的构造函数，不需要显式传递scoreRuleId和durationMinutes
+    CompetitionEvent newEvent(eventName, type, genderReq);  // 默认scoreRuleId=-1, durationMinutes=0
     competitionEvents.insert({newEvent.getId(), newEvent});
     return true;
 }
@@ -169,6 +170,13 @@ bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType
 bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
     CompetitionEvent newEvent(eventName, type, genderReq);
     newEvent.setScoreRuleId(scoreRuleId); // 设置计分规则ID
+    competitionEvents.insert({newEvent.getId(), newEvent});
+    return true;
+}
+
+// 新增重载：允许直接指定计分规则ID和持续时间
+bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId, int durationMinutes) {
+    CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId, durationMinutes);
     competitionEvents.insert({newEvent.getId(), newEvent});
     return true;
 }
