@@ -79,7 +79,7 @@ void viewUnitStandingsOverall(const SystemSettings& settings) {
 
 int main() {
     SystemSettings settings;
-    // settings.initializeDefaultSettings(); // 确保此方法设置初始工作流程阶段为 SETUP_EVENTS
+    settings.initializeDefaultSettings(); // 确保此方法设置初始工作流程阶段为 SETUP_EVENTS
 
     Registration registration(settings);
     Schedule schedule(settings); 

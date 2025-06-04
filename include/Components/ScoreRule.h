@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <atomic> // 用于生成唯一ID
+#include <vector> // 用于存储子规则
 
 /**
  * @brief 定义了比赛项目的计分规则。
@@ -15,6 +16,9 @@
  * ScoreRule 类封装了一条计分规则，包括规则的描述、适用的参赛人数范围、
  * 录取的名次数以及每个名次对应的具体分数。
  * ID 由静态原子计数器自动生成，保证唯一性。
+ * 
+ * 修改说明：增加了子规则支持，一个主规则ID可以包含多个子规则，
+ * 系统会根据参赛人数自动选择适用的子规则。
  */
 class ScoreRule {
 private:
@@ -25,6 +29,10 @@ private:
     int maxParticipants;                    // 适用此规则的最大参赛人数 (包含, 使用 -1 表示无上限)
     int ranksToAward;                       // 录取名次数
     std::map<int, double> scoresForRanks;   // 名次对应的分数 <名次, 分数> (例如: {1:7, 2:5, ...})
+    
+    // 子规则列表（对于复合规则）
+    std::vector<ScoreRule*> subRules;       // 存储子规则指针
+    bool isCompositeRule;                   // 是否为复合规则标志
 
 public:
     /**
@@ -36,6 +44,11 @@ public:
      * @param scores 一个map，键为名次（int），值为对应的分数（double）。
      */
     ScoreRule(std::string  desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
+    
+    /**
+     * @brief 析构函数，负责清理子规则占用的内存
+     */
+    ~ScoreRule();
 
     /**
      * @brief 获取计分规则的唯一ID。
@@ -54,6 +67,13 @@ public:
      * @return 如果适用，返回 true；否则返回 false。
      */
     [[nodiscard]] bool appliesTo(int participantCount) const;
+    
+    /**
+     * @brief 根据参赛人数获取适用的子规则或规则本身
+     * @param participantCount 实际参赛人数
+     * @return 返回适用的规则指针，不会返回nullptr（若无匹配子规则则返回this）
+     */
+    [[nodiscard]] const ScoreRule* getApplicableRule(int participantCount) const;
 
     /**
      * @brief 获取此规则下计划奖励的名次数。
@@ -81,6 +101,24 @@ public:
      * @return 返回最大参赛人数（-1表示无上限）。
      */
     [[nodiscard]] int getMaxParticipants() const { return maxParticipants; }
+    
+    /**
+     * @brief 添加一个子规则
+     * @param subRule 要添加的子规则指针（将由本对象负责释放内存）
+     */
+    void addSubRule(ScoreRule* subRule);
+    
+    /**
+     * @brief 检查是否为复合规则（包含子规则）
+     * @return 如果是复合规则，返回true；否则返回false
+     */
+    [[nodiscard]] bool isComposite() const { return isCompositeRule; }
+    
+    /**
+     * @brief 获取所有子规则
+     * @return 返回子规则指针向量的常量引用
+     */
+    [[nodiscard]] const std::vector<ScoreRule*>& getSubRules() const { return subRules; }
 
     /**
      * @brief 重置用于生成下一个计分规则ID的静态计数器。

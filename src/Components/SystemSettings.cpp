@@ -263,11 +263,29 @@ void SystemSettings::clearScoreRules() {
 }
 
 std::optional<utils::Ref<ScoreRule>> SystemSettings::findAppropriateScoreRule(int participantCount) {
+    // 新版本：优先使用默认复合规则（ID=1）中的适用子规则
+    auto mainRuleOpt = getScoreRule(1);
+    if (mainRuleOpt.has_value()) {
+        ScoreRule& mainRule = mainRuleOpt.value().get();
+        if (mainRule.isComposite()) {
+            const ScoreRule* applicableSubRule = mainRule.getApplicableRule(participantCount);
+            if (applicableSubRule && applicableSubRule->appliesTo(participantCount)) {
+                // 这里有个问题：applicableSubRule是指向子规则的指针，但返回值需要是主规则的引用包装
+                // 为兼容现有接口，我们返回主规则的引用
+                return mainRuleOpt;
+            }
+        } else if (mainRule.appliesTo(participantCount)) {
+            return mainRuleOpt;
+        }
+    }
+    
+    // 向后兼容：如果默认复合规则不可用或不适用，则搜索所有规则
     for (auto &val : scoreRules | std::views::values) {
         if (val.appliesTo(participantCount)) {
             return val;
         }
     }
+    
     std::cerr << "警告: 未找到适用于参赛人数 " << participantCount << " 的计分规则。" << std::endl;
     return std::nullopt; // 没有找到合适的规则
 }
@@ -436,41 +454,48 @@ bool SystemSettings::registerAthleteForEvent(int athleteId, int eventId) {
 void SystemSettings::initializeDefaultSettings() {
     std::cout << "正在初始化系统默认核心设置..." << std::endl;
 
-    // 1. 清空计分规则和比赛结果 (单位、运动员、项目由DataManager::loadSampleData负责，此处不处理)
+    // 1. 清空计分规则和比赛结果
     scoreRules.clear();
     eventResultsMap.clear();
-    // 如果需要重置计分规则ID计数器，可以在此操作，例如：
-    // ScoreRule::nextId = 1; // 假设ID从1开始，并且可以重置。请确保这符合您的ID管理策略。
-    // **重要**: 重置静态ID计数器 (如 Unit::nextId) 应该在所有相关对象都被清除后，
-    // 并且通常在测试或完全重置系统状态时才这样做。对于默认设置，可能只需要确保
-    // 默认计分规则的ID是固定的 (如 ID=1)。
-    // 如果 ScoreRule 的ID不是从1开始或者不是按顺序，那么 DataManager::loadSampleData 中
-    // 对 defaultScoreRuleId = 1 的假设就需要调整，或者这里需要确保ID为1的规则被创建。
 
     // 2. 设置系统核心参数
     setAthleteMaxEventsAllowed(3); // 每人最多报3项 (来自原逻辑)
     setMinParticipantsToHoldEvent(4); // 不足4人的项目将取消 (来自原逻辑)
 
-    // 3. 添加默认的计分规则 (确保ID为1的规则存在且符合预期)
-    // 规则1 (ID将是1，如果ScoreRule::nextId从1开始且未被其他规则占用): 参赛人数 > 6人 (即 >= 7人)，取前5名
-    std::map<int, double> scoresRule1 = {{1, 7.0}, {2, 5.0}, {3, 3.0}, {4, 2.0}, {5, 1.0}};
-    // 为了确保ID为1，我们需要一种方式来指定ID，或者依赖于ScoreRule的ID生成机制。
-    // 假设ScoreRule构造函数不接受ID，且ID由静态计数器生成，则第一个添加的规则ID为1。
-    bool rule1Added = addScoreRule("默认规则1: 大于6人取前5名 (7,5,3,2,1)", 7, -1, 5, scoresRule1);
+    // 3. 添加默认的复合计分规则（ID为1）
+    ScoreRule::resetNextId(1); // 确保第一个规则的ID为1
+    
+    // 创建主规则（包含子规则）
+    std::map<int, double> dummyScores; // 主规则不直接使用分数，而是通过子规则
+    bool rule1Added = addScoreRule("默认规则: 根据参赛人数动态选择计分方案", 4, -1, 0, dummyScores);
+    
     if (!rule1Added) {
         std::cerr << "严重错误: 无法添加ID为1的默认计分规则！" << std::endl;
-        // 可能需要抛出异常或采取其他错误处理措施
+        return;
     }
-    // 您可以检查 getScoreRuleConst(1) 是否有效，以确保ID为1的规则已正确添加。
-
-    // 规则2 (ID将是2): 参赛人数 <= 6人 (且 >= 4人), 取前3名
+    
+    // 获取主规则（ID为1）
+    auto mainRuleOpt = getScoreRule(1);
+    if (!mainRuleOpt.has_value()) {
+        std::cerr << "严重错误: 无法获取刚刚创建的主规则（ID=1）！" << std::endl;
+        return;
+    }
+    
+    // 子规则1: 参赛人数 > 6人，取前5名 (7,5,3,2,1)
+    std::map<int, double> scoresRule1 = {{1, 7.0}, {2, 5.0}, {3, 3.0}, {4, 2.0}, {5, 1.0}};
+    auto* subRule1 = new ScoreRule("子规则1: 大于6人取前5名 (7,5,3,2,1)", 7, -1, 5, scoresRule1);
+    
+    // 子规则2: 参赛人数 <= 6人且 >= 4人，取前3名 (5,3,2)
     std::map<int, double> scoresRule2 = {{1, 5.0}, {2, 3.0}, {3, 2.0}};
-    addScoreRule("默认规则2: 4至6人取前3名 (5,3,2)", 4, 6, 3, scoresRule2);
-    // 可以根据需要添加更多核心的、不属于"示例数据"的计分规则
-
-    // 4. 重置所有单位分数（如果单位数据此时不应存在，此步骤可能不需要，
-    // 或者应在 DataManager::loadSampleData 之后由调用方根据需要执行）
-    // resetAllUnitScores(); // 考虑到单位数据由 loadSampleData 加载，此处可能不应重置。
+    auto* subRule2 = new ScoreRule("子规则2: 4至6人取前3名 (5,3,2)", 4, 6, 3, scoresRule2);
+    
+    // 将子规则添加到主规则
+    mainRuleOpt.value().get().addSubRule(subRule1);
+    mainRuleOpt.value().get().addSubRule(subRule2);
+    
+    std::cout << "系统默认规则（ID=1）初始化完成，包含两个子规则：" << std::endl;
+    std::cout << " - " << subRule1->getDescription() << std::endl;
+    std::cout << " - " << subRule2->getDescription() << std::endl;
 
     std::cout << "系统默认核心设置（计分规则、参数）初始化完成。" << std::endl;
     std::cout << "提示：示例单位、运动员、比赛项目需通过 '导入示例数据' 选项加载。" << std::endl;

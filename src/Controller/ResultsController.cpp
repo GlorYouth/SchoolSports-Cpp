@@ -76,7 +76,6 @@ void ResultsController::handleRecordEventResults() {
                                std::to_string(competitionEvent.getParticipantCount()) + ") 不足最少要求 (" +
                                std::to_string(settings_.getMinParticipantsToHoldEvent()) + ")。");
         if (!competitionEvent.getIsCancelled()) {
-            // settings_.cancelEvent(eventId); // 假设有这样一个方法
             competitionEvent.setCancelled(true); // 直接修改
             UIManager::showErrorMessage("项目 \"" + competitionEvent.getName() + "\" 现已自动标记为取消，无法录入成绩。");
         }
@@ -85,18 +84,29 @@ void ResultsController::handleRecordEventResults() {
 
     settings_.clearResultsForEvent(eventId); // 清除旧成绩并调整单位分数
 
-    auto scoreRuleOpt = settings_.findAppropriateScoreRule(competitionEvent.getParticipantCount());
+    // 使用新的查找规则机制：先查找规则，再确定适用的子规则
+    // 默认情况下应该只有一个主规则（ID=1），包含多个子规则
+    auto scoreRuleOpt = settings_.getScoreRule(1); // 默认使用ID=1的规则
     if (!scoreRuleOpt) {
-        UIManager::showErrorMessage("未找到适用于项目 \"" + competitionEvent.getName() +
-                                    "\" (参赛人数: " + std::to_string(competitionEvent.getParticipantCount()) +
-                                    ") 的计分规则。请先定义相关计分规则。");
+        UIManager::showErrorMessage("找不到默认计分规则（ID=1）。请初始化系统设置。");
         return;
     }
-    ScoreRule& scoreRule = scoreRuleOpt.value().get();
-    UIManager::showMessage("应用计分规则: " + scoreRule.getDescription());
+    
+    // 获取适用于当前参赛人数的子规则
+    ScoreRule& mainRule = scoreRuleOpt.value().get();
+    const ScoreRule* applicableRule = mainRule.getApplicableRule(competitionEvent.getParticipantCount());
+    
+    if (!applicableRule || !applicableRule->appliesTo(competitionEvent.getParticipantCount())) {
+        UIManager::showErrorMessage("未找到适用于项目 \"" + competitionEvent.getName() +
+                                    "\" (参赛人数: " + std::to_string(competitionEvent.getParticipantCount()) +
+                                    ") 的计分子规则。请检查规则配置。");
+        return;
+    }
+    
+    UIManager::showMessage("应用计分规则: " + applicableRule->getDescription());
 
     EventResults newEventResults(eventId);
-    int ranksToAward = scoreRule.getRanksToAward();
+    int ranksToAward = applicableRule->getRanksToAward();
     UIManager::showMessage("请为项目 \"" + competitionEvent.getName() + "\" 录入前 " +
                            std::to_string(ranksToAward) + " 名的成绩。");
 
@@ -125,7 +135,7 @@ void ResultsController::handleRecordEventResults() {
             break;
         }
 
-        auto athleteOpt = settings_.getAthlete(athleteId_input); // 非 const，虽然这里没修改 Athlete 本身
+        auto athleteOpt = settings_.getAthlete(athleteId_input);
         if (!athleteOpt) {
             UIManager::showErrorMessage("运动员ID " + std::to_string(athleteId_input) + " 不存在。此名次作废。");
             i--; continue;
@@ -151,7 +161,7 @@ void ResultsController::handleRecordEventResults() {
         }
 
         std::string scoreRecordStr = UIManager::getStringInput("请输入第 " + std::to_string(rank) + " 名 (运动员 " + rankedAthlete.getName() + ") 的成绩记录 (如 10.5s, 2.10m): ");
-        double points = scoreRule.getScoreForRank(rank);
+        double points = applicableRule->getScoreForRank(rank);
 
         Result result(eventId, athleteId_input, rank, scoreRecordStr, points);
         newEventResults.addResult(result);
@@ -163,7 +173,7 @@ void ResultsController::handleRecordEventResults() {
 
     newEventResults.finalizeResults(); // 内部可能排序或做其他处理
     settings_.addOrUpdateEventResults(newEventResults);
-    competitionEvent.setScoreRuleId(scoreRule.getId()); // 关联计分规则到项目
+    competitionEvent.setScoreRuleId(applicableRule->getId()); // 关联计分规则到项目
 
     UIManager::showSuccessMessage("项目 \"" + competitionEvent.getName() + "\" 的成绩已录入/更新完毕。");
 }

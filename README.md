@@ -32,7 +32,8 @@ SchoolSports-Cpp  # 项目根目录
 │  │  ├─ Schedule.h        # 赛程安排类
 │  │  ├─ ScoreRule.h       # 计分规则类
 │  │  ├─ SystemSettings.h  # 系统设置类
-│  │  └─ Unit.h           # 参赛单位类
+│  │  ├─ Unit.h           # 参赛单位类
+│  │  └─ Workflow.h        # 流程控制enum
 │  ├─ Controller  # 控制器层，处理业务逻辑
 │  │  ├─ DataManagementController.h  # 数据管理控制器
 │  │  ├─ QueryController.h          # 查询功能控制器
