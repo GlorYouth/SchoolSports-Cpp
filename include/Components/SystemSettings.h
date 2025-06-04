@@ -6,7 +6,6 @@
 #include <map>
 #include <optional>
 #include <set>
-#include <functional> // For std::function
 
 #include "Unit.h"
 #include "CompetitionEvent.h"
@@ -290,7 +289,7 @@ public:
      * @brief 检查当前赛程是否已锁定。
      * @return 如果赛程已锁定，返回 true；否则返回 false。
      */
-    bool isScheduleLocked() const;
+    [[nodiscard]] bool isScheduleLocked() const;
 
     // --- 场地管理 ---
     /**
@@ -309,7 +308,7 @@ public:
      * @brief 获取所有可用比赛场地的列表 (常量引用)。
      * @return 返回一个包含所有场地名称的 std::set 的常量引用。
      */
-    const std::set<std::string>& getAllVenues() const;
+    [[nodiscard]] const std::set<std::string>& getAllVenues() const;
 
     // --- 上午/下午时间段管理 ---
     /**
@@ -328,15 +327,15 @@ public:
      * @brief 获取上午比赛的开始和结束时间。
      * @return 返回一个 std::pair，包含开始时间和结束时间字符串。
      */
-    std::pair<std::string, std::string> getMorningSession() const;
+    [[nodiscard]] std::pair<std::string, std::string> getMorningSession() const;
     /**
      * @brief 获取下午比赛的开始和结束时间。
      * @return 返回一个 std::pair，包含开始时间和结束时间字符串。
      */
-    std::pair<std::string, std::string> getAfternoonSession() const;
+    [[nodiscard]] std::pair<std::string, std::string> getAfternoonSession() const;
 
     // --- 工作流程阶段管理 ---
-    WorkflowStage getCurrentWorkflowStage() const;
+    [[nodiscard]] WorkflowStage getCurrentWorkflowStage() const;
     bool setWorkflowStage(WorkflowStage newStage);
 };
 

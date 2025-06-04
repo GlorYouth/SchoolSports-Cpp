@@ -7,7 +7,7 @@
 ScheduleController::ScheduleController(Schedule& schedule, SystemSettings& settings)
     : schedule_(schedule), settings_(settings) {}
 
-void ScheduleController::manage(const SystemSettings& settings) {
+void ScheduleController::manage() {
     int choice;
     do {
         UIManager::displayScheduleMenu(settings_);
@@ -96,8 +96,18 @@ void ScheduleController::handleLockSchedule() {
         return;
     }
 
+    // 自动生成赛程
+    UIManager::showMessage("正在为即将开始的报名阶段自动生成赛程...");
+    if (schedule_.generateSchedule()) {
+        UIManager::showSuccessMessage("赛程已成功生成！");
+    } else {
+        UIManager::showErrorMessage("赛程生成失败，无法进入报名阶段。请检查项目、场地和时间段设置。");
+        return; // 如果赛程生成失败，不进行锁定
+    }
+
+    // 锁定赛程（这会自动将阶段切换为REGISTRATION_OPEN）
     settings_.lockSchedule();
-    UIManager::showSuccessMessage("赛程已成功锁定。");
+    UIManager::showSuccessMessage("赛程已成功锁定，系统已进入运动员报名阶段。");
 }
 
 void ScheduleController::handleUnlockSchedule() {
@@ -112,6 +122,8 @@ void ScheduleController::handleUnlockSchedule() {
 // 添加新方法，用于主菜单中的赛程生成与查看选项
 void ScheduleController::handleScheduleGeneration() {
     UIManager::showMessage("\n--- 赛程生成与查看 ---");
+    
+    // 简化后的代码，只显示菜单和处理选择
     int choice;
     do {
         UIManager::displayScheduleGenerationMenu();

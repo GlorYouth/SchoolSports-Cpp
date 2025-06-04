@@ -444,38 +444,6 @@ void SystemSettingsController::handleSessionSettings() {
     } while (choice != 0);
 }
 
-void SystemSettingsController::handleScheduleGeneration() {
-    Schedule schedule(settings_);
-    int choice;
-    do {
-        UIManager::displayScheduleGenerationMenu();
-        choice = UIManager::getIntInput("请输入您的选择: ", 0, 2);
-        switch (choice) {
-            case 1: {
-                if (schedule.generateSchedule()) {
-                    UIManager::showSuccessMessage("赛程生成成功！");
-                } else {
-                    UIManager::showErrorMessage("赛程生成失败，请检查项目、场地和时间段设置。");
-                }
-                break;
-            }
-            case 2: {
-                schedule.printSchedule();
-                break;
-            }
-            case 0:
-                UIManager::showMessage("返回上一级菜单...");
-                break;
-            default:
-                UIManager::showErrorMessage("无效选择。");
-                break;
-        }
-        if (choice != 0) {
-            UIManager::pressEnterToContinue();
-        }
-    } while (choice != 0);
-}
-
 // 添加显示会话信息的辅助方法
 void SystemSettingsController::displaySessionInfo() {
     auto [morningStart, morningEnd] = settings_.getMorningSession();

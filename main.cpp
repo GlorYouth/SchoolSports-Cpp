@@ -129,7 +129,16 @@ int main() {
         WorkflowStage currentStage = settings.getCurrentWorkflowStage();
         
         // 输入提示和范围可以根据当前菜单动态调整，但为简化，使用一个通用范围
-        choice = UIManager::getIntInput("请输入您的选项: ", 0, 10); 
+        int maxChoice = 10; // 默认值
+        
+        // 根据当前阶段设置最大选择范围
+        switch(currentStage) {
+            case WorkflowStage::SETUP_EVENTS: maxChoice = 10; break; // 确保可以选择1-4和9-10选项
+            case WorkflowStage::REGISTRATION_OPEN: maxChoice = 10; break; // 包括通用选项9和10
+            case WorkflowStage::COMPETITION_RUNNING: maxChoice = 10; break; // 包括通用选项9和10
+        }
+        
+        choice = UIManager::getIntInput("请输入您的选项: ", 0, maxChoice);
                                      // 假设通用选项是9, 10, 0，阶段选项从1开始
 
         bool choiceHandled = false;
@@ -164,11 +173,7 @@ int main() {
                             systemSettingsCtrl.handleSessionSettings(); // 该方法内部已有赛程锁定检查
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
-                        case 4: // 赛程生成与查看
-                            scheduleCtrl.handleScheduleGeneration();
-                            UIManager::pressEnterToContinue();
-                            choiceHandled = true; break;
-                        case 5: // 完成项目设置并锁定赛程
+                        case 4: // 完成项目设置并锁定赛程
                             scheduleCtrl.handleLockSchedule(); // 成功则内部会 settings.lockSchedule() 并改阶段
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
@@ -185,12 +190,16 @@ int main() {
                             viewPublishedEvents(settings); 
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
-                        case 3: // 结束报名并确认最终赛程安排
+                        case 3: // 查看当前赛程安排
+                            UIManager::showMessage(schedule.getScheduleContentAsString());
+                            UIManager::pressEnterToContinue();
+                            choiceHandled = true; break;
+                        case 4: // 结束报名并确认最终赛程安排
                             endRegistrationProcess(registration, schedule, settings);
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
                         // 可选的返回上一阶段（解锁）逻辑，目前未实现
-                        // case 4: 
+                        // case 5: 
                         //     scheduleCtrl.handleUnlockSchedule();
                         //     UIManager::pressEnterToContinue();
                         //     choiceHandled = true; break;
@@ -204,7 +213,7 @@ int main() {
                             systemSettingsCtrl.manage();
                             choiceHandled = true; break;
                         case 2: // 秩序册管理 (查看/验证)
-                            scheduleCtrl.manage(settings); // scheduleCtrl::manage 内部菜单应考虑当前阶段
+                            scheduleCtrl.manage();
                             choiceHandled = true; break;
                         case 3: // 比赛成绩管理
                             resultsCtrl.manage(); 

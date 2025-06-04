@@ -516,7 +516,8 @@ void SystemSettings::lockSchedule() {
     this->scheduleLocked = true;
     // 成功锁定赛程后，自动进入运动员报名阶段
     this->currentWorkflowStage_ = WorkflowStage::REGISTRATION_OPEN;
-    // std::cout << "[SystemSettings] 赛程已锁定，工作流程进入运动员报名阶段。" << std::endl;
+    // 注意：锁定赛程时需要生成赛程，但具体逻辑由外部ScheduleController实现
+    // 这里我们仅改变状态，赛程生成将在调用lockSchedule的地方处理
 }
 
 void SystemSettings::unlockSchedule() {

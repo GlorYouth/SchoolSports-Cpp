@@ -20,8 +20,7 @@ public:
     void handleVenueManagement();
     // 上午下午/时间段设置
     void handleSessionSettings();
-    // 秩序册生成功能
-    void handleScheduleGeneration();
+    // 删除赛程生成管理
 
 private:
     SystemSettings& settings_; // 操作系统设置对象

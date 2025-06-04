@@ -143,15 +143,15 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
             // 选项 1 内部会调用 SystemSettingsController::manage()，其中已有赛程锁定时部分功能禁用的逻辑
             std::cout << "2.  场地管理" << std::endl;             // 指向 SystemSettingsController::handleVenueManagement
             std::cout << "3.  上下午时间段设置" << std::endl;     // 指向 SystemSettingsController::handleSessionSettings
-            std::cout << "4.  赛程生成与查看" << std::endl;       // 新选项，用于赛程生成和查看
-            std::cout << "5.  完成项目设置并锁定赛程 (进入运动员报名阶段)" << std::endl; // 新的流程控制选项
+            std::cout << "4.  完成项目设置并锁定赛程 (进入运动员报名阶段)" << std::endl; // 新的流程控制选项
             break;
         case WorkflowStage::REGISTRATION_OPEN:
             std::cout << "运动员报名" << std::endl;
             std::cout << "--------------------------------------" << std::endl;
             std::cout << "1.  运动员报名与管理 (报名/取消/查看)" << std::endl; // 指向 RegistrationController::manage
             std::cout << "2.  查看所有比赛项目 (已锁定)" << std::endl;      // 指向 SystemSettingsController::handleViewAllEvents
-            std::cout << "3.  结束报名并生成秩序册 (进入比赛管理阶段)" << std::endl; // 新的流程控制选项
+            std::cout << "3.  查看当前赛程安排" << std::endl;              // 新选项，用于查看已生成的赛程安排
+            std::cout << "4.  结束报名并生成秩序册 (进入比赛管理阶段)" << std::endl; // 新的流程控制选项
             // std::cout << "4.  返回项目设置阶段 (解锁赛程)" << std::endl; // 可选，需要 ScheduleController::handleUnlockSchedule
             break;
         case WorkflowStage::COMPETITION_RUNNING:
