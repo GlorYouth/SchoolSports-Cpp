@@ -37,7 +37,6 @@ private:
     std::map<int, EventResults> eventResultsMap;    // 比赛结果列表 <EventId, EventResults>
 
     int athleteMaxEventsAllowed;                    // 运动员允许参加的最多项目数
-    int minParticipantsToHoldEvent;                 // 项目成立的最小参赛人数
     bool scheduleLocked = false;                    ///< 赛程是否已锁定。如果为true，项目信息不可编辑，报名流程会进行时间冲突检查。
     std::set<std::string> venues;                   ///< 系统中所有可用的比赛场地名称集合。
     std::string morningSessionStart = "08:00";      ///< 上午比赛时间段的默认开始时间。
@@ -218,17 +217,6 @@ public:
      * @return 返回最大项目数。
      */
     [[nodiscard]] int getAthleteMaxEventsAllowed() const;
-
-    /**
-     * @brief 设置比赛项目成立所需的最小参赛人数。
-     * @param minParticipants 最小参赛人数。
-     */
-    void setMinParticipantsToHoldEvent(int minParticipants);
-    /**
-     * @brief 获取比赛项目成立所需的最小参赛人数。
-     * @return 返回最小参赛人数。
-     */
-    [[nodiscard]] int getMinParticipantsToHoldEvent() const;
 
     // --- 比赛结果管理 ---
     /**

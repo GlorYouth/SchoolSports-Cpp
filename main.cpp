@@ -73,6 +73,33 @@ void viewUnitStandingsOverall(const SystemSettings& settings) {
     UIManager::displayUnitStandings(unitsVec);
 }
 
+// 结束报名流程函数
+void endRegistrationProcess(Registration& registration, Schedule& schedule, SystemSettings& settings) {
+    UIManager::showMessage("正在结束报名流程...");
+    
+    // 检查并取消人数不足的项目
+    int cancelledEvents = registration.checkAndCancelEventsDueToLowParticipation();
+    if (cancelledEvents > 0) {
+        UIManager::showMessage("已取消 " + std::to_string(cancelledEvents) + " 个报名人数不足的项目。");
+    }
+    
+    // 自动生成秩序册
+    UIManager::showMessage("正在生成最终赛程安排...");
+    bool scheduleGenerated = schedule.generateSchedule();
+    if (scheduleGenerated) {
+        UIManager::showSuccessMessage("秩序册已成功生成！");
+        // 显示生成的秩序册
+        std::string scheduleContent = schedule.getScheduleContentAsString();
+        UIManager::showMessage(scheduleContent);
+        
+        // 进入下一阶段
+        settings.setWorkflowStage(WorkflowStage::COMPETITION_RUNNING);
+        UIManager::showSuccessMessage("报名已结束。工作流程已进入比赛管理阶段。");
+    } else {
+        UIManager::showErrorMessage("秩序册生成失败，请检查项目和场地设置。");
+    }
+}
+
 // 声明 AutoTest::runAllTests 如果它是静态成员函数
 // namespace AutoTest { void runAllTests(SystemSettings&, Schedule&, Registration&, DataManager&); }
 
@@ -156,13 +183,8 @@ int main() {
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
                         case 3: // 结束报名并确认最终赛程安排
-                            UIManager::showMessage("正在结束报名流程...");
-                            // 此处主要动作是转换阶段。秩序册的"生成"更多是数据的完整和可查看性。
-                            // 确保运动员数据和项目数据是最新的。
-                            // Schedule对象应基于锁定的赛程和报名数据来呈现秩序册。
-                            settings.setWorkflowStage(WorkflowStage::COMPETITION_RUNNING);
-                            UIManager::showSuccessMessage("报名已结束。工作流程已进入比赛管理阶段。");
-                            UIManager::pressEnterToContinue(); 
+                            endRegistrationProcess(registration, schedule, settings);
+                            UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
                         // 可选的返回上一阶段（解锁）逻辑，目前未实现
                         // case 4: 

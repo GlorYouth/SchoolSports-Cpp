@@ -15,7 +15,7 @@
 // Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
 // #include "../../include/Components/Workflow.h" // 通常不需要重复包含
 
-SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3), minParticipantsToHoldEvent(4) {
+SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3) {
     // 构造函数中可以进行一些初始化
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
@@ -303,18 +303,6 @@ int SystemSettings::getAthleteMaxEventsAllowed() const {
     return athleteMaxEventsAllowed;
 }
 
-void SystemSettings::setMinParticipantsToHoldEvent(int minParticipants) {
-     if (minParticipants >= 0) { // 允许为0，表示没有限制，但通常至少为1或更高
-        minParticipantsToHoldEvent = minParticipants;
-    } else {
-        std::cerr << "错误: 项目最少举行人数不能为负值。" << std::endl; // 修正为"负值"
-    }
-}
-
-int SystemSettings::getMinParticipantsToHoldEvent() const {
-    return minParticipantsToHoldEvent;
-}
-
 // --- 比赛结果管理 ---
 bool SystemSettings::addOrUpdateEventResults(const EventResults& er) {
     if (!competitionEvents.contains(er.getEventId())) {
@@ -460,7 +448,7 @@ void SystemSettings::initializeDefaultSettings() {
 
     // 2. 设置系统核心参数
     setAthleteMaxEventsAllowed(3); // 每人最多报3项 (来自原逻辑)
-    setMinParticipantsToHoldEvent(4); // 不足4人的项目将取消 (来自原逻辑)
+    // 移除setMinParticipantsToHoldEvent设置，这个逻辑将由具体的计分规则决定
 
     // 3. 添加默认的复合计分规则（ID为1）
     ScoreRule::resetNextId(1); // 确保第一个规则的ID为1
@@ -496,6 +484,7 @@ void SystemSettings::initializeDefaultSettings() {
     std::cout << "系统默认规则（ID=1）初始化完成，包含两个子规则：" << std::endl;
     std::cout << " - " << subRule1->getDescription() << std::endl;
     std::cout << " - " << subRule2->getDescription() << std::endl;
+    std::cout << " - 注意：不足4人的项目将被自动取消" << std::endl;  // 添加说明，最小人数限制现在由规则决定
 
     std::cout << "系统默认核心设置（计分规则、参数）初始化完成。" << std::endl;
     std::cout << "提示：示例单位、运动员、比赛项目需通过 '导入示例数据' 选项加载。" << std::endl;

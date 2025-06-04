@@ -75,6 +75,56 @@ void UIManager::showErrorMessage(const std::string& message) {
     std::cout << "[错误] " << message << std::endl;
 }
 
+// 获取浮点数输入
+double UIManager::getDoubleInput(const std::string& prompt) {
+    double input;
+    std::string inputStr;
+    bool isValid;
+
+    do {
+        isValid = true;
+        std::cout << prompt;
+        std::getline(std::cin, inputStr);
+
+        try {
+            if (inputStr.empty()) {
+                std::cout << "错误: 输入不能为空。请重新输入。" << std::endl;
+                isValid = false;
+                continue;
+            }
+            
+            // 尝试将输入转换为浮点数
+            input = std::stod(inputStr);
+        }
+        catch (const std::invalid_argument&) {
+            std::cout << "错误: 输入必须为有效的浮点数。请重新输入。" << std::endl;
+            isValid = false;
+        }
+        catch (const std::out_of_range&) {
+            std::cout << "错误: 输入超出有效范围。请重新输入。" << std::endl;
+            isValid = false;
+        }
+    } while (!isValid);
+
+    return input;
+}
+
+// 获取带范围校验的浮点数输入
+double UIManager::getDoubleInput(const std::string& prompt, double minVal, double maxVal) {
+    double input;
+    bool isValid;
+
+    do {
+        input = getDoubleInput(prompt);
+        isValid = (input >= minVal && input <= maxVal);
+        
+        if (!isValid) {
+            std::cout << "错误: 输入必须在 " << minVal << " 到 " << maxVal << " 之间。请重新输入。" << std::endl;
+        }
+    } while (!isValid);
+
+    return input;
+}
 
 // --- 菜单显示 ---
 void UIManager::displayMainMenu(const SystemSettings& settings) {
@@ -141,11 +191,12 @@ void UIManager::displaySystemSettingsMenu(const SystemSettings& settings) {
     std::cout << "6. 查看所有运动员" << std::endl;
     std::cout << "7. 添加计分规则" << std::endl;
     std::cout << "8. 查看所有计分规则" << std::endl;
-    std::cout << "9. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
-    std::cout << "10. 设置项目最少举行人数 (当前: " << settings.getMinParticipantsToHoldEvent() << ")" << std::endl;
-    std::cout << "11. 场地管理 (仅未锁定时可维护)" << std::endl;
-    std::cout << "12. 上午/下午时间段设置" << std::endl;
-    std::cout << "13. 赛程生成与查看" << std::endl;
+    std::cout << "9. 添加复合计分规则" << std::endl;
+    std::cout << "10. 管理复合计分规则" << std::endl;
+    std::cout << "11. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
+    std::cout << "12. 场地管理 (仅未锁定时可维护)" << std::endl;
+    std::cout << "13. 上午/下午时间段设置" << std::endl;
+    std::cout << "14. 赛程生成与查看" << std::endl;
     std::cout << "0. 返回主菜单" << std::endl;
 }
 

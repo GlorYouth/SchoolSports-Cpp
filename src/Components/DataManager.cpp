@@ -33,7 +33,6 @@ bool DataManager::backupData(const std::string& filePath) const {
 
     // 备份系统设置参数
     outFile << "AthleteMaxEventsAllowed:" << settings.getAthleteMaxEventsAllowed() << std::endl;
-    outFile << "MinParticipantsToHoldEvent:" << settings.getMinParticipantsToHoldEvent() << std::endl;
 
     // 备份单位
     outFile << "UnitsCount:" << settings.getAllUnits().size() << std::endl;

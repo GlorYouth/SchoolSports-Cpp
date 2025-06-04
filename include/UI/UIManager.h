@@ -42,6 +42,11 @@ public:
 
     // 获取字符串输入
     static std::string getStringInput(const std::string& prompt);
+    
+    // 获取浮点数输入
+    static double getDoubleInput(const std::string& prompt);
+    // 获取带范围校验的浮点数输入
+    static double getDoubleInput(const std::string& prompt, double minVal, double maxVal);
 
     // 等待用户按 Enter 继续
     static void pressEnterToContinue(const std::string& message = "\n按 Enter键 返回上一级菜单...");

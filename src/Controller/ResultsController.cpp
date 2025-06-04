@@ -71,20 +71,7 @@ void ResultsController::handleRecordEventResults() {
         return;
     }
 
-    if (competitionEvent.getParticipantCount() < settings_.getMinParticipantsToHoldEvent()) {
-        UIManager::showMessage("项目 \"" + competitionEvent.getName() + "\" 参赛人数 (" +
-                               std::to_string(competitionEvent.getParticipantCount()) + ") 不足最少要求 (" +
-                               std::to_string(settings_.getMinParticipantsToHoldEvent()) + ")。");
-        if (!competitionEvent.getIsCancelled()) {
-            competitionEvent.setCancelled(true); // 直接修改
-            UIManager::showErrorMessage("项目 \"" + competitionEvent.getName() + "\" 现已自动标记为取消，无法录入成绩。");
-        }
-        return;
-    }
-
-    settings_.clearResultsForEvent(eventId); // 清除旧成绩并调整单位分数
-
-    // 使用新的查找规则机制：先查找规则，再确定适用的子规则
+    // 使用规则的最小参赛人数
     // 默认情况下应该只有一个主规则（ID=1），包含多个子规则
     auto scoreRuleOpt = settings_.getScoreRule(1); // 默认使用ID=1的规则
     if (!scoreRuleOpt) {
@@ -97,11 +84,18 @@ void ResultsController::handleRecordEventResults() {
     const ScoreRule* applicableRule = mainRule.getApplicableRule(competitionEvent.getParticipantCount());
     
     if (!applicableRule || !applicableRule->appliesTo(competitionEvent.getParticipantCount())) {
-        UIManager::showErrorMessage("未找到适用于项目 \"" + competitionEvent.getName() +
-                                    "\" (参赛人数: " + std::to_string(competitionEvent.getParticipantCount()) +
-                                    ") 的计分子规则。请检查规则配置。");
+        // 如果找不到适用的规则，说明参赛人数不足，取消项目
+        UIManager::showMessage("项目 \"" + competitionEvent.getName() + "\" 参赛人数 (" +
+                             std::to_string(competitionEvent.getParticipantCount()) + ") 不满足最低要求 (" +
+                             std::to_string(mainRule.getMinParticipants()) + ")。");
+        if (!competitionEvent.getIsCancelled()) {
+            competitionEvent.setCancelled(true);
+            UIManager::showErrorMessage("项目 \"" + competitionEvent.getName() + "\" 现已自动标记为取消，无法录入成绩。");
+        }
         return;
     }
+
+    settings_.clearResultsForEvent(eventId); // 清除旧成绩并调整单位分数
     
     UIManager::showMessage("应用计分规则: " + applicableRule->getDescription());
 
