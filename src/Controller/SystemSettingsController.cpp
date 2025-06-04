@@ -19,34 +19,85 @@ SystemSettingsController::SystemSettingsController(SystemSettings& settings)
 void SystemSettingsController::manage() {
     int choice;
     do {
-        UIManager::displaySystemSettingsMenu(settings_);
-        choice = UIManager::getIntInput("请输入您的选项: ", 0, 12);
-
-        switch (choice) {
-            case 1: handleAddUnit(); break;
-            case 2: handleViewAllUnits(); break;
-            case 3: handleAddEvent(); break;
-            case 4: handleViewAllEvents(); break;
-            case 5: handleAddAthlete(); break;
-            case 6: handleViewAllAthletes(); break;
-            case 7: handleScoreRuleManagement(); break;
-            case 8: handleSetAthleteMaxEvents(); break;
-            case 9:
-                if (!settings_.isScheduleLocked()) {
-                    handleVenueManagement();
-                } else {
-                    UIManager::showErrorMessage("赛程已锁定，无法维护场地表。");
-                }
-                break;
-            case 10:
-                handleSessionSettings();
-                break;
-            case 11:
-                handleScheduleGeneration();
-                break;
-            case 0: UIManager::showMessage("返回主菜单..."); break;
-            default: UIManager::showErrorMessage("无效选择，请重新输入。"); break;
+        // 获取当前工作流阶段
+        WorkflowStage currentStage = settings_.getCurrentWorkflowStage();
+        
+        // 根据当前阶段显示菜单
+        UIManager::displaySystemSettingsMenu(settings_, currentStage);
+        
+        // 根据不同阶段设置有效的选择范围
+        int maxChoice = 0;
+        switch (currentStage) {
+            case WorkflowStage::SETUP_EVENTS: maxChoice = 7; break;
+            case WorkflowStage::REGISTRATION_OPEN: maxChoice = 8; break;
+            case WorkflowStage::COMPETITION_RUNNING: maxChoice = 4; break;
         }
+        
+        choice = UIManager::getIntInput("请输入您的选项: ", 0, maxChoice);
+        
+        // 处理通用选项（所有阶段都有的）
+        bool handled = true;
+        switch (choice) {
+            case 0: UIManager::showMessage("返回主菜单..."); break;
+            case 1: handleViewAllUnits(); break;
+            case 2: handleViewAllEvents(); break;
+            case 3: handleScoreRuleManagement(); break;
+            default: handled = false; // 不是通用选项，需要按阶段处理
+        }
+        
+        // 如果不是通用选项，则根据当前阶段处理
+        if (!handled) {
+            switch (currentStage) {
+                case WorkflowStage::SETUP_EVENTS:
+                    switch (choice) {
+                        case 4: handleAddUnit(); break;
+                        case 5: handleAddEvent(); break;
+                        case 6: 
+                            if (!settings_.isScheduleLocked()) {
+                                handleVenueManagement();
+                            } else {
+                                UIManager::showErrorMessage("赛程已锁定，场地管理仅可查看。");
+                                handleViewAllVenues();
+                            }
+                            break;
+                        case 7: 
+                            if (!settings_.isScheduleLocked()) {
+                                handleSessionSettings();
+                            } else {
+                                UIManager::showErrorMessage("赛程已锁定，时间段设置仅可查看。");
+                                displaySessionInfo();
+                            }
+                            break;
+                        default: UIManager::showErrorMessage("无效选择，请重新输入。"); break;
+                    }
+                    break;
+                    
+                case WorkflowStage::REGISTRATION_OPEN:
+                    switch (choice) {
+                        case 4: handleAddAthlete(); break;
+                        case 5: handleViewAllAthletes(); break;
+                        case 6: handleSetAthleteMaxEvents(); break;
+                        case 7: 
+                            UIManager::showMessage("场地管理（仅可查看）：");
+                            handleViewAllVenues();
+                            break;
+                        case 8: 
+                            UIManager::showMessage("时间段设置（仅可查看）：");
+                            displaySessionInfo();
+                            break;
+                        default: UIManager::showErrorMessage("无效选择，请重新输入。"); break;
+                    }
+                    break;
+                    
+                case WorkflowStage::COMPETITION_RUNNING:
+                    switch (choice) {
+                        case 4: handleViewAllAthletes(); break;
+                        default: UIManager::showErrorMessage("无效选择，请重新输入。"); break;
+                    }
+                    break;
+            }
+        }
+        
         if (choice != 0) {
             UIManager::pressEnterToContinue();
         }
@@ -423,4 +474,19 @@ void SystemSettingsController::handleScheduleGeneration() {
             UIManager::pressEnterToContinue();
         }
     } while (choice != 0);
+}
+
+// 添加显示会话信息的辅助方法
+void SystemSettingsController::displaySessionInfo() {
+    auto [morningStart, morningEnd] = settings_.getMorningSession();
+    auto [afternoonStart, afternoonEnd] = settings_.getAfternoonSession();
+    
+    UIManager::showMessage("\n当前时间段设置：");
+    UIManager::showMessage("上午时间段: " + morningStart + " - " + morningEnd);
+    UIManager::showMessage("下午时间段: " + afternoonStart + " - " + afternoonEnd);
+}
+
+// 添加查看所有场地的辅助方法
+void SystemSettingsController::handleViewAllVenues() {
+    UIManager::displayVenues(settings_.getAllVenues());
 }

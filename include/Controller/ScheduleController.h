@@ -16,6 +16,7 @@ public:
     void manage(const SystemSettings& settings);
     void handleLockSchedule();    // 移至 public
     void handleUnlockSchedule();  // 移至 public
+    void handleScheduleGeneration();  // 添加新方法用于主菜单中的赛程生成与查看选项
 
 private:
     Schedule& schedule_;

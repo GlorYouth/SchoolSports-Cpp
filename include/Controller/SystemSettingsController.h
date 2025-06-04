@@ -40,6 +40,10 @@ private:
     void handleAddScoreRule(bool isComposite = false);
     void handleViewAllScoreRules();
     void handleManageExistingScoreRule();
+    
+    // 辅助方法
+    void displaySessionInfo(); // 显示当前会话时间设置信息
+    void handleViewAllVenues(); // 查看所有场地
 };
 
 

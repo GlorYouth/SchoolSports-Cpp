@@ -143,7 +143,8 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
             // 选项 1 内部会调用 SystemSettingsController::manage()，其中已有赛程锁定时部分功能禁用的逻辑
             std::cout << "2.  场地管理" << std::endl;             // 指向 SystemSettingsController::handleVenueManagement
             std::cout << "3.  上下午时间段设置" << std::endl;     // 指向 SystemSettingsController::handleSessionSettings
-            std::cout << "4.  完成项目设置并锁定赛程 (进入运动员报名阶段)" << std::endl; // 新的流程控制选项
+            std::cout << "4.  赛程生成与查看" << std::endl;       // 新选项，用于赛程生成和查看
+            std::cout << "5.  完成项目设置并锁定赛程 (进入运动员报名阶段)" << std::endl; // 新的流程控制选项
             break;
         case WorkflowStage::REGISTRATION_OPEN:
             std::cout << "运动员报名" << std::endl;
@@ -156,11 +157,11 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
         case WorkflowStage::COMPETITION_RUNNING:
             std::cout << "比赛与成绩管理" << std::endl;
             std::cout << "--------------------------------------" << std::endl;
-            std::cout << "1.  秩序册管理 (查看/验证)" << std::endl;     // 指向 ScheduleController::manage (主要用于查看)
-            std::cout << "2.  比赛成绩管理 (录入/查看)" << std::endl;     // 指向 ResultsController::manage
-            std::cout << "3.  查看单位总分排名" << std::endl;         // 指向一个专门的统计功能
-            std::cout << "4.  数据备份与恢复" << std::endl;         // 指向 DataManagementController::manage
-            // std::cout << "5.  返回运动员报名阶段 (需谨慎)" << std::endl;
+            std::cout << "1.  系统设置与查询" << std::endl;           // 更改名称，表示此阶段的系统设置菜单是查询为主
+            std::cout << "2.  秩序册管理 (查看/验证)" << std::endl;   // 指向 ScheduleController::manage (主要用于查看)
+            std::cout << "3.  比赛成绩管理 (录入/查看)" << std::endl; // 指向 ResultsController::manage
+            std::cout << "4.  查看单位总分排名" << std::endl;         // 指向一个专门的统计功能
+            std::cout << "5.  数据备份与恢复" << std::endl;           // 指向 DataManagementController::manage
             break;
     }
     std::cout << "--------------------------------------" << std::endl;
@@ -177,23 +178,38 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
     std::cout << "10. 自动测试 (辅助功能)" << std::endl;
     std::cout << "0.  退出系统" << std::endl;
     std::cout << "======================================" << std::endl;
-    // 原有的赛程状态显示可以保留，或者根据新阶段信息调整
-    // std::cout << "当前赛程状态：「" << (settings.isScheduleLocked() ? "已锁定」" : "未锁定」") << std::endl;
 }
 
-void UIManager::displaySystemSettingsMenu(const SystemSettings& settings) {
+void UIManager::displaySystemSettingsMenu(const SystemSettings& settings, WorkflowStage currentStage) {
     std::cout << "\n--- 系统设置管理 ---" << std::endl;
-    std::cout << "1. 添加参赛单位" << std::endl;
-    std::cout << "2. 查看所有单位" << std::endl;
-    std::cout << "3. 添加比赛项目" << std::endl;
-    std::cout << "4. 查看所有项目" << std::endl;
-    std::cout << "5. 添加运动员" << std::endl;
-    std::cout << "6. 查看所有运动员" << std::endl;
-    std::cout << "7. 计分规则管理" << std::endl; // 统一的计分规则管理入口
-    std::cout << "8. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
-    std::cout << "9. 场地管理 (仅未锁定时可维护)" << std::endl;
-    std::cout << "10. 上午/下午时间段设置" << std::endl;
-    std::cout << "11. 赛程生成与查看" << std::endl;
+    
+    // 所有阶段都显示的选项
+    std::cout << "1. 查看所有单位" << std::endl;
+    std::cout << "2. 查看所有项目" << std::endl;
+    std::cout << "3. 计分规则管理" << std::endl;
+    
+    // 阶段1（项目设置）特有的选项
+    if (currentStage == WorkflowStage::SETUP_EVENTS) {
+        std::cout << "4. 添加参赛单位" << std::endl;
+        std::cout << "5. 添加比赛项目" << std::endl;
+        std::cout << "6. 场地管理" << (settings.isScheduleLocked() ? " (已锁定，仅可查看)" : "") << std::endl;
+        std::cout << "7. 上午/下午时间段设置" << (settings.isScheduleLocked() ? " (已锁定，仅可查看)" : "") << std::endl;
+    }
+    
+    // 阶段2（运动员报名）特有的选项
+    if (currentStage == WorkflowStage::REGISTRATION_OPEN) {
+        std::cout << "4. 添加运动员" << std::endl;
+        std::cout << "5. 查看所有运动员" << std::endl;
+        std::cout << "6. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
+        std::cout << "7. 场地管理 (仅可查看)" << std::endl;
+        std::cout << "8. 上午/下午时间段设置 (仅可查看)" << std::endl;
+    }
+    
+    // 阶段3（比赛进行）无额外选项，只显示通用选项
+    if (currentStage == WorkflowStage::COMPETITION_RUNNING) {
+        std::cout << "4. 查看所有运动员" << std::endl;
+    }
+    
     std::cout << "0. 返回主菜单" << std::endl;
 }
 

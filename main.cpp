@@ -165,7 +165,11 @@ int main() {
                             systemSettingsCtrl.handleSessionSettings(); // 该方法内部已有赛程锁定检查
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
-                        case 4: // 完成项目设置并锁定赛程
+                        case 4: // 赛程生成与查看
+                            scheduleCtrl.handleScheduleGeneration();
+                            UIManager::pressEnterToContinue();
+                            choiceHandled = true; break;
+                        case 5: // 完成项目设置并锁定赛程
                             scheduleCtrl.handleLockSchedule(); // 成功则内部会 settings.lockSchedule() 并改阶段
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
@@ -197,17 +201,20 @@ int main() {
 
                 case WorkflowStage::COMPETITION_RUNNING:
                     switch (choice) {
-                        case 1: // 秩序册管理 (查看/验证)
+                        case 1: // 系统设置与查询
+                            systemSettingsCtrl.manage();
+                            choiceHandled = true; break;
+                        case 2: // 秩序册管理 (查看/验证)
                             scheduleCtrl.manage(settings); // scheduleCtrl::manage 内部菜单应考虑当前阶段
                             choiceHandled = true; break;
-                        case 2: // 比赛成绩管理
+                        case 3: // 比赛成绩管理
                             resultsCtrl.manage(); 
                             choiceHandled = true; break;
-                        case 3: // 查看单位总分排名
+                        case 4: // 查看单位总分排名
                             viewUnitStandingsOverall(settings); 
                             UIManager::pressEnterToContinue();
                             choiceHandled = true; break;
-                        case 4: // 数据备份与恢复
+                        case 5: // 数据备份与恢复
                             dataManagementCtrl.manage(); 
                             choiceHandled = true; break;
                         default: break;

@@ -15,6 +15,7 @@
 #include <iomanip>  // 用于 std::setw, std::fixed, std::setprecision
 #include <functional> // 用于 std::reference_wrapper
 #include <set>
+#include "../Components/Workflow.h" // 添加WorkflowStage枚举类型的引用
 
 // 前向声明核心数据结构，避免不必要的头文件依赖
 // 实际项目中，如果 UIManager 需要访问这些类的成员，可能需要包含它们的完整头文件
@@ -60,7 +61,8 @@ public:
 
     // --- 菜单显示 ---
     static void displayMainMenu(const SystemSettings& settings);
-    static void displaySystemSettingsMenu(const SystemSettings& settings);
+    // 根据当前工作流阶段显示不同的系统设置菜单
+    static void displaySystemSettingsMenu(const SystemSettings& settings, WorkflowStage currentStage);
     static void displayRegistrationMenu();
     static void displayScheduleMenu(const SystemSettings& settings);
     static void displayResultsMenu();

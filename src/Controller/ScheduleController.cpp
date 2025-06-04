@@ -108,3 +108,30 @@ void ScheduleController::handleUnlockSchedule() {
     settings_.unlockSchedule();
     UIManager::showSuccessMessage("赛程已成功解锁。");
 }
+
+// 添加新方法，用于主菜单中的赛程生成与查看选项
+void ScheduleController::handleScheduleGeneration() {
+    UIManager::showMessage("\n--- 赛程生成与查看 ---");
+    int choice;
+    do {
+        UIManager::displayScheduleGenerationMenu();
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 2);
+        switch (choice) {
+            case 1:
+                handleGenerateSchedule();
+                break;
+            case 2:
+                handleViewSchedule();
+                break;
+            case 0:
+                UIManager::showMessage("返回主菜单...");
+                break;
+            default:
+                UIManager::showErrorMessage("无效选择。");
+                break;
+        }
+        if (choice != 0) {
+            UIManager::pressEnterToContinue();
+        }
+    } while (choice != 0);
+}
