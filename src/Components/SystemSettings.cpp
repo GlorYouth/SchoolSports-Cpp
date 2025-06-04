@@ -9,6 +9,11 @@
 #include <vector>
 #include <map>
 #include "../../include/Components/Result.h"
+#include "../../include/Components/Athlete.h"
+#include "../../include/Components/CompetitionEvent.h"
+#include "../../include/Components/ScoreRule.h"
+// Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
+// #include "../../include/Components/Workflow.h" // 通常不需要重复包含
 
 SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3), minParticipantsToHoldEvent(4) {
     // 构造函数中可以进行一些初始化
@@ -480,10 +485,34 @@ std::vector<utils::RefConst<Athlete>> SystemSettings::getAllAthlesConst() const 
     return refs;
 }
 
-// 赛程锁定相关
-void SystemSettings::lockSchedule() { scheduleLocked = true; }
-void SystemSettings::unlockSchedule() { scheduleLocked = false; }
-bool SystemSettings::isScheduleLocked() const { return scheduleLocked; }
+// --- 赛程锁定与工作流管理实现 ---
+void SystemSettings::lockSchedule() {
+    this->scheduleLocked = true;
+    // 成功锁定赛程后，自动进入运动员报名阶段
+    this->currentWorkflowStage_ = WorkflowStage::REGISTRATION_OPEN;
+    // std::cout << "[SystemSettings] 赛程已锁定，工作流程进入运动员报名阶段。" << std::endl;
+}
+
+void SystemSettings::unlockSchedule() {
+    this->scheduleLocked = false;
+    // 解锁赛程后，自动退回项目设置阶段
+    this->currentWorkflowStage_ = WorkflowStage::SETUP_EVENTS;
+    // std::cout << "[SystemSettings] 赛程已解锁，工作流程退回项目设置阶段。" << std::endl;
+}
+
+bool SystemSettings::isScheduleLocked() const {
+    return this->scheduleLocked;
+}
+
+WorkflowStage SystemSettings::getCurrentWorkflowStage() const {
+    return this->currentWorkflowStage_;
+}
+
+bool SystemSettings::setWorkflowStage(WorkflowStage newStage) {
+    this->currentWorkflowStage_ = newStage;
+    // std::cout << "[SystemSettings] 工作流程阶段已设置为: " << static_cast<int>(newStage) << std::endl;
+    return true;
+}
 
 // --- 场地管理 ---
 bool SystemSettings::addVenue(const std::string& venueName) {

@@ -6,6 +6,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <functional> // For std::function
 
 #include "Unit.h"
 #include "CompetitionEvent.h"
@@ -13,6 +14,7 @@
 #include "ScoreRule.h"
 #include "Result.h"
 #include "../utils.h"
+#include "Workflow.h" // 新增：引入工作流程阶段定义
 
 // 系统设置类，负责管理全局配置信息
 /**
@@ -42,6 +44,7 @@ private:
     std::string morningSessionEnd = "12:00";        ///< 上午比赛时间段的默认结束时间。
     std::string afternoonSessionStart = "14:00";    ///< 下午比赛时间段的默认开始时间。
     std::string afternoonSessionEnd = "18:00";      ///< 下午比赛时间段的默认结束时间。
+    WorkflowStage currentWorkflowStage_ = WorkflowStage::SETUP_EVENTS;
 
 public:
     /**
@@ -337,6 +340,10 @@ public:
      * @return 返回一个 std::pair，包含开始时间和结束时间字符串。
      */
     std::pair<std::string, std::string> getAfternoonSession() const;
+
+    // --- 工作流程阶段管理 ---
+    WorkflowStage getCurrentWorkflowStage() const;
+    bool setWorkflowStage(WorkflowStage newStage);
 };
 
 #endif //SYSTEMSETTINGS_H

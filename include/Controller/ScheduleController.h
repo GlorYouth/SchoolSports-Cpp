@@ -14,6 +14,8 @@ class ScheduleController {
 public:
     ScheduleController(Schedule& schedule, SystemSettings& settings);
     void manage(const SystemSettings& settings);
+    void handleLockSchedule();    // 移至 public
+    void handleUnlockSchedule();  // 移至 public
 
 private:
     Schedule& schedule_;
@@ -22,8 +24,9 @@ private:
     void handleGenerateSchedule();
     void handleViewSchedule();
     void handleValidateSchedule();
-    void handleLockSchedule();    // 新增：处理锁定赛程
-    void handleUnlockSchedule();  // 新增：处理解锁赛程
+    // 原私有声明移至 public
+    // void handleLockSchedule();
+    // void handleUnlockSchedule();
 };
 
 
