@@ -13,62 +13,103 @@ Schedule::Schedule(SystemSettings& sysSettings) : settings(sysSettings) {}
 bool Schedule::generateSchedule() {
     std::cout << "正在智能生成秩序册..." << std::endl;
     scheduleEntries.clear();
-    // 1. 收集所有未取消项目，按持续时间降序排序
-    std::vector<CompetitionEvent> events;
+    
+    // 1. 收集所有未取消项目的ID，而不是创建副本
+    std::vector<int> eventIds;
     for (const auto& event : settings.getAllCompetitionEventsConst() | std::views::values) {
         if (!event.get().getIsCancelled()) {
-            events.push_back(event);
+            eventIds.push_back(event.get().getId());
         }
     }
-    std::sort(events.begin(), events.end(), [](utils::RefConst<CompetitionEvent> a, utils::RefConst<CompetitionEvent> b) {
-        return a.get().getDurationMinutes() > b.get().getDurationMinutes();
+    
+    // 按持续时间降序排序项目ID
+    std::ranges::sort(eventIds, [&](int a, int b) {
+        auto eventA = settings.getCompetitionEventConst(a);
+        auto eventB = settings.getCompetitionEventConst(b);
+        if (eventA.has_value() && eventB.has_value()) {
+            return eventA.value().get().getDurationMinutes() > eventB.value().get().getDurationMinutes();
+        }
+        return false; // 如果ID无效，则保持原顺序
     });
+    
     // 2. 获取所有场地
     const auto& venues = settings.getAllVenues();
     if (venues.empty()) {
         std::cout << "错误：场地表为空，请先添加场地。" << std::endl;
         return false;
     }
+    
+    // 将场地转换为可排序的vector，便于轮询分配
+    std::vector<std::string> venueList(venues.begin(), venues.end());
+    
     // 3. 获取上午/下午时间段
     auto [morningStart, morningEnd] = settings.getMorningSession();
     auto [afternoonStart, afternoonEnd] = settings.getAfternoonSession();
+    
     // 辅助函数：时间字符串转分钟
     auto timeToMin = [](const std::string& t) -> int {
         if (t.size() != 5 || t[2] != ':') return -1;
         return std::stoi(t.substr(0,2))*60 + std::stoi(t.substr(3,2));
     };
+    
     int morningStartMin = timeToMin(morningStart), morningEndMin = timeToMin(morningEnd);
     int afternoonStartMin = timeToMin(afternoonStart), afternoonEndMin = timeToMin(afternoonEnd);
     if (morningStartMin < 0 || morningEndMin <= morningStartMin || afternoonStartMin < 0 || afternoonEndMin <= afternoonStartMin) {
         std::cout << "错误：上午/下午时间段设置不合法。" << std::endl;
         return false;
     }
+    
     // 4. 维护每个场地每天的上午/下午已排时间表
     struct Slot { int start, end; };
     using VenueDayKey = std::tuple<std::string, int, bool>; // 场地, 天, isMorning
     std::map<VenueDayKey, std::vector<Slot>> venueSchedule;
     int day = 1;
+    
+    // 新增：记录每个场地的使用次数，用于均衡分配
+    std::map<std::string, int> venueUsageCount;
+    for (const auto& venue : venueList) {
+        venueUsageCount[venue] = 0;
+    }
+
     // 5. 依次为每个项目分配时间
-    for (CompetitionEvent event : events) {
+    for (int eventId : eventIds) {
+        // 获取项目的可修改引用
+        auto eventOpt = settings.getCompetitionEvent(eventId);
+        if (!eventOpt.has_value()) {
+            std::cout << "错误：项目ID " << eventId << " 无效，跳过此项目。" << std::endl;
+            continue;
+        }
+        
+        auto& event = eventOpt.value().get(); // 获取原始项目的引用
         int duration = event.getDurationMinutes();
         bool scheduled = false;
+        
         // 尝试从第1天开始，直到找到可排入的空隙
         for (day = 1; day < 100; ++day) { // 最多排100天
-            for (const auto& venue : venues) {
+            // 对场地进行排序，使用次数少的优先
+            std::sort(venueList.begin(), venueList.end(), [&](const std::string& a, const std::string& b) {
+                return venueUsageCount[a] < venueUsageCount[b];
+            });
+            
+            for (const auto& venue : venueList) {
                 for (int isMorning = 0; isMorning <= 1; ++isMorning) {
                     int sessionStart = isMorning ? morningStartMin : afternoonStartMin;
                     int sessionEnd = isMorning ? morningEndMin : afternoonEndMin;
                     auto& slots = venueSchedule[{venue, day, isMorning}];
+                    
                     // 查找该场地该天该时段的可用空隙
                     int lastEnd = sessionStart;
                     bool found = false;
+                    
                     // 按已排slot排序
-                    std::sort(slots.begin(), slots.end(), [](const Slot& a, const Slot& b){ return a.start < b.start; });
-                    for (const auto& slot : slots) {
-                        if (slot.start - lastEnd >= duration) {
+                    std::ranges::sort(slots, [](const Slot& a, const Slot& b){ return a.start < b.start; });
+                    
+                    for (const auto& [start, end] : slots) {
+                        if (start - lastEnd >= duration) {
                             // 找到空隙
                             int s = lastEnd, e = lastEnd + duration;
-                            // 分配
+                            
+                            // 分配 - 现在修改的是原始对象
                             event.setVenue(venue);
                             char bufS[6], bufE[6];
                             snprintf(bufS, 6, "%02d:%02d", s/60, s%60);
@@ -76,22 +117,33 @@ bool Schedule::generateSchedule() {
                             event.setStartTime(bufS);
                             event.setEndTime(bufE);
                             slots.push_back({s, e});
+                            
+                            // 更新场地使用计数
+                            venueUsageCount[venue]++;
+                            
                             // 记录到赛程表
                             ScheduleEntry entry;
-                            entry.eventId = event.getId();
+                            entry.eventId = eventId;
                             entry.venue = venue;
                             entry.startTime = bufS;
                             entry.endTime = bufE;
                             scheduleEntries.push_back(entry);
+                            
+                            std::cout << "项目[" << event.getName() << "] 安排在 场地[" << venue 
+                                      << "] 时间[" << bufS << "-" << bufE << "]" << std::endl;
+                            
                             found = true;
                             scheduled = true;
                             break;
                         }
-                        lastEnd = slot.end;
+                        lastEnd = end;
                     }
+                    
                     // 检查最后一个空隙
                     if (!found && sessionEnd - lastEnd >= duration) {
                         int s = lastEnd, e = lastEnd + duration;
+                        
+                        // 修改原始对象
                         event.setVenue(venue);
                         char bufS[6], bufE[6];
                         snprintf(bufS, 6, "%02d:%02d", s/60, s%60);
@@ -99,26 +151,43 @@ bool Schedule::generateSchedule() {
                         event.setStartTime(bufS);
                         event.setEndTime(bufE);
                         slots.push_back({s, e});
+                        
+                        // 更新场地使用计数
+                        venueUsageCount[venue]++;
+                        
                         ScheduleEntry entry;
-                        entry.eventId = event.getId();
+                        entry.eventId = eventId;
                         entry.venue = venue;
                         entry.startTime = bufS;
                         entry.endTime = bufE;
                         scheduleEntries.push_back(entry);
+                        
+                        std::cout << "项目[" << event.getName() << "] 安排在 场地[" << venue 
+                                  << "] 时间[" << bufS << "-" << bufE << "]" << std::endl;
+                        
                         scheduled = true;
                         break;
                     }
+                    
                     if (scheduled) break;
                 }
                 if (scheduled) break;
             }
             if (scheduled) break;
         }
+        
         if (!scheduled) {
             std::cout << "错误：项目[" << event.getName() << "]无法排入赛程，请检查场地和时间段设置。" << std::endl;
             return false;
         }
     }
+    
+    // 打印场地使用情况统计
+    std::cout << "场地使用统计：" << std::endl;
+    for (const auto& [venue, count] : venueUsageCount) {
+        std::cout << "场地[" << venue << "] 使用 " << count << " 次" << std::endl;
+    }
+    
     std::cout << "赛程智能生成成功！共安排" << scheduleEntries.size() << "个项目。" << std::endl;
     return true;
 }

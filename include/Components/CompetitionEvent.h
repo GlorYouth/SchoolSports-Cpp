@@ -189,12 +189,12 @@ public:
      * @brief 获取项目的计划开始时间。
      * @return 返回开始时间字符串。
      */
-    std::string getStartTime() const;
+    [[nodiscard]] std::string getStartTime() const;
     /**
      * @brief 获取项目的计划结束时间。
      * @return 返回结束时间字符串。
      */
-    std::string getEndTime() const;
+    [[nodiscard]] std::string getEndTime() const;
 };
 
 #endif //COMPETITIONEVENT_H
