@@ -13,6 +13,13 @@
 // 前向声明
 class CompetitionEvent;
 
+/**
+ * @brief 代表一名运动员。
+ *
+ * Athlete 类存储运动员的个人信息，如ID、姓名、性别、所属单位ID，
+ * 以及该运动员已报名参加的比赛项目ID列表。
+ * ID 由静态原子计数器自动生成，保证唯一性。
+ */
 class Athlete {
 private:
     static std::atomic<int> nextId; // 用于生成唯一的运动员ID
@@ -24,38 +31,96 @@ private:
     // 运动员个人总得分可以在需要时计算，或在此处添加字段
 
 public:
+    /**
+     * @brief Athlete 类的构造函数。
+     * @param name 运动员姓名。
+     * @param gender 运动员性别 (Gender::MALE 或 Gender::FEMALE)。
+     * @param unitId 运动员所属单位的ID。
+     */
     Athlete(std::string  name, Gender gender, int unitId);
 
-    // 获取运动员ID
+    /**
+     * @brief 获取运动员的唯一ID。
+     * @return 返回运动员ID。
+     */
     [[nodiscard]] int getId() const;
 
-    // 获取姓名
+    /**
+     * @brief 获取运动员的姓名。
+     * @return 返回运动员姓名。
+     */
     [[nodiscard]] std::string getName() const;
-    // 设置姓名
+
+    /**
+     * @brief 设置运动员的姓名。
+     * @param name 新的运动员姓名。
+     */
     void setName(const std::string& name);
 
-    // 获取性别
+    /**
+     * @brief 获取运动员的性别。
+     * @return 返回运动员性别 (Gender枚举类型)。
+     */
     [[nodiscard]] Gender getGender() const;
-    // 设置性别
+
+    /**
+     * @brief 设置运动员的性别。
+     * @param gender 新的运动员性别 (Gender枚举类型)。
+     */
     void setGender(Gender gender);
 
-    // 获取所属单位ID
+    /**
+     * @brief 获取运动员所属单位的ID。
+     * @return 返回所属单位ID。
+     */
     [[nodiscard]] int getUnitId() const;
-    // 设置所属单位ID (通常在创建时指定，不轻易修改)
+
+    /**
+     * @brief 设置运动员所属单位的ID。
+     * @param unitId 新的所属单位ID。
+     * @note 通常在创建运动员对象时指定单位ID，一般不轻易修改。
+     */
     void setUnitId(int unitId);
 
-    // 报名参加项目 (只记录项目ID)
+    /**
+     * @brief 为运动员报名参加一个比赛项目。
+     * @param eventId 要报名的比赛项目ID。
+     * @param maxEventsAllowed 允许运动员报名的最大项目数。
+     * @return 如果报名成功（未超过最大项目数限制且未重复报名），返回 true；否则返回 false。
+     */
     bool registerForEvent(int eventId, int maxEventsAllowed);
-    // 取消报名项目
+
+    /**
+     * @brief 为运动员取消报名一个比赛项目。
+     * @param eventId 要取消报名的比赛项目ID。
+     * @return 如果找到并成功取消报名，返回 true；否则返回 false。
+     */
     bool unregisterFromEvent(int eventId);
-    // 获取已报名项目ID列表
+
+    /**
+     * @brief 获取运动员已报名参加的所有比赛项目的ID列表。
+     * @return 返回一个包含比赛项目ID的常量vector引用。
+     */
     [[nodiscard]] const std::vector<int>& getRegisteredEventIds() const;
-    // 检查是否已报名某项目
+
+    /**
+     * @brief 检查运动员是否已报名参加指定的比赛项目。
+     * @param eventId 要检查的比赛项目ID。
+     * @return 如果已报名，返回 true；否则返回 false。
+     */
     [[nodiscard]] bool isRegisteredForEvent(int eventId) const;
-    // 获取已报名项目数量
+
+    /**
+     * @brief 获取运动员已报名参加的比赛项目数量。
+     * @return 返回已报名项目的数量。
+     */
     [[nodiscard]] int getRegisteredEventsCount() const;
 
-    // 新增：重置静态ID计数器的方法，用于测试
+    /**
+     * @brief 重置用于生成下一个运动员ID的静态计数器。
+     * @param startId 可选参数，指定ID重新开始的初始值，默认为1。
+     * @note 主要用于测试目的，以确保每次测试时ID的生成是可预测的。
+     */
     static void resetNextId(int startId = 1);
 };
 
