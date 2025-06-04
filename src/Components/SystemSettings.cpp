@@ -231,8 +231,20 @@ void SystemSettings::clearCompetitionEvents() {
 
 // --- 计分规则管理 ---
 bool SystemSettings::addScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores) {
-    ScoreRule newRule(desc, minP, maxP, ranks, scores);
-    scoreRules.insert({newRule.getId(), newRule});
+    ScoreRule rule(desc, minP, maxP, ranks, scores);
+    int ruleId = rule.getId();
+    scoreRules.emplace(ruleId, std::move(rule));
+    return true; // 目前实现总是成功，未来可能扩展验证等功能
+}
+
+bool SystemSettings::addCustomScoreRule(ScoreRule* rule) {
+    if (!rule) {
+        return false; // 空指针检查
+    }
+    
+    int ruleId = rule->getId();
+    scoreRules.emplace(ruleId, std::move(*rule)); // 移动构造进map
+    delete rule; // 删除原对象，因为已经被移动到map中
     return true;
 }
 

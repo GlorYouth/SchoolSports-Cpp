@@ -16,15 +16,15 @@ class SystemSettingsController {
 public:
     SystemSettingsController(SystemSettings& settings);
     void manage(); // 系统设置管理主循环
-    // 场馆管理相关
+    // 场地管理功能
     void handleVenueManagement();
-    // 管理上午/下午时段配置
+    // 上午下午/时间段设置
     void handleSessionSettings();
-    // 管理赛程生成
+    // 秩序册生成功能
     void handleScheduleGeneration();
 
 private:
-    SystemSettings& settings_; // 管理系统设置对象
+    SystemSettings& settings_; // 操作系统设置对象
 
     // --- 子菜单对应的处理函数 ---
     void handleAddUnit() const;
@@ -33,13 +33,13 @@ private:
     void handleViewAllEvents();
     void handleAddAthlete();
     void handleViewAllAthletes();
-    void handleAddScoreRule();
-    void handleViewAllScoreRules();
     void handleSetAthleteMaxEvents();
     
-    // 新增：处理复合规则的添加和管理
-    void handleAddCompositeScoreRule();
-    void handleManageCompositeScoreRule();
+    // 重构后的计分规则统一管理函数
+    void handleScoreRuleManagement();
+    void handleAddScoreRule(bool isComposite = false);
+    void handleViewAllScoreRules();
+    void handleManageExistingScoreRule();
 };
 
 

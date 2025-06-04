@@ -189,14 +189,11 @@ void UIManager::displaySystemSettingsMenu(const SystemSettings& settings) {
     std::cout << "4. 查看所有项目" << std::endl;
     std::cout << "5. 添加运动员" << std::endl;
     std::cout << "6. 查看所有运动员" << std::endl;
-    std::cout << "7. 添加计分规则" << std::endl;
-    std::cout << "8. 查看所有计分规则" << std::endl;
-    std::cout << "9. 添加复合计分规则" << std::endl;
-    std::cout << "10. 管理复合计分规则" << std::endl;
-    std::cout << "11. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
-    std::cout << "12. 场地管理 (仅未锁定时可维护)" << std::endl;
-    std::cout << "13. 上午/下午时间段设置" << std::endl;
-    std::cout << "14. 赛程生成与查看" << std::endl;
+    std::cout << "7. 计分规则管理" << std::endl; // 统一的计分规则管理入口
+    std::cout << "8. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
+    std::cout << "9. 场地管理 (仅未锁定时可维护)" << std::endl;
+    std::cout << "10. 上午/下午时间段设置" << std::endl;
+    std::cout << "11. 赛程生成与查看" << std::endl;
     std::cout << "0. 返回主菜单" << std::endl;
 }
 
@@ -272,6 +269,15 @@ void UIManager::displayScheduleGenerationMenu() {
     std::cout << "0. 返回上一级菜单" << std::endl;
 }
 
+// 新增：计分规则管理菜单
+void UIManager::displayScoreRuleManagementMenu() {
+    std::cout << "\n--- 计分规则管理 ---" << std::endl;
+    std::cout << "1. 添加普通计分规则" << std::endl;
+    std::cout << "2. 添加复合计分规则" << std::endl;
+    std::cout << "3. 查看所有计分规则" << std::endl;
+    std::cout << "4. 管理已有计分规则" << std::endl;
+    std::cout << "0. 返回上一级菜单" << std::endl;
+}
 
 // --- 数据列表显示 ---
 void UIManager::displayUnits(const std::vector<utils::RefConst<Unit>>& units) {

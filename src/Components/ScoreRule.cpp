@@ -8,9 +8,9 @@
 
 std::atomic<int> ScoreRule::nextId(1); // 初始化静态成员, ID从1开始
 
-ScoreRule::ScoreRule(std::string  desc, int minP, int maxP, int ranks, const std::map<int, double>& scores)
+ScoreRule::ScoreRule(std::string desc, int minP, int maxP, int ranks, const std::map<int, double>& scores, bool isComposite)
     : description(std::move(desc)), minParticipants(minP), maxParticipants(maxP), ranksToAward(ranks), 
-      scoresForRanks(scores), isCompositeRule(false) {
+      scoresForRanks(scores), isCompositeRule(isComposite) {
     id = nextId++; // 分配唯一ID
 }
 
@@ -93,4 +93,12 @@ const std::map<int, double>& ScoreRule::getAllScoresForRanks() const {
 // 实现静态方法：重置ID计数器
 void ScoreRule::resetNextId(int startId) {
     nextId.store(startId);
+}
+
+// 实现创建复合规则的静态工厂方法
+ScoreRule* ScoreRule::createCompositeRule(const std::string& desc, int minP, int maxP) {
+    // 创建一个空的分数映射表，因为复合规则本身不直接使用分数
+    std::map<int, double> emptyScores;
+    // 创建并返回一个复合规则，最后参数true表示这是一个复合规则
+    return new ScoreRule(desc, minP, maxP, 0, emptyScores, true);
 }

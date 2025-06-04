@@ -11,14 +11,14 @@
 #include <vector> // 用于存储子规则
 
 /**
- * @brief 定义了比赛项目的计分规则。
+ * @brief 处理比赛项目的计分规则
  *
- * ScoreRule 类封装了一条计分规则，包括规则的描述、适用的参赛人数范围、
- * 录取的名次数以及每个名次对应的具体分数。
+ * ScoreRule 封装了一个计分规则，包含适用条件（参赛人数范围）、
+ * 录取名次数，以及每个名次对应的具体得分。
  * ID 由静态原子计数器自动生成，保证唯一性。
  * 
- * 修改说明：增加了子规则支持，一个主规则ID可以包含多个子规则，
- * 系统会根据参赛人数自动选择适用的子规则。
+ * 实现了复合模式，一个规则ID可以包含多个子规则，
+ * 系统会根据参赛人数自动选择最适用的子规则。
  */
 class ScoreRule {
 private:
@@ -36,14 +36,16 @@ private:
 
 public:
     /**
-     * @brief ScoreRule 类的构造函数。
-     * @param desc 规则的文字描述。
-     * @param minP 适用此规则的最小参赛人数（含）。
-     * @param maxP 适用此规则的最大参赛人数（含）。若为-1，表示无人数上限。
-     * @param ranks 计划奖励的名次数。
-     * @param scores 一个map，键为名次（int），值为对应的分数（double）。
+     * @brief ScoreRule 类的构造函数
+     * @param desc 规则的文字描述
+     * @param minP 适用此规则的最小参赛人数（含）
+     * @param maxP 适用此规则的最大参赛人数（含）。若为-1，表示无人数上限
+     * @param ranks 计划奖励的名次数
+     * @param scores 一个map，键为名次（int），值为对应的分数（double）
+     * @param isComposite 是否创建为复合规则，默认为false
      */
-    ScoreRule(std::string  desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
+    ScoreRule(std::string desc, int minP, int maxP, int ranks, 
+              const std::map<int, double>& scores, bool isComposite = false);
     
     /**
      * @brief 析构函数，负责清理子规则占用的内存
@@ -51,60 +53,60 @@ public:
     ~ScoreRule();
 
     /**
-     * @brief 获取计分规则的唯一ID。
-     * @return 返回规则ID。
+     * @brief 获取计分规则的唯一ID
+     * @return 返回规则ID
      */
     [[nodiscard]] int getId() const;
     /**
-     * @brief 获取计分规则的文字描述。
-     * @return 返回规则描述字符串。
+     * @brief 获取计分规则的文字描述
+     * @return 返回规则描述字符串
      */
     [[nodiscard]] std::string getDescription() const;
 
     /**
-     * @brief 检查此计分规则是否适用于给定的参赛人数。
-     * @param participantCount 实际参赛人数。
-     * @return 如果适用，返回 true；否则返回 false。
+     * @brief 检测计分规则是否适用于给定的参赛人数
+     * @param participantCount 实际参赛人数
+     * @return 如果适用，返回 true；否则返回 false
      */
     [[nodiscard]] bool appliesTo(int participantCount) const;
     
     /**
-     * @brief 根据参赛人数获取适用的子规则或规则本身
+     * @brief 根据参赛人数获取适用的子规则或自身
      * @param participantCount 实际参赛人数
-     * @return 返回适用的规则指针，不会返回nullptr（若无匹配子规则则返回this）
+     * @return 返回适用的规则指针，不会返回nullptr（如无匹配子规则则返回this）
      */
     [[nodiscard]] const ScoreRule* getApplicableRule(int participantCount) const;
 
     /**
-     * @brief 获取此规则下计划奖励的名次数。
-     * @return 返回录取名次数。
+     * @brief 获取此规则计划录取的名次数量
+     * @return 返回录取名次数
      */
     [[nodiscard]] int getRanksToAward() const;
     /**
-     * @brief 根据指定的名次获取对应的分数。
-     * @param rank 要查询的名次。
-     * @return 如果名次在奖励范围内，则返回对应的分数；否则通常返回0或根据具体实现处理。
+     * @brief 根据指定名次获取对应的分数值
+     * @param rank 要查询的名次
+     * @return 如果名次在奖励范围内，则返回对应的分数；否则通常返回0
      */
     [[nodiscard]] double getScoreForRank(int rank) const;
     /**
-     * @brief 获取此规则下所有名次及其对应分数的完整映射。
-     * @return 返回一个包含名次到分数映射的常量map引用。
+     * @brief 获取此规则所有名次和对应分数的映射表
+     * @return 返回一个名次到分数映射的常量map引用
      */
     [[nodiscard]] const std::map<int, double>& getAllScoresForRanks() const;
     /**
-     * @brief 获取适用此规则的最小参赛人数。
-     * @return 返回最小参赛人数。
+     * @brief 获取适用此规则的最小参赛人数
+     * @return 返回最小参赛人数
      */
     [[nodiscard]] int getMinParticipants() const { return minParticipants; }
     /**
-     * @brief 获取适用此规则的最大参赛人数。
-     * @return 返回最大参赛人数（-1表示无上限）。
+     * @brief 获取适用此规则的最大参赛人数
+     * @return 返回最大参赛人数（-1表示无上限）
      */
     [[nodiscard]] int getMaxParticipants() const { return maxParticipants; }
     
     /**
      * @brief 添加一个子规则
-     * @param subRule 要添加的子规则指针（将由本对象负责释放内存）
+     * @param subRule 要添加的子规则指针（由本类负责释放内存）
      */
     void addSubRule(ScoreRule* subRule);
     
@@ -121,10 +123,19 @@ public:
     [[nodiscard]] const std::vector<ScoreRule*>& getSubRules() const { return subRules; }
 
     /**
-     * @brief 重置用于生成下一个计分规则ID的静态计数器。
-     * @param startId 可选参数，指定ID重新开始的初始值，默认为1。
-     * @note 主要用于测试目的，以确保每次测试时ID的生成是可预测的。
+     * @brief 重置计数器，生成新的一组计分规则ID的静态方法
+     * @param startId 可选，指定从指定ID重新开始的初始值，默认为1
+     * @note 主要用于测试目的，确保每次测试时ID序列是可预测的
      */
     static void resetNextId(int startId = 1);
+    
+    /**
+     * @brief 创建复合规则的静态工厂方法
+     * @param desc 复合规则的描述
+     * @param minP 最小参赛人数
+     * @param maxP 最大参赛人数
+     * @return 返回创建的复合规则指针（由调用者负责管理内存）
+     */
+    static ScoreRule* createCompositeRule(const std::string& desc, int minP, int maxP);
 };
 #endif //SCORERULE_H

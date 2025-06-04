@@ -20,7 +20,7 @@ void SystemSettingsController::manage() {
     int choice;
     do {
         UIManager::displaySystemSettingsMenu(settings_);
-        choice = UIManager::getIntInput("请输入您的选项: ", 0, 14);
+        choice = UIManager::getIntInput("请输入您的选项: ", 0, 12);
 
         switch (choice) {
             case 1: handleAddUnit(); break;
@@ -29,22 +29,19 @@ void SystemSettingsController::manage() {
             case 4: handleViewAllEvents(); break;
             case 5: handleAddAthlete(); break;
             case 6: handleViewAllAthletes(); break;
-            case 7: handleAddScoreRule(); break;
-            case 8: handleViewAllScoreRules(); break;
-            case 9: handleAddCompositeScoreRule(); break;
-            case 10: handleManageCompositeScoreRule(); break;
-            case 11: handleSetAthleteMaxEvents(); break;
-            case 12:
+            case 7: handleScoreRuleManagement(); break;
+            case 8: handleSetAthleteMaxEvents(); break;
+            case 9:
                 if (!settings_.isScheduleLocked()) {
                     handleVenueManagement();
                 } else {
                     UIManager::showErrorMessage("赛程已锁定，无法维护场地表。");
                 }
                 break;
-            case 13:
+            case 10:
                 handleSessionSettings();
                 break;
-            case 14:
+            case 11:
                 handleScheduleGeneration();
                 break;
             case 0: UIManager::showMessage("返回主菜单..."); break;
@@ -129,31 +126,187 @@ void SystemSettingsController::handleViewAllAthletes() {
     UIManager::displayAthletes(athletes, settings_);
 }
 
-void SystemSettingsController::handleAddScoreRule() {
-    std::string desc = UIManager::getStringInput("请输入规则描述 (例如: 超过6人取前5名): ");
+void SystemSettingsController::handleScoreRuleManagement() {
+    int choice;
+    do {
+        UIManager::displayScoreRuleManagementMenu();
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 4);
+        
+        switch (choice) {
+            case 1: handleAddScoreRule(false); break; // 添加普通规则
+            case 2: handleAddScoreRule(true); break;  // 添加复合规则
+            case 3: handleViewAllScoreRules(); break;
+            case 4: handleManageExistingScoreRule(); break;
+            case 0: UIManager::showMessage("返回上级菜单..."); break;
+            default: UIManager::showErrorMessage("无效选择。"); break;
+        }
+        
+        if (choice != 0) {
+            UIManager::pressEnterToContinue();
+        }
+    } while (choice != 0);
+}
+
+void SystemSettingsController::handleAddScoreRule(bool isComposite) {
+    if (isComposite) {
+        UIManager::showMessage("\n--- 添加复合计分规则 ---");
+        UIManager::showMessage("复合规则可以包含多个子规则，系统将根据参赛人数自动选择适用的子规则。");
+    } else {
+        UIManager::showMessage("\n--- 添加普通计分规则 ---");
+    }
+    
+    std::string desc = UIManager::getStringInput("请输入规则描述: ");
     int minP = UIManager::getIntInput("请输入适用此规则的最小参赛人数: ");
     int maxP = UIManager::getIntInput("请输入适用此规则的最大参赛人数 (-1表示无上限): ");
-    int ranks = UIManager::getIntInput("请输入录取名次数: ", 1, 100); // 假设名次数至少为1，上限100
-
-    std::map<int, double> scoresMap;
-    for (int i = 1; i <= ranks; ++i) {
-        double scoreVal = UIManager::getIntInput("请输入第 " + std::to_string(i) + " 名的分数: "); // 假设分数也是整数或可转为double
-        scoresMap[i] = scoreVal;
-    }
-
-    if (settings_.addScoreRule(desc, minP, maxP, ranks, scoresMap)) {
-        UIManager::showSuccessMessage("计分规则添加成功。");
+    
+    if (isComposite) {
+        auto* mainRule = ScoreRule::createCompositeRule(desc, minP, maxP);
+        int ruleId = mainRule->getId();
+        
+        bool added = settings_.addCustomScoreRule(mainRule);
+        if (!added) {
+            UIManager::showErrorMessage("添加复合规则失败。");
+            delete mainRule;
+            return;
+        }
+        
+        int subRuleCount = UIManager::getIntInput("请输入要添加的子规则数量: ", 1, 10);
+        for (int i = 1; i <= subRuleCount; ++i) {
+            UIManager::showMessage("\n--- 添加子规则 " + std::to_string(i) + " ---");
+            
+            std::string subDesc = UIManager::getStringInput("请输入子规则描述: ");
+            int subMinP = UIManager::getIntInput("请输入子规则适用的最小参赛人数: ");
+            int subMaxP = UIManager::getIntInput("请输入子规则适用的最大参赛人数 (-1表示无上限): ");
+            int ranks = UIManager::getIntInput("请输入录取名次数: ", 1, 100);
+            
+            std::map<int, double> scoresMap;
+            for (int j = 1; j <= ranks; ++j) {
+                double scoreVal = UIManager::getDoubleInput("请输入第 " + std::to_string(j) + " 名的分数: ");
+                scoresMap[j] = scoreVal;
+            }
+            
+            auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
+            
+            auto mainRuleOpt = settings_.getScoreRule(ruleId);
+            if (mainRuleOpt.has_value()) {
+                ScoreRule& ruleRef = mainRuleOpt.value().get();
+                ruleRef.addSubRule(subRule);
+                UIManager::showSuccessMessage("子规则 " + std::to_string(i) + " 添加成功。");
+            } else {
+                UIManager::showErrorMessage("获取主规则失败，无法添加子规则。");
+                delete subRule;
+                return;
+            }
+        }
+        
+        UIManager::showSuccessMessage("复合规则创建成功，ID为 " + std::to_string(ruleId) + "，包含 " + 
+                                     std::to_string(subRuleCount) + " 个子规则。");
     } else {
-        UIManager::showErrorMessage("计分规则添加失败。");
+        int ranks = UIManager::getIntInput("请输入录取名次数: ", 1, 100);
+        std::map<int, double> scoresMap;
+        for (int i = 1; i <= ranks; ++i) {
+            double scoreVal = UIManager::getDoubleInput("请输入第 " + std::to_string(i) + " 名的分数: ");
+            scoresMap[i] = scoreVal;
+        }
+        
+        if (settings_.addScoreRule(desc, minP, maxP, ranks, scoresMap)) {
+            UIManager::showSuccessMessage("计分规则添加成功。");
+        } else {
+            UIManager::showErrorMessage("计分规则添加失败。");
+        }
     }
 }
 
 void SystemSettingsController::handleViewAllScoreRules() {
-     std::vector<utils::RefConst<ScoreRule>> rules;
-     for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
+    UIManager::showMessage("\n--- 所有计分规则 ---");
+    std::vector<utils::RefConst<ScoreRule>> rules;
+    for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
         rules.push_back(std::cref(val));
     }
+    
+    if (rules.empty()) {
+        UIManager::showMessage("系统中没有任何计分规则。");
+        return;
+    }
+    
     UIManager::displayScoreRules(rules);
+}
+
+void SystemSettingsController::handleManageExistingScoreRule() {
+    UIManager::showMessage("\n--- 管理已有计分规则 ---");
+    
+    handleViewAllScoreRules();
+    
+    int ruleId = UIManager::getIntInput("请输入要管理的规则ID (输入0返回): ");
+    if (ruleId == 0) return;
+    
+    auto ruleOpt = settings_.getScoreRule(ruleId);
+    if (!ruleOpt.has_value()) {
+        UIManager::showErrorMessage("规则ID " + std::to_string(ruleId) + " 不存在。");
+        return;
+    }
+    
+    ScoreRule& rule = ruleOpt.value().get();
+    
+    UIManager::showMessage("\n规则详情:");
+    UIManager::showMessage("ID: " + std::to_string(rule.getId()));
+    UIManager::showMessage("描述: " + rule.getDescription());
+    UIManager::showMessage("适用人数范围: " + std::to_string(rule.getMinParticipants()) + 
+                         " 到 " + (rule.getMaxParticipants() == -1 ? "无上限" : std::to_string(rule.getMaxParticipants())));
+    
+    if (rule.isComposite()) {
+        UIManager::showMessage("\n这是一个复合规则，包含以下子规则:");
+        int idx = 1;
+        for (const auto* subRule : rule.getSubRules()) {
+            UIManager::showMessage("\n子规则 " + std::to_string(idx) + ":");
+            UIManager::showMessage("描述: " + subRule->getDescription());
+            UIManager::showMessage("适用人数: " + std::to_string(subRule->getMinParticipants()) + 
+                                 " 到 " + (subRule->getMaxParticipants() == -1 ? "无上限" : std::to_string(subRule->getMaxParticipants())));
+            
+            UIManager::showMessage("录取名次: " + std::to_string(subRule->getRanksToAward()));
+            UIManager::showMessage("分数分配:");
+            for (const auto& [rank, score] : subRule->getAllScoresForRanks()) {
+                UIManager::showMessage("- 第" + std::to_string(rank) + "名: " + std::to_string(score) + "分");
+            }
+            
+            idx++;
+        }
+        
+        UIManager::showMessage("\n管理选项:");
+        UIManager::showMessage("1. 添加新的子规则");
+        UIManager::showMessage("0. 返回");
+        
+        int option = UIManager::getIntInput("请输入选项: ", 0, 1);
+        if (option == 0) return;
+        
+        if (option == 1) {
+            UIManager::showMessage("\n--- 添加新的子规则 ---");
+            
+            std::string subDesc = UIManager::getStringInput("请输入子规则描述: ");
+            int subMinP = UIManager::getIntInput("请输入子规则适用的最小参赛人数: ");
+            int subMaxP = UIManager::getIntInput("请输入子规则适用的最大参赛人数 (-1表示无上限): ");
+            int ranks = UIManager::getIntInput("请输入录取名次数: ", 1, 100);
+            
+            std::map<int, double> scoresMap;
+            for (int j = 1; j <= ranks; ++j) {
+                double scoreVal = UIManager::getDoubleInput("请输入第 " + std::to_string(j) + " 名的分数: ");
+                scoresMap[j] = scoreVal;
+            }
+            
+            auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
+            rule.addSubRule(subRule);
+            
+            UIManager::showSuccessMessage("新的子规则添加成功。");
+        }
+    } else {
+        UIManager::showMessage("录取名次: " + std::to_string(rule.getRanksToAward()));
+        UIManager::showMessage("分数分配:");
+        for (const auto& [rank, score] : rule.getAllScoresForRanks()) {
+            UIManager::showMessage("- 第" + std::to_string(rank) + "名: " + std::to_string(score) + "分");
+        }
+        
+        UIManager::showMessage("\n普通规则暂不支持更多管理操作。");
+    }
 }
 
 void SystemSettingsController::handleSetAthleteMaxEvents() {
@@ -270,156 +423,4 @@ void SystemSettingsController::handleScheduleGeneration() {
             UIManager::pressEnterToContinue();
         }
     } while (choice != 0);
-}
-
-void SystemSettingsController::handleAddCompositeScoreRule() {
-    UIManager::showMessage("\n--- 添加复合计分规则 ---");
-    UIManager::showMessage("复合规则可以包含多个子规则，系统将根据参赛人数自动选择适用的子规则。");
-    
-    std::string desc = UIManager::getStringInput("请输入复合规则名称 (例如: 通用积分规则): ");
-    int minP = UIManager::getIntInput("请输入此规则适用的最小参赛人数: ");
-    int maxP = UIManager::getIntInput("请输入此规则适用的最大参赛人数 (-1表示无上限): ");
-    
-    // 主规则不直接使用分数，分数由子规则定义
-    std::map<int, double> dummyScores;
-    
-    // 创建主规则
-    bool mainRuleAdded = settings_.addScoreRule(desc, minP, maxP, 0, dummyScores);
-    if (!mainRuleAdded) {
-        UIManager::showErrorMessage("添加复合规则失败。");
-        return;
-    }
-    
-    // 获取刚刚添加的规则ID
-    int mainRuleId = -1;
-    for (const auto& pair : settings_.getAllScoreRules()) {
-        if (pair.second.getDescription() == desc) {
-            mainRuleId = pair.first;
-            break;
-        }
-    }
-    
-    if (mainRuleId == -1) {
-        UIManager::showErrorMessage("无法获取刚刚创建的复合规则ID。");
-        return;
-    }
-    
-    auto mainRuleOpt = settings_.getScoreRule(mainRuleId);
-    if (!mainRuleOpt.has_value()) {
-        UIManager::showErrorMessage("无法获取刚刚创建的复合规则。");
-        return;
-    }
-    
-    ScoreRule& mainRule = mainRuleOpt.value().get();
-    
-    // 添加子规则
-    int subRuleCount = UIManager::getIntInput("请输入要添加的子规则数量: ", 1, 10);
-    for (int i = 1; i <= subRuleCount; ++i) {
-        UIManager::showMessage("\n--- 添加子规则 " + std::to_string(i) + " ---");
-        
-        std::string subDesc = UIManager::getStringInput("请输入子规则描述 (例如: 7人以上取前5名): ");
-        int subMinP = UIManager::getIntInput("请输入子规则适用的最小参赛人数: ");
-        int subMaxP = UIManager::getIntInput("请输入子规则适用的最大参赛人数 (-1表示无上限): ");
-        int ranks = UIManager::getIntInput("请输入录取名次数: ", 1, 100);
-        
-        std::map<int, double> scoresMap;
-        for (int j = 1; j <= ranks; ++j) {
-            double scoreVal = UIManager::getDoubleInput("请输入第 " + std::to_string(j) + " 名的分数: ");
-            scoresMap[j] = scoreVal;
-        }
-        
-        // 创建子规则
-        auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
-        mainRule.addSubRule(subRule);
-        
-        UIManager::showSuccessMessage("子规则 " + std::to_string(i) + " 添加成功。");
-    }
-    
-    UIManager::showSuccessMessage("复合规则创建成功，ID为 " + std::to_string(mainRuleId) + "，包含 " + 
-                                 std::to_string(subRuleCount) + " 个子规则。");
-}
-
-void SystemSettingsController::handleManageCompositeScoreRule() {
-    UIManager::showMessage("\n--- 管理复合计分规则 ---");
-    
-    // 显示所有规则
-    std::vector<utils::RefConst<ScoreRule>> rules;
-    for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
-        rules.push_back(std::cref(val));
-    }
-    
-    if (rules.empty()) {
-        UIManager::showErrorMessage("系统中没有任何计分规则。");
-        return;
-    }
-    
-    UIManager::displayScoreRules(rules);
-    
-    // 选择要管理的规则
-    int ruleId = UIManager::getIntInput("请输入要管理的规则ID (输入0返回): ");
-    if (ruleId == 0) return;
-    
-    auto ruleOpt = settings_.getScoreRule(ruleId);
-    if (!ruleOpt.has_value()) {
-        UIManager::showErrorMessage("规则ID " + std::to_string(ruleId) + " 不存在。");
-        return;
-    }
-    
-    ScoreRule& rule = ruleOpt.value().get();
-    
-    if (!rule.isComposite()) {
-        UIManager::showMessage("规则 \"" + rule.getDescription() + "\" 不是复合规则，无需特别管理。");
-        return;
-    }
-    
-    UIManager::showMessage("\n复合规则: " + rule.getDescription());
-    UIManager::showMessage("适用人数范围: " + std::to_string(rule.getMinParticipants()) + 
-                         " 到 " + (rule.getMaxParticipants() == -1 ? "无上限" : std::to_string(rule.getMaxParticipants())));
-    
-    UIManager::showMessage("\n包含的子规则:");
-    int idx = 1;
-    for (const auto* subRule : rule.getSubRules()) {
-        UIManager::showMessage(std::to_string(idx) + ". " + subRule->getDescription() + 
-                             " (适用人数: " + std::to_string(subRule->getMinParticipants()) + 
-                             " 到 " + (subRule->getMaxParticipants() == -1 ? "无上限" : std::to_string(subRule->getMaxParticipants())) + 
-                             ")");
-        
-        UIManager::showMessage("   录取名次: " + std::to_string(subRule->getRanksToAward()));
-        UIManager::showMessage("   分数分配:");
-        for (const auto& [rank, score] : subRule->getAllScoresForRanks()) {
-            UIManager::showMessage("   - 第" + std::to_string(rank) + "名: " + std::to_string(score) + "分");
-        }
-        
-        idx++;
-    }
-    
-    // 管理选项
-    UIManager::showMessage("\n管理选项:");
-    UIManager::showMessage("1. 添加新的子规则");
-    UIManager::showMessage("0. 返回");
-    
-    int option = UIManager::getIntInput("请输入选项: ", 0, 1);
-    if (option == 0) return;
-    
-    if (option == 1) {
-        // 添加新的子规则
-        UIManager::showMessage("\n--- 添加新的子规则 ---");
-        
-        std::string subDesc = UIManager::getStringInput("请输入子规则描述: ");
-        int subMinP = UIManager::getIntInput("请输入子规则适用的最小参赛人数: ");
-        int subMaxP = UIManager::getIntInput("请输入子规则适用的最大参赛人数 (-1表示无上限): ");
-        int ranks = UIManager::getIntInput("请输入录取名次数: ", 1, 100);
-        
-        std::map<int, double> scoresMap;
-        for (int j = 1; j <= ranks; ++j) {
-            double scoreVal = UIManager::getDoubleInput("请输入第 " + std::to_string(j) + " 名的分数: ");
-            scoresMap[j] = scoreVal;
-        }
-        
-        // 创建并添加子规则
-        auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
-        rule.addSubRule(subRule);
-        
-        UIManager::showSuccessMessage("新的子规则添加成功。");
-    }
 }

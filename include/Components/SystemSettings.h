@@ -180,11 +180,17 @@ public:
      */
     bool addScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
     /**
-     * @brief 根据规则ID获取计分规则对象的可修改引用。
-     * @param ruleId 要查找的规则ID。
-     * @return 如果找到，返回一个包含 ScoreRule 引用的 std::optional；否则返回 std::nullopt。
+     * @brief 添加一个自定义的计分规则对象
+     * @param rule 计分规则对象指针，由SystemSettings接管内存管理
+     * @return 添加成功返回true，否则返回false
      */
-    std::optional<utils::Ref<ScoreRule>> getScoreRule(int ruleId);
+    bool addCustomScoreRule(ScoreRule* rule);
+    /**
+     * @brief 获取指定ID的计分规则对象引用
+     * @param ruleId 规则ID
+     * @return 返回optional，包含规则对象的引用包装
+     */
+    [[nodiscard]] std::optional<utils::Ref<ScoreRule>> getScoreRule(int ruleId);
     /**
      * @brief 根据规则ID获取计分规则对象的常量引用。
      * @param ruleId 要查找的规则ID。

@@ -72,6 +72,8 @@ public:
     static void displaySessionSettingsMenu(const SystemSettings& settings);
     // 新增：赛程生成菜单
     static void displayScheduleGenerationMenu();
+    // 新增：计分规则管理菜单
+    static void displayScoreRuleManagementMenu();
 
 
     // --- 数据列表显示 ---
