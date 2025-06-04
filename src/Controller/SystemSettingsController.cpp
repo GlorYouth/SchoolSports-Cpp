@@ -75,6 +75,10 @@ void SystemSettingsController::handleViewAllUnits() {
 }
 
 void SystemSettingsController::handleAddEvent() {
+    if (settings_.isScheduleLocked()) {
+        UIManager::showErrorMessage("赛程已锁定，无法添加新项目。");
+        return;
+    }
     std::string name = UIManager::getStringInput("请输入项目名称: ");
     EventType eventType = UIManager::getEventTypeInput("请选择项目类型");
     Gender gender = UIManager::getGenderInput("请选择性别要求", true); // true 表示允许不限性别
@@ -205,6 +209,10 @@ void SystemSettingsController::handleVenueManagement() {
 }
 
 void SystemSettingsController::handleSessionSettings() {
+    if (settings_.isScheduleLocked()) {
+        UIManager::showErrorMessage("赛程已锁定，无法修改上下午时间段设置。");
+        return;
+    }
     int choice;
     do {
         UIManager::displaySessionSettingsMenu(settings_);

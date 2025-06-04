@@ -123,12 +123,14 @@ void UIManager::displayRegistrationMenu() {
 }
 
 void UIManager::displayScheduleMenu(const SystemSettings& settings) {
-    std::cout << "\n--- 秩序册管理 ---" << std::endl;
-    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定，禁止修改项目时间/场地" : "未锁定，可编辑项目时间/场地") << std::endl;
-    std::cout << "1. 自动生成秩序册" << std::endl;
+    std::cout << "\n--- 赛程管理 ---" << std::endl;
+    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定 (禁止修改项目时间/场地)" : "未锁定 (可编辑项目时间/场地)") << std::endl;
+    std::cout << "1. 自动编排赛程" << std::endl;
     std::cout << "2. 查看秩序册" << std::endl;
-    std::cout << "3. 验证秩序册 (占位符)" << std::endl;
-    std::cout << "0. 返回主菜单" << std::endl;
+    std::cout << "3. 验证赛程 (占位符)" << std::endl;
+    std::cout << "4. 锁定赛程" << std::endl;
+    std::cout << "5. 解锁赛程" << std::endl;
+    std::cout << "0. 返回上级菜单" << std::endl;
 }
 
 void UIManager::displayResultsMenu() {

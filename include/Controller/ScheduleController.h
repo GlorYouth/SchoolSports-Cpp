@@ -22,6 +22,8 @@ private:
     void handleGenerateSchedule();
     void handleViewSchedule();
     void handleValidateSchedule();
+    void handleLockSchedule();    // 新增：处理锁定赛程
+    void handleUnlockSchedule();  // 新增：处理解锁赛程
 };
 
 

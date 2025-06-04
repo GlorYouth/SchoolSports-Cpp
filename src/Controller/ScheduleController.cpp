@@ -10,13 +10,15 @@ ScheduleController::ScheduleController(Schedule& schedule, SystemSettings& setti
 void ScheduleController::manage(const SystemSettings& settings) {
     int choice;
     do {
-        UIManager::displayScheduleMenu(settings);
-        choice = UIManager::getIntInput("请输入您的选择: ", 0, 3);
+        UIManager::displayScheduleMenu(settings_);
+        choice = UIManager::getIntInput("请输入您的选择: ", 0, 5);
 
         switch (choice) {
             case 1: handleGenerateSchedule(); break;
             case 2: handleViewSchedule(); break;
             case 3: handleValidateSchedule(); break;
+            case 4: handleLockSchedule(); break;
+            case 5: handleUnlockSchedule(); break;
             case 0: UIManager::showMessage("返回主菜单..."); break;
             default: UIManager::showErrorMessage("无效选择。"); break;
         }
@@ -27,8 +29,12 @@ void ScheduleController::manage(const SystemSettings& settings) {
 }
 
 void ScheduleController::handleGenerateSchedule() {
-    // Schedule::generateSchedule 可能需要 SystemSettings 来获取最终确认的项目和运动员信息
-    // 假设 Schedule 类构造时或 generateSchedule 时传入了 settings_ 的引用
+    if (settings_.isScheduleLocked()) {
+        UIManager::showErrorMessage("赛程已锁定，无法重新生成。如需操作，请先解锁赛程。");
+        return;
+    }
+    // Schedule::generateSchedule 本身需要 SystemSettings 来获取正确配置的项目和场地信息
+    // 在 Schedule 类构造或 generateSchedule 时传入 settings_ 成员即可
     if (schedule_.generateSchedule()) { // 假设 generateSchedule 返回 bool
         UIManager::showSuccessMessage("秩序册已成功生成/更新。");
     } else {
@@ -59,4 +65,46 @@ void ScheduleController::handleValidateSchedule() {
     } else {
         UIManager::showErrorMessage("赛程验证失败 (具体验证逻辑待实现)。");
     }
+}
+
+void ScheduleController::handleLockSchedule() {
+    if (settings_.isScheduleLocked()) {
+        UIManager::showMessage("赛程当前已是锁定状态。");
+        return;
+    }
+
+    // 前置检查：所有未取消的项目是否都有持续时间和场地
+    bool allEventsReady = true;
+    for (const auto& pair : settings_.getAllCompetitionEventsConst()) {
+        const CompetitionEvent& event = pair.second.get();
+        if (!event.getIsCancelled()) {
+            if (event.getDurationMinutes() <= 0) {
+                UIManager::showErrorMessage("项目 \"" + event.getName() + "\" (ID: " + std::to_string(event.getId()) + ") 缺少有效的持续时间。无法锁定赛程。");
+                allEventsReady = false;
+                break;
+            }
+            if (event.getVenue().empty()) {
+                UIManager::showErrorMessage("项目 \"" + event.getName() + "\" (ID: " + std::to_string(event.getId()) + ") 缺少场地信息。无法锁定赛程。");
+                allEventsReady = false;
+                break;
+            }
+        }
+    }
+
+    if (!allEventsReady) {
+        UIManager::showMessage("请先为所有未取消的项目设置有效的持续时间和场地信息后再锁定赛程。");
+        return;
+    }
+
+    settings_.lockSchedule();
+    UIManager::showSuccessMessage("赛程已成功锁定。");
+}
+
+void ScheduleController::handleUnlockSchedule() {
+    if (!settings_.isScheduleLocked()) {
+        UIManager::showMessage("赛程当前并未锁定。");
+        return;
+    }
+    settings_.unlockSchedule();
+    UIManager::showSuccessMessage("赛程已成功解锁。");
 }

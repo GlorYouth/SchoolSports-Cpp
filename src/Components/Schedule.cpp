@@ -6,6 +6,7 @@
 #include <iostream> // 用于打印等
 #include <ranges>
 #include <sstream>
+#include <algorithm> // 为 std::sort 添加此头文件
 
 Schedule::Schedule(SystemSettings& sysSettings) : settings(sysSettings) {}
 
@@ -119,7 +120,6 @@ bool Schedule::generateSchedule() {
         }
     }
     std::cout << "赛程智能生成成功！共安排" << scheduleEntries.size() << "个项目。" << std::endl;
-    settings.lockSchedule();
     return true;
 }
 

@@ -19,7 +19,7 @@ void RegistrationController::manage() {
     int choice;
     do {
         UIManager::displayRegistrationMenu();
-        choice = UIManager::getIntInput("请输入您的选择: ", 0, 5);
+        choice = UIManager::getIntInput("请输入您的选项: ", 0, 5);
 
         switch (choice) {
             case 1: handleRegisterAthleteForEvent(); break;
@@ -124,6 +124,12 @@ void RegistrationController::handleRegisterAthleteForEvent() {
 }
 
 void RegistrationController::handleUnregisterAthleteFromEvent() {
+    // 提示信息，如果赛程已锁定
+    if (settings_.isScheduleLocked()) {
+        UIManager::showMessage("提示：当前赛程已锁定。运动员退赛后，若相关项目因此人数不足，其状态需管理员后续关注。已锁定的赛程本身可能不会自动更新项目取消状态。");
+        // 注意：此处不直接返回，允许退赛操作继续，但提示管理员关注后续状态。
+    }
+
     if (settings_.getAllAthletes().empty()) {
         UIManager::showErrorMessage("系统中没有运动员。");
         return;
@@ -172,7 +178,7 @@ void RegistrationController::handleUnregisterAthleteFromEvent() {
     if (registration_.unregisterAthleteFromEvent(athleteId, eventId)) {
         // UIManager::showSuccessMessage("取消报名成功。");
     } else {
-        // UIManager::showErrorMessage("取消报名失败。");
+        // UIManager::showErrorMessage("取消报名失败。可能原因：运动员或项目不存在，或运动员未报名该项目。");
     }
 }
 
@@ -187,21 +193,25 @@ void RegistrationController::handleViewAthleteRegistrations() {
 }
 
 void RegistrationController::handleViewEventRegistrations() {
-    UIManager::showMessage("\n--- 所有项目及其报名情况 ---");
+    UIManager::showMessage("\n--- 各项目报名情况查询 ---");
     if (settings_.getAllCompetitionEventsConst().empty()) {
-        UIManager::showMessage("暂无比赛项目。");
+        UIManager::showMessage("暂无比赛项目。 ");
         return;
     }
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     for(const auto& val : settings_.getAllCompetitionEventsConst() | std::views::values) events_refs.push_back(std::cref(val));
-    UIManager::displayEvents(events_refs, settings_); // UIManager::displayEvents 已包含报名人数
+    UIManager::displayEvents(events_refs, settings_); // UIManager::displayEvents 已包含参赛人数
 }
 
 void RegistrationController::handleCheckAndCancelLowParticipationEvents() {
+    if (settings_.isScheduleLocked()) {
+        UIManager::showErrorMessage("赛程已锁定，无法自动取消人数不足的项目。如需操作，请先解锁赛程。");
+        return;
+    }
     UIManager::showMessage("\n--- 检查并取消人数不足的项目 ---");
-    // 此逻辑通常在 Registration 类中实现，因为它需要修改项目状态并可能通知运动员
+    // 此逻辑通过 Registration 类实现，因为它需要修改项目状态并可能通知运动员
     // registration_.checkAndCancelEventsDueToLowParticipation();
-    // 假设该方法会打印相关信息或返回一个总结
+    // 假设该方法打印具体信息或返回一个总结
     int cancelledCount = registration_.checkAndCancelEventsDueToLowParticipation(); // 假设返回取消的项目数
     if (cancelledCount > 0) {
         UIManager::showSuccessMessage("已检查并取消了 " + std::to_string(cancelledCount) + " 个人数不足的项目。");
