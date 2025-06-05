@@ -5,6 +5,7 @@
 #include "../../../include/Components/Core/ScoreRule.h"
 #include <utility>
 #include <iostream>
+#include <optional>
 
 std::atomic<int> ScoreRule::nextId(1); // 初始化静态成员, ID从1开始
 
@@ -15,10 +16,6 @@ ScoreRule::ScoreRule(std::string desc, int minP, int maxP, int ranks, const std:
 }
 
 ScoreRule::~ScoreRule() {
-    // 释放所有子规则占用的内存
-    for (auto* subRule : subRules) {
-        delete subRule;
-    }
     subRules.clear();
 }
 
@@ -33,8 +30,8 @@ std::string ScoreRule::getDescription() const {
 bool ScoreRule::appliesTo(int participantCount) const {
     // 如果是复合规则，只要有任一子规则适用即可
     if (isCompositeRule && !subRules.empty()) {
-        for (const auto* subRule : subRules) {
-            if (subRule->appliesTo(participantCount)) {
+        for (const auto subRule : subRules) {
+            if (subRule.get().appliesTo(participantCount)) {
                 return true;
             }
         }
@@ -47,32 +44,28 @@ bool ScoreRule::appliesTo(int participantCount) const {
     return minMet && maxMet;
 }
 
-const ScoreRule* ScoreRule::getApplicableRule(int participantCount) const {
+std::optional<utils::RefConst<ScoreRule>> ScoreRule::getApplicableRule(int participantCount) const {
     // 如果是复合规则，查找适用的子规则
     if (isCompositeRule && !subRules.empty()) {
-        for (const auto* subRule : subRules) {
-            if (subRule->appliesTo(participantCount)) {
-                return subRule;
+        for (const auto subRule : subRules) {
+            if (subRule.get().appliesTo(participantCount)) {
+                return subRule.get();
             }
         }
     }
     
-    // 如果没有适用的子规则或者不是复合规则，且自身适用，则返回自身
+    // 如果没有适用的子规则或者不是复合规则，检查自身是否适用
     if (appliesTo(participantCount)) {
-        return this;
+        return std::cref(*this);  // 返回对自身的引用
     }
     
-    // 如果自身也不适用，仍然返回自身，调用者需要检查适用性
-    return this;
+    // 没有找到任何适用的规则
+    return std::nullopt;
 }
 
-void ScoreRule::addSubRule(ScoreRule* subRule) {
-    if (subRule) {
-        subRules.push_back(subRule);
-        isCompositeRule = true;
-    } else {
-        std::cerr << "警告：尝试添加空子规则指针。" << std::endl;
-    }
+void ScoreRule::addSubRule(ScoreRule &subRule) {
+    subRules.push_back(std::ref(subRule));
+    isCompositeRule = true;
 }
 
 int ScoreRule::getRanksToAward() const {

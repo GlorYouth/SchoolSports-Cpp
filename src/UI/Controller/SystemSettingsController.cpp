@@ -266,7 +266,7 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
             auto mainRuleOpt = settings_.rules.get(ruleId);
             if (mainRuleOpt.has_value()) {
                 ScoreRule& ruleRef = mainRuleOpt.value().get();
-                ruleRef.addSubRule(subRule);
+                ruleRef.addSubRule(*subRule);
                 UIManager::showSuccessMessage("子规则 " + std::to_string(i) + " 添加成功。");
             } else {
                 UIManager::showErrorMessage("获取主规则失败，无法添加子规则。");
@@ -333,15 +333,15 @@ void SystemSettingsController::handleManageExistingScoreRule() {
     if (rule.isComposite()) {
         UIManager::showMessage("\n这是一个复合规则，包含以下子规则:");
         int idx = 1;
-        for (const auto* subRule : rule.getSubRules()) {
+        for (const auto subRule : rule.getSubRules()) {
             UIManager::showMessage("\n子规则 " + std::to_string(idx) + ":");
-            UIManager::showMessage("描述: " + subRule->getDescription());
-            UIManager::showMessage("适用人数: " + std::to_string(subRule->getMinParticipants()) + 
-                                 " 到 " + (subRule->getMaxParticipants() == -1 ? "无上限" : std::to_string(subRule->getMaxParticipants())));
+            UIManager::showMessage("描述: " + subRule.get().getDescription());
+            UIManager::showMessage("适用人数: " + std::to_string(subRule.get().getMinParticipants()) +
+                                 " 到 " + (subRule.get().getMaxParticipants() == -1 ? "无上限" : std::to_string(subRule.get().getMaxParticipants())));
             
-            UIManager::showMessage("录取名次: " + std::to_string(subRule->getRanksToAward()));
+            UIManager::showMessage("录取名次: " + std::to_string(subRule.get().getRanksToAward()));
             UIManager::showMessage("分数分配:");
-            for (const auto& [rank, score] : subRule->getAllScoresForRanks()) {
+            for (const auto& [rank, score] : subRule.get().getAllScoresForRanks()) {
                 UIManager::showMessage("- 第" + std::to_string(rank) + "名: " + std::to_string(score) + "分");
             }
             
@@ -370,7 +370,7 @@ void SystemSettingsController::handleManageExistingScoreRule() {
             }
             
             auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
-            rule.addSubRule(subRule);
+            rule.addSubRule(*subRule);
             
             UIManager::showSuccessMessage("新的子规则添加成功。");
         }

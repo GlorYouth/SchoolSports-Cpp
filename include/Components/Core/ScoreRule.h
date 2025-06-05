@@ -8,7 +8,11 @@
 #include <map>
 #include <string>
 #include <atomic> // 用于生成唯一ID
+#include <optional>
+#include <vector>
 #include <vector> // 用于存储子规则
+
+#include "../../utils.h"
 
 /**
  * @brief 处理比赛项目的计分规则
@@ -31,7 +35,7 @@ private:
     std::map<int, double> scoresForRanks;   // 名次对应的分数 <名次, 分数> (例如: {1:7, 2:5, ...})
     
     // 子规则列表（对于复合规则）
-    std::vector<ScoreRule*> subRules;       // 存储子规则指针
+    std::vector<utils::Ref<ScoreRule>> subRules;       // 存储子规则引用
     bool isCompositeRule;                   // 是否为复合规则标志
 
 public:
@@ -75,7 +79,7 @@ public:
      * @param participantCount 实际参赛人数
      * @return 返回适用的规则指针，不会返回nullptr（如无匹配子规则则返回this）
      */
-    [[nodiscard]] const ScoreRule* getApplicableRule(int participantCount) const;
+    [[nodiscard]] std::optional<utils::RefConst<ScoreRule>> getApplicableRule(int participantCount) const;
 
     /**
      * @brief 获取此规则计划录取的名次数量
@@ -108,7 +112,7 @@ public:
      * @brief 添加一个子规则
      * @param subRule 要添加的子规则指针（由本类负责释放内存）
      */
-    void addSubRule(ScoreRule* subRule);
+    void addSubRule(ScoreRule& subRule);
     
     /**
      * @brief 检查是否为复合规则（包含子规则）
@@ -120,7 +124,14 @@ public:
      * @brief 获取所有子规则
      * @return 返回子规则指针向量的常量引用
      */
-    [[nodiscard]] const std::vector<ScoreRule*>& getSubRules() const { return subRules; }
+    [[nodiscard]] std::vector<utils::RefConst<ScoreRule>> getSubRules() const {
+        auto result = std::vector<utils::RefConst<ScoreRule>>();
+        result.reserve(subRules.size());
+        for (const auto& subRule : subRules){
+            result.emplace_back(subRule);
+        }
+        return result;
+    }
 
     /**
      * @brief 重置计数器，生成新的一组计分规则ID的静态方法

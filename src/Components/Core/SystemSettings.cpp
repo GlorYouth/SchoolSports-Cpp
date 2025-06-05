@@ -90,15 +90,15 @@ void SystemSettings::initializeDefaultSettings() {
     
     // 子规则1: 参赛人数 > 6人，取前5名 (7,5,3,2,1)
     std::map<int, double> scoresRule1 = {{1, 7.0}, {2, 5.0}, {3, 3.0}, {4, 2.0}, {5, 1.0}};
-    auto* subRule1 = new ScoreRule("子规则1: 大于6人取前5名 (7,5,3,2,1)", 7, -1, 5, scoresRule1);
+    auto subRule1 = new ScoreRule("子规则1: 大于6人取前5名 (7,5,3,2,1)", 7, -1, 5, scoresRule1);
     
     // 子规则2: 参赛人数 <= 6人且 >= 4人，取前3名 (5,3,2)
     std::map<int, double> scoresRule2 = {{1, 5.0}, {2, 3.0}, {3, 2.0}};
-    auto* subRule2 = new ScoreRule("子规则2: 4至6人取前3名 (5,3,2)", 4, 6, 3, scoresRule2);
+    auto subRule2 = new ScoreRule("子规则2: 4至6人取前3名 (5,3,2)", 4, 6, 3, scoresRule2);
     
     // 将子规则添加到主规则
-    mainRuleOpt.value().get().addSubRule(subRule1);
-    mainRuleOpt.value().get().addSubRule(subRule2);
+    mainRuleOpt.value().get().addSubRule(*subRule1);
+    mainRuleOpt.value().get().addSubRule(*subRule2);
     
     std::cout << "系统默认规则（ID=1）初始化完成，包含两个子规则：" << std::endl;
     std::cout << " - " << subRule1->getDescription() << std::endl;

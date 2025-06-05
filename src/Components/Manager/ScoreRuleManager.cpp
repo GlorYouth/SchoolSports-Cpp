@@ -83,23 +83,25 @@ ScoreRuleManager::const_iterator ScoreRuleManager::end() const {
 
 // 查找方法
 std::optional<utils::Ref<ScoreRule>> ScoreRuleManager::findAppropriate(int participantCount) {
-    // 优先使用默认复合规则（ID=1）中的适用子规则
+    // 优先使用默认复合规则（ID=1）
     auto mainRuleOpt = get(1);
     if (mainRuleOpt.has_value()) {
         ScoreRule& mainRule = mainRuleOpt.value().get();
         if (mainRule.isComposite()) {
-            const ScoreRule* applicableSubRule = mainRule.getApplicableRule(participantCount);
-            if (applicableSubRule && applicableSubRule->appliesTo(participantCount)) {
-                // 这里有个问题：applicableSubRule是指向子规则的指针，但返回值需要是主规则的引用包装
-                // 为兼容现有接口，我们返回主规则的引用
-                return mainRuleOpt;
+            // 获取适用的子规则
+            auto applicableSubRuleOpt = mainRule.getApplicableRule(participantCount);
+            if (applicableSubRuleOpt.has_value()) {
+                // 找到适用的子规则，但我们需要返回非const引用
+                // 由于我们无法直接将const引用转为非const引用，需要查找原始的规则
+                int subRuleId = applicableSubRuleOpt.value().get().getId();
+                return get(subRuleId); // 尝试获取对应ID的非const引用
             }
         } else if (mainRule.appliesTo(participantCount)) {
-            return mainRuleOpt;
+            return mainRuleOpt; // 主规则不是复合规则但适用
         }
     }
     
-    // 向后兼容：如果默认复合规则不可用或不适用，则搜索所有规则
+    // 如果默认复合规则不可用或不适用，则搜索所有规则
     const auto& rulesMap = getRulesMapConst();
     for (auto &val : rulesMap | std::views::values) {
         if (val.appliesTo(participantCount)) {

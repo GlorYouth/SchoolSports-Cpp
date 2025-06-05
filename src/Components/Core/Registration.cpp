@@ -117,7 +117,7 @@ bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eve
     if (!athleteOpt.has_value()) {
         std::cerr << "取消报名失败: 运动员ID " << athleteId << " 不存在。" << std::endl;
         return false;
-    }
+    }   
     Athlete& athlete_ref = athleteOpt.value().get(); // 使用引用
 
     if (!eventOpt.has_value()) {
@@ -144,20 +144,34 @@ bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eve
     std::cout << "取消报名成功: 运动员 " << athlete_ref.getName() << " 已取消报名项目 \"" << event_ref.getName() << "\"" << std::endl;
 
     // 取消报名后，检查项目是否会因此人数不足而需要取消
-    // 使用计分规则来判断项目最少人数，而非全局设置
+    // 使用项目自身的计分规则来判断最少人数
     if (!event_ref.getIsCancelled()) {
-        // 优先使用默认规则（ID=1）
-        auto scoreRuleOpt = settings.rules.get(1);
+        // 获取项目关联的计分规则ID
+        int ruleId = event_ref.getScoreRuleId();
+        
+        // 如果项目没有关联计分规则，则使用默认规则（ID=1）
+        if (ruleId <= 0) {
+            ruleId = 1;
+        }
+        
+        auto scoreRuleOpt = settings.rules.get(ruleId);
         if (scoreRuleOpt.has_value()) {
-            ScoreRule& mainRule = scoreRuleOpt.value().get();
-            // 检查当前参与人数是否满足规则的最小要求
-            if (event_ref.getParticipantCount() < mainRule.getMinParticipants()) {
+            ScoreRule& rule = scoreRuleOpt.value().get();
+            
+            // 对于复合规则，需要获取适用于当前参赛人数的具体子规则
+            auto applicableRuleOpt = rule.getApplicableRule(event_ref.getParticipantCount());
+            
+            // 如果找不到适用规则或参赛人数不满足规则要求
+            if (!applicableRuleOpt.has_value() || 
+                !applicableRuleOpt.value().get().appliesTo(event_ref.getParticipantCount())) {
                 event_ref.setCancelled(true);
                 std::cout << "注意: 项目 \"" << event_ref.getName() << "\" (ID: " << event_ref.getId()
                       << ") 因参赛人数 (" << event_ref.getParticipantCount()
-                      << ") 少于计分规则要求的最少人数 (" << mainRule.getMinParticipants()
-                      << ") 已被自动取消。" << std::endl;
+                      << ") 不满足计分规则要求，已被自动取消。" << std::endl;
             }
+        } else {
+            std::cerr << "警告: 找不到项目 \"" << event_ref.getName() << "\" 关联的计分规则 (ID: " 
+                  << ruleId << ")，无法检查最低参赛人数要求。" << std::endl;
         }
     }
     return true;
@@ -166,39 +180,55 @@ bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eve
 int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 const
     std::cout << "\n正在检查并处理因人数不足而需取消的项目..." << std::endl;
     bool changed = false;
-    // 需要迭代 map 的 value，并且可能修改它，所以不能用 range-based for loop 直接在 const map 上
-    // 或者，如果 SystemSettings::getAllCompetitionEvents 返回的是非 const 引用，则可以
-    // 当前 SystemSettings::getAllCompetitionEvents() 返回 const&
-    // 所以我们需要通过ID获取非const的event对象来修改
+    // 收集所有项目ID
     std::vector<int> eventIdsToCheck;
     for(const auto& pair : settings.events.getAllConst()){
         eventIdsToCheck.push_back(pair.first);
     }
 
-    // 优先获取默认计分规则（ID=1）
-    auto scoreRuleOpt = settings.rules.get(1);
-    int minRequiredParticipants = 4; // 默认值，以防找不到规则
-    if (scoreRuleOpt.has_value()) {
-        ScoreRule& mainRule = scoreRuleOpt.value().get();
-        minRequiredParticipants = mainRule.getMinParticipants();
-    }
-
     int eventToCancelCount = 0;
     for (const int eventId : eventIdsToCheck) {
         if (auto eventOpt = settings.events.get(eventId); eventOpt.has_value()) {
-            if (CompetitionEvent& event_ref = eventOpt.value().get(); !event_ref.getIsCancelled()) { // 只检查未被取消的项目
-                if (event_ref.getParticipantCount() < minRequiredParticipants) {
-                    event_ref.setCancelled(true); // 修改获取到的非 const 对象
-                    std::cout << "项目 \"" << event_ref.getName() << "\" (ID: " << event_ref.getId()
-                              << ") 因参赛人数 (" << event_ref.getParticipantCount()
-                              << ") 少于计分规则要求的最少人数 (" << minRequiredParticipants
-                              << ") 已被取消。" << std::endl;
-                    changed = true;
-                    eventToCancelCount++;
-                }
+            CompetitionEvent& event_ref = eventOpt.value().get();
+            
+            // 只检查未被取消的项目
+            if (event_ref.getIsCancelled()) {
+                continue;
+            }
+            
+            // 获取项目自身的计分规则ID
+            int ruleId = event_ref.getScoreRuleId();
+            
+            // 如果项目未指定计分规则，使用默认规则（ID=1）
+            if (ruleId <= 0) {
+                ruleId = 1;
+            }
+            
+            // 尝试获取对应的计分规则
+            auto scoreRuleOpt = settings.rules.get(ruleId);
+            if (!scoreRuleOpt.has_value()) {
+                std::cerr << "警告: 项目 \"" << event_ref.getName() << "\" (ID: " << eventId 
+                          << ") 关联的计分规则 (ID: " << ruleId << ") 不存在，无法检查最低参赛人数要求。" << std::endl;
+                continue;
+            }
+            
+            // 获取适用于当前参赛人数的具体规则（可能是子规则）
+            ScoreRule& rule = scoreRuleOpt.value().get();
+            auto applicableRuleOpt = rule.getApplicableRule(event_ref.getParticipantCount());
+            
+            // 如果找不到适用规则或参赛人数不满足规则要求
+            if (!applicableRuleOpt.has_value() || 
+                !applicableRuleOpt.value().get().appliesTo(event_ref.getParticipantCount())) {
+                event_ref.setCancelled(true);
+                std::cout << "项目 \"" << event_ref.getName() << "\" (ID: " << event_ref.getId()
+                          << ") 因参赛人数 (" << event_ref.getParticipantCount()
+                          << ") 不满足计分规则要求，已被取消。" << std::endl;
+                changed = true;
+                eventToCancelCount++;
             }
         }
     }
+    
     if (!changed) {
         std::cout << "没有项目因人数不足而需要取消。" << std::endl;
     }

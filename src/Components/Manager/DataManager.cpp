@@ -342,15 +342,15 @@ bool DataManager::loadSampleStage3Data() {
         
         // 获取适用于该参赛人数的规则
         ScoreRule& mainRule = mainRuleOpt.value().get();
-        const ScoreRule* applicableRule = mainRule.getApplicableRule(participantCount);
+        auto applicableRule = mainRule.getApplicableRule(participantCount);
         
-        // 如果没有适用规则说明参赛人数
-        if (!applicableRule->appliesTo(participantCount)) {
-            std::cout << "项目\"" << event.getName() << "\"，ID: " << eventId 
-                      << "，参赛人数为" << participantCount 
-                      << "，不满足计分规则要求，将被取消！" << std::endl;
+        // 如果没有适用规则或规则不适用，说明人数不足
+        if (!applicableRule.has_value() || !applicableRule.value().get().appliesTo(participantCount)) {
+            std::cout << "项目\"" << event.getName() << "\"（ID: " << eventId 
+                      << "）的参赛人数为" << participantCount 
+                      << "，不满足计分规则要求，将被取消。" << std::endl;
             
-            // 获取项目的可修改引用，设置取消状态
+            // 设置项目的可修改引用，修改取消状态
             auto eventOpt = settings.events.get(eventId);
             if (eventOpt.has_value()) {
                 eventOpt.value().get().setCancelled(true);
@@ -399,7 +399,7 @@ bool DataManager::loadSampleStage3Data() {
                 }
                 
                 // 获取该名次对应的积分
-                double points = applicableRule->getScoreForRank(rank);
+                double points = applicableRule.value().get().getScoreForRank(rank);
                 
                 // 添加成绩记录
                 Result result(eventId, athleteId, rank, scoreRecord, points);
