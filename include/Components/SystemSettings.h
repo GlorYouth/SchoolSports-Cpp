@@ -60,13 +60,6 @@ public:
      */
     bool addUnit(const std::string& unitName);
     /**
-     * @brief 使用指定ID添加一个新的参赛单位。
-     * @param unitName 单位的名称。
-     * @param id 指定的单位ID。
-     * @return 如果单位名称未重复且成功添加，返回 true；否则返回 false。
-     */
-    bool addUnitWithId(const std::string& unitName, int id);
-    /**
      * @brief 根据单位ID获取单位对象的可修改引用。
      * @param unitId 要查找的单位ID。
      * @return 如果找到，返回一个包含 Unit 引用的 std::optional；否则返回 std::nullopt。
@@ -104,15 +97,6 @@ public:
      * @return 如果所属单位存在且成功添加运动员，返回 true；否则返回 false。
      */
     bool addAthlete(const std::string& name, Gender gender, int unitId);
-    /**
-     * @brief 使用指定ID添加一名新的运动员。
-     * @param name 运动员姓名。
-     * @param gender 运动员性别。
-     * @param unitId 运动员所属单位的ID。
-     * @param id 指定的运动员ID。
-     * @return 如果所属单位存在且成功添加运动员，返回 true；否则返回 false。
-     */
-    bool addAthleteWithId(const std::string& name, Gender gender, int unitId, int id);
     /**
      * @brief 根据运动员ID获取运动员对象的可修改引用。
      * @param athleteId 要查找的运动员ID。

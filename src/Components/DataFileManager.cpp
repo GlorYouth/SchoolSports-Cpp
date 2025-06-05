@@ -308,113 +308,91 @@ std::string DataFileManager::createRestoreBackup(const SystemSettings& settings)
 }
 
 bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::string& filePath) {
-    // 检查文件路径是否为ID
     std::string actualFilePath = filePath;
     
-    // 尝试将filePath转换为整数ID
-    try {
-        int id = std::stoi(filePath);
-        std::string pathById = getBackupFilePathById(id);
-        
-        if (!pathById.empty()) {
-            actualFilePath = pathById;
-            std::cout << "使用ID " << id << " 加载备份文件: " << actualFilePath << std::endl;
-        } else {
-            std::cerr << "错误: 无法找到ID为 " << id << " 的备份文件" << std::endl;
+    // 如果是备份ID，转换为实际文件路径
+    if (filePath.find_first_not_of("0123456789") == std::string::npos) {
+        actualFilePath = getBackupFilePathById(std::stoi(filePath));
+        if (actualFilePath.empty()) {
+            std::cerr << "错误: 无效的备份ID: " << filePath << std::endl;
             return false;
         }
-    } catch (const std::exception&) {
-        // 不是ID，保持原路径不变
     }
-
-    std::ifstream inFile(actualFilePath);
-    if (!inFile.is_open()) {
-        std::cerr << "错误: 无法打开文件进行恢复: " << actualFilePath << std::endl;
+    
+    // 创建临时备份
+    std::string tempBackupPath = createRestoreBackup(settings);
+    if (tempBackupPath.empty()) {
+        std::cerr << "错误: 无法创建临时备份，取消导入操作。" << std::endl;
         return false;
     }
-
-    // 创建临时备份
-    createRestoreBackup(settings);
-
+    
     // 清空当前系统数据
     settings.clearUnits();
     settings.clearAthletes();
     settings.clearCompetitionEvents();
-    settings.clearScoreRules();
+    settings.clearAllEventResults();
+    settings.resetAllUnitScores();
     
-    // 清空所有场馆数据
-    std::set<std::string> oldVenues = settings.getAllVenues();
-    for (const auto& venue : oldVenues) {
-        settings.removeVenue(venue);
+    // 重置ID计数器
+    settings.resetUnitIdCounter();
+    settings.resetAthleteIdCounter();
+    settings.resetCompetitionEventIdCounter();
+    settings.resetScoreRuleIdCounter();
+    
+    // 打开文件
+    std::ifstream inFile(actualFilePath);
+    if (!inFile.is_open()) {
+        std::cerr << "错误: 无法打开文件: " << actualFilePath << std::endl;
+        return false;
     }
-
-    std::cout << "开始从 " << actualFilePath << " 恢复数据..." << std::endl;
     
     std::string line;
-    std::string currentSection;
-    int expectedCount = 0;
-    int currentCount = 0;
+    bool success = true;
+    std::map<int, std::vector<int>> athleteEventMap; // 用于存储运动员-项目关系
     
-    // 初始化默认计分规则（因为系统初始化时就会创建）
-    bool hasScoreRule1 = false;
-    
-    // 用于存储运动员和项目的关系，因为加载顺序问题需要临时存储
-    std::map<int, std::vector<int>> athleteEventMap;
-
+    // 逐行读取文件
     while (std::getline(inFile, line)) {
-        // 跳过空行
         if (line.empty()) continue;
         
-        // 解析新节标记
-        if (line.front() == '[' && line.back() == ']') {
-            currentSection = line.substr(1, line.size() - 2);
-            expectedCount = 0;
-            currentCount = 0;
-            std::cout << "正在读取段: " << currentSection << std::endl;
-            continue;
-        }
-        
-        // 解析计数行
-        if (line.find("COUNT=") == 0) {
-            expectedCount = std::stoi(line.substr(6));
-            std::cout << "预计" << currentSection << "数量: " << expectedCount << std::endl;
-            continue;
-        }
-        
-        // 解析实际数据行
-        if (currentSection == "METADATA") {
-            processMetadata(line, settings);
-        } else if (currentSection == "UNITS") {
-            processUnit(line, settings);
-            currentCount++;
-        } else if (currentSection == "SCORE_RULES") {
-            hasScoreRule1 = processScoreRule(line, settings) || hasScoreRule1;
-            currentCount++;
-        } else if (currentSection == "EVENTS") {
-            processEvent(line, settings, athleteEventMap);
-            currentCount++;
-        } else if (currentSection == "VENUES") {
-            // 解析场馆数据
-            settings.addVenue(line);
-            currentCount++;
-        } else if (currentSection == "ATHLETES") {
-            processAthlete(line, settings);
-            currentCount++;
-        } else if (currentSection == "RESULTS") {
-            processResult(line, settings);
-            currentCount++;
+        // 根据行首标识处理不同类型的数据
+        if (line.starts_with("[M]")) {
+            processMetadata(line.substr(3), settings);
+        } else if (line.starts_with("[U]")) {
+            processUnit(line.substr(3), settings);
+        } else if (line.starts_with("[R]")) {
+            if (!processScoreRule(line.substr(3), settings)) {
+                success = false;
+                break;
+            }
+        } else if (line.starts_with("[E]")) {
+            processEvent(line.substr(3), settings, athleteEventMap);
+        } else if (line.starts_with("[A]")) {
+            processAthlete(line.substr(3), settings);
+        } else if (line.starts_with("[S]")) {
+            processResult(line.substr(3), settings);
+        } else if (line.starts_with("[V]")) {
+            // 处理场地信息
+            std::string venueName = line.substr(3);
+            settings.addVenue(venueName);
         }
     }
-
+    
     inFile.close();
     
-    std::cout << "数据恢复成功完成！" << std::endl;
-    std::cout << "已恢复单位数: " << settings.getAllUnits().size() << std::endl;
-    std::cout << "已恢复运动员数: " << settings.getAllAthletes().size() << std::endl;
-    std::cout << "已恢复比赛项目数: " << settings.getAllCompetitionEventsConst().size() << std::endl;
-    std::cout << "已恢复计分规则数: " << settings.getAllScoreRules().size() << std::endl;
+    // 如果导入成功，删除临时备份文件
+    if (success) {
+        try {
+            std::filesystem::remove(tempBackupPath);
+            std::cout << "成功导入数据，已删除临时备份文件。" << std::endl;
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "警告: 无法删除临时备份文件: " << e.what() << std::endl;
+            // 这里我们不返回false，因为数据导入本身是成功的
+        }
+    } else {
+        std::cerr << "导入数据失败，保留临时备份文件: " << tempBackupPath << std::endl;
+    }
     
-    return true;
+    return success;
 }
 
 void DataFileManager::processMetadata(const std::string& line, SystemSettings& settings) {
@@ -455,7 +433,7 @@ void DataFileManager::processUnit(const std::string& line, SystemSettings& setti
     std::string name = token;
     
     // 添加单位 - 使用指定ID
-    bool success = settings.addUnitWithId(name, id);
+    bool success = settings.addUnit(name);
     if (!success) {
         std::cerr << "警告: 添加单位失败: " << name << " (ID: " << id << ")" << std::endl;
         return;

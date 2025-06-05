@@ -34,32 +34,6 @@ bool SystemSettings::addUnit(const std::string& unitName) {
     return true;
 }
 
-// 新增：使用指定ID添加单位
-bool SystemSettings::addUnitWithId(const std::string& unitName, int id) {
-    // 检查单位名是否已存在
-    for (const auto &val : units | std::views::values) {
-        if (val.getName() == unitName) {
-            std::cerr << "错误: 单位名称 '" << unitName << "' 已存在。" << std::endl;
-            return false; // 单位名已存在
-        }
-    }
-    
-    // 检查ID是否已被使用
-    if (units.find(id) != units.end()) {
-        std::cerr << "错误: 单位ID " << id << " 已被使用。" << std::endl;
-        return false;
-    }
-    
-    // 创建单位并设置ID
-    Unit newUnit(unitName);
-    // 重置ID计数器到指定ID的下一个值
-    Unit::resetNextId(id + 1);
-    // 手动设置ID
-    newUnit.setId(id);
-    units.insert({id, newUnit});
-    return true;
-}
-
 std::optional<utils::Ref<Unit>> SystemSettings::getUnit(const int unitId) {
     if (const auto it = units.find(unitId); it != units.end()) {
         return it->second;
@@ -129,30 +103,6 @@ bool SystemSettings::addAthlete(const std::string& name, Gender gender, int unit
     return true;
 }
 
-// 新增：使用指定ID添加运动员
-bool SystemSettings::addAthleteWithId(const std::string& name, Gender gender, int unitId, int id) {
-    const auto optional_unit = getUnit(unitId);
-    if (!optional_unit.has_value()) {
-        std::cerr << "错误: 添加运动员失败，单位ID " << unitId << " 不存在。" << std::endl;
-        return false; // 单位不存在
-    }
-    
-    // 检查ID是否已被使用
-    if (athletes.find(id) != athletes.end()) {
-        std::cerr << "错误: 运动员ID " << id << " 已被使用。" << std::endl;
-        return false;
-    }
-    
-    // 创建运动员并设置ID
-    Athlete newAthlete(name, gender, unitId);
-    // 重置ID计数器到指定ID的下一个值
-    Athlete::resetNextId(id + 1);
-    // 手动设置ID
-    newAthlete.setId(id);
-    athletes.insert({id, newAthlete});
-    optional_unit.value().get().addAthleteId(id); // 将运动员ID关联到单位
-    return true;
-}
 
 std::optional<utils::Ref<Athlete>> SystemSettings::getAthlete(const int athleteId) {
     if (const auto it = athletes.find(athleteId); it != athletes.end()) {
