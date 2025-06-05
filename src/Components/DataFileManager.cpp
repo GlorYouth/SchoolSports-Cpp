@@ -175,8 +175,8 @@ void DataFileManager::saveUnits(std::ofstream& outFile, const SystemSettings& se
 // 保存计分规则段
 void DataFileManager::saveScoreRules(std::ofstream& outFile, const SystemSettings& settings) const {
     outFile << std::endl << "[SCORE_RULES]" << std::endl;
-    outFile << "COUNT=" << settings.getAllScoreRules().size() << std::endl;
-    for (const auto& pair : settings.getAllScoreRules()) {
+    outFile << "COUNT=" << settings.rules.getAll().size() << std::endl;
+    for (const auto& pair : settings.rules.getAll()) {
         const ScoreRule& rule = pair.second;
         // 写入规则信息
         outFile << rule.getId() << "|" 
@@ -489,7 +489,7 @@ bool DataFileManager::processScoreRule(const std::string& line, SystemSettings& 
         return true;
     } else {
         // 使用正确的参数创建规则
-        bool success = settings.addScoreRule(description, minParticipants, maxParticipants, ranksToAward, scoresMap);
+        bool success = settings.rules.add(description, minParticipants, maxParticipants, ranksToAward, scoresMap);
         if (success) {
             std::cout << "成功添加计分规则" << description << std::endl;
         } else {

@@ -17,18 +17,20 @@
 #include "UnitManager.h"
 #include "AthleteManager.h"
 #include "CompetitionEventManager.h"
+#include "ScoreRuleManager.h"
 
 // 系统设置类，负责管理全局配置信息
 class SystemSettings {
     friend class UnitManager;  // 允许UnitManager访问私有成员
     friend class AthleteManager; // 允许AthleteManager访问私有成员
     friend class CompetitionEventManager; // 允许CompetitionEventManager访问私有成员
+    friend class ScoreRuleManager; // 允许ScoreRuleManager访问私有成员
 
 private:
     std::map<int, Unit> _unitsMap;                   // 参赛单位列表 <UnitId, Unit>
     std::map<int, CompetitionEvent> _competitionEvents; // 比赛项目列表 <EventId, CompetitionEvent>
     std::map<int, Athlete> _athletesMap;                // 运动员列表 <AthleteId, Athlete>
-    std::map<int, ScoreRule> scoreRules;            // 计分规则列表 <RuleId, ScoreRule>
+    std::map<int, ScoreRule> _scoreRules;            // 计分规则列表 <RuleId, ScoreRule>
     std::map<int, EventResults> eventResultsMap;    // 比赛结果列表 <EventId, EventResults>
 
     int athleteMaxEventsAllowed;                    // 运动员允许参加的最多项目数
@@ -45,19 +47,10 @@ public:
     UnitManager units;
     AthleteManager athletes;
     CompetitionEventManager events;
+    ScoreRuleManager rules;
 
     SystemSettings();
     void resetAllIdCounter();
-
-    // --- 计分规则管理 ---
-    bool addScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
-    bool addCustomScoreRule(ScoreRule* rule);
-    [[nodiscard]] std::optional<utils::Ref<ScoreRule>> getScoreRule(int ruleId);
-    [[nodiscard]] std::optional<utils::RefConst<ScoreRule>> getScoreRuleConst(int ruleId) const;
-    std::optional<utils::Ref<ScoreRule>> findAppropriateScoreRule(int participantCount);
-    [[nodiscard]] const std::map<int, ScoreRule>& getAllScoreRules() const;
-    void clearScoreRules();
-    static void resetScoreRuleIdCounter();
 
     // --- 系统参数设置 ---
     void setAthleteMaxEventsAllowed(int maxEvents);

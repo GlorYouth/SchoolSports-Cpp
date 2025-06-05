@@ -22,7 +22,6 @@
 
 DataManager::DataManager(SystemSettings& sysSettings) : 
     settings(sysSettings),
-    fileManager(),  // 初始化 DataFileManager
     stage1DataImported(false),
     stage2DataImported(false),
     stage3DataImported(false) {}
@@ -78,7 +77,7 @@ bool DataManager::loadSampleStage1Data() {
     std::cout << "开始加载阶段1示例数据（单位、场地）..." << std::endl;
 
     // 确保默认计分规则ID为1存在
-    std::optional<utils::RefConst<ScoreRule>> defaultRuleOpt = settings.getScoreRuleConst(1);
+    std::optional<utils::RefConst<ScoreRule>> defaultRuleOpt = settings.rules.getConst(1);
     if (!defaultRuleOpt) {
         std::cerr << "错误未找到ID为1的默认计分规则，确保已初始化。" << std::endl;
         return false;
@@ -329,7 +328,7 @@ bool DataManager::loadSampleStage3Data() {
     // 再次手动检查所有项目是否满足要求
     
     // 获取默认计分规则
-    auto mainRuleOpt = settings.getScoreRule(1);
+    auto mainRuleOpt = settings.rules.get(1);
     if (!mainRuleOpt.has_value()) {
         std::cerr << "找不到ID为1的默认计分规则" << std::endl;
         return false;

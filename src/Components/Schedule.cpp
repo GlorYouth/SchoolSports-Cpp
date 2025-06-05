@@ -87,7 +87,7 @@ bool Schedule::generateSchedule() {
         // 尝试从第1天开始，直到找到可排入的空隙
         for (day = 1; day < 100; ++day) { // 最多排100天
             // 对场地进行排序，使用次数少的优先
-            std::sort(venueList.begin(), venueList.end(), [&](const std::string& a, const std::string& b) {
+            std::ranges::sort(venueList, [&](const std::string& a, const std::string& b) {
                 return venueUsageCount[a] < venueUsageCount[b];
             });
             

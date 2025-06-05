@@ -15,7 +15,7 @@
 // Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
 // #include "../../include/Components/Workflow.h" // 通常不需要重复包含
 
-SystemSettings::SystemSettings() : units(*this), athletes(*this), events(*this), athleteMaxEventsAllowed(3) {
+SystemSettings::SystemSettings() : units(*this), athletes(*this), events(*this), rules(*this), athleteMaxEventsAllowed(3) {
     // 构造函数中可以进行一些初始化
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
@@ -24,85 +24,7 @@ void SystemSettings::resetAllIdCounter() {
     units.resetIdCounter();
     athletes.resetIdCounter();
     events.resetIdCounter();
-    resetScoreRuleIdCounter();
-}
-
-// --- 计分规则管理 ---
-bool SystemSettings::addScoreRule(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores) {
-    ScoreRule rule(desc, minP, maxP, ranks, scores);
-    int ruleId = rule.getId();
-    scoreRules.emplace(ruleId, std::move(rule));
-    return true; // 目前实现总是成功，未来可能扩展验证等功能
-}
-
-bool SystemSettings::addCustomScoreRule(ScoreRule* rule) {
-    if (!rule) {
-        return false; // 空指针检查
-    }
-    
-    int ruleId = rule->getId();
-    scoreRules.emplace(ruleId, std::move(*rule)); // 移动构造进map
-    delete rule; // 删除原对象，因为已经被移动到map中
-    return true;
-}
-
-std::optional<utils::Ref<ScoreRule>> SystemSettings::getScoreRule(int ruleId) {
-    if (const auto it = scoreRules.find(ruleId); it != scoreRules.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-std::optional<utils::RefConst<ScoreRule>> SystemSettings::getScoreRuleConst(const int ruleId) const {
-    if (const auto it = scoreRules.find(ruleId); it != scoreRules.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-
-const std::map<int, ScoreRule>& SystemSettings::getAllScoreRules() const {
-    return scoreRules;
-}
-
-// 新增：重置计分规则ID计数器
-void SystemSettings::resetScoreRuleIdCounter() {
-    ScoreRule::resetNextId(1);
-}
-
-// 修改：清除所有计分规则
-void SystemSettings::clearScoreRules() {
-    scoreRules.clear();
-    resetScoreRuleIdCounter(); // 重置ID计数器
-    std::cout << "所有计分规则已清除。" << std::endl;
-}
-
-std::optional<utils::Ref<ScoreRule>> SystemSettings::findAppropriateScoreRule(int participantCount) {
-    // 新版本：优先使用默认复合规则（ID=1）中的适用子规则
-    auto mainRuleOpt = getScoreRule(1);
-    if (mainRuleOpt.has_value()) {
-        ScoreRule& mainRule = mainRuleOpt.value().get();
-        if (mainRule.isComposite()) {
-            const ScoreRule* applicableSubRule = mainRule.getApplicableRule(participantCount);
-            if (applicableSubRule && applicableSubRule->appliesTo(participantCount)) {
-                // 这里有个问题：applicableSubRule是指向子规则的指针，但返回值需要是主规则的引用包装
-                // 为兼容现有接口，我们返回主规则的引用
-                return mainRuleOpt;
-            }
-        } else if (mainRule.appliesTo(participantCount)) {
-            return mainRuleOpt;
-        }
-    }
-    
-    // 向后兼容：如果默认复合规则不可用或不适用，则搜索所有规则
-    for (auto &val : scoreRules | std::views::values) {
-        if (val.appliesTo(participantCount)) {
-            return val;
-        }
-    }
-    
-    std::cerr << "警告: 未找到适用于参赛人数 " << participantCount << " 的计分规则。" << std::endl;
-    return std::nullopt; // 没有找到合适的规则
+    rules.resetIdCounter();
 }
 
 // --- 系统参数设置 ---
@@ -184,7 +106,7 @@ void SystemSettings::initializeDefaultSettings() {
     std::cout << "正在初始化系统默认核心设置..." << std::endl;
 
     // 1. 清空计分规则和比赛结果
-    scoreRules.clear();
+    rules.clear();
     eventResultsMap.clear();
 
     // 2. 设置系统核心参数
@@ -196,15 +118,15 @@ void SystemSettings::initializeDefaultSettings() {
     
     // 创建主规则（包含子规则）
     std::map<int, double> dummyScores; // 主规则不直接使用分数，而是通过子规则
-    bool rule1Added = addScoreRule("默认规则: 根据参赛人数动态选择计分方案", 4, -1, 0, dummyScores);
+    bool rule1Added = rules.add("默认规则: 根据参赛人数动态选择计分方案", 4, -1, 0, dummyScores);
     
     if (!rule1Added) {
         std::cerr << "严重错误: 无法添加ID为1的默认计分规则！" << std::endl;
         return;
     }
     
-    // 获取主规则（ID为1）
-    auto mainRuleOpt = getScoreRule(1);
+    // 获取主规则（ID=1）
+    auto mainRuleOpt = rules.get(1);
     if (!mainRuleOpt.has_value()) {
         std::cerr << "严重错误: 无法获取刚刚创建的主规则（ID=1）！" << std::endl;
         return;

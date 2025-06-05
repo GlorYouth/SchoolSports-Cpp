@@ -90,20 +90,10 @@ public:
     // 新增：计分规则管理菜单
     static void displayScoreRuleManagementMenu();
 
-
-    // --- 数据列表显示 ---
-    // 注意：这里参数类型改为 const std::vector<utils::RefConst T>>&
-    // 以便传递从 map 中获取的对象的引用集合，避免拷贝，同时保持 const 正确性。
-    // 或者，可以直接传递 SystemSettings& settings 和相应的 getter 方法名或 lambda。
-    // 为简化，这里假设控制器已经准备好了要显示的数据。
-
     static void displayUnits(const std::vector<utils::RefConst<Unit>>& units);
     static void displayAthletes(const std::vector<utils::RefConst<Athlete>>& athletes, const SystemSettings& settings);
     static void displayScoreRules(const std::vector<utils::RefConst<ScoreRule>>& rules);
-    // 新增：支持高亮冲突项目的重载
-    // conflictEventIds为需要高亮的项目ID集合
     static void displayEvents(const std::vector<utils::RefConst<CompetitionEvent>>& events, const SystemSettings& settings);
-    // 新增：显示场地表
     static void displayVenues(const std::set<std::string>& venues);
 
     // 成绩相关显示
@@ -117,7 +107,7 @@ public:
     static Gender getGenderInput(const std::string& prompt, bool allowUnspecified = false);
     static EventType getEventTypeInput(const std::string& prompt);
 
-    // --- 新增：报名相关辅助UI提示 ---
+    // --- 报名相关辅助UI提示 ---
     // 显示赛程未锁定时的报名限制提示
     static void showRegistrationLockedMessage();
     // 显示报名时间冲突提示

@@ -484,7 +484,7 @@ void UIManager::displayEventResultsDetails(const CompetitionEvent& event,
         std::cout << " [状态: 已取消]";
     }
 
-    auto ruleOpt = settings.getScoreRuleConst(event.getScoreRuleId());
+    auto ruleOpt = settings.rules.getConst(event.getScoreRuleId());
     if (ruleOpt) {
         std::cout << " (计分规则: " << ruleOpt.value().get().getDescription() << ")" << std::endl;
     } else if (event.getScoreRuleId() != -1) {

@@ -137,7 +137,7 @@ void SystemSettingsController::handleAddEvent() {
     // 显示所有可用的计分规则
     UIManager::showTitleMessage("可用的计分规则");
     std::vector<utils::RefConst<ScoreRule>> rules;
-    for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
+    for (const auto& val : settings_.rules.getAll() | std::views::values) {
         rules.push_back(std::cref(val));
     }
     
@@ -152,7 +152,7 @@ void SystemSettingsController::handleAddEvent() {
     int scoreRuleId = UIManager::getIntInput("请选择要应用的计分规则ID: ");
     
     // 验证计分规则ID是否存在
-    if (!settings_.getScoreRuleConst(scoreRuleId).has_value()) {
+    if (!settings_.rules.getConst(scoreRuleId).has_value()) {
         UIManager::showErrorMessage("所选计分规则ID不存在，项目添加失败。");
         return;
     }
@@ -239,7 +239,7 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
         auto* mainRule = ScoreRule::createCompositeRule(desc, minP, maxP);
         int ruleId = mainRule->getId();
         
-        bool added = settings_.addCustomScoreRule(mainRule);
+        bool added = settings_.rules.addCustom(mainRule);
         if (!added) {
             UIManager::showErrorMessage("添加复合规则失败。");
             delete mainRule;
@@ -263,7 +263,7 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
             
             auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
             
-            auto mainRuleOpt = settings_.getScoreRule(ruleId);
+            auto mainRuleOpt = settings_.rules.get(ruleId);
             if (mainRuleOpt.has_value()) {
                 ScoreRule& ruleRef = mainRuleOpt.value().get();
                 ruleRef.addSubRule(subRule);
@@ -285,7 +285,7 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
             scoresMap[i] = scoreVal;
         }
         
-        if (settings_.addScoreRule(desc, minP, maxP, ranks, scoresMap)) {
+        if (settings_.rules.add(desc, minP, maxP, ranks, scoresMap)) {
             UIManager::showSuccessMessage("计分规则添加成功。");
         } else {
             UIManager::showErrorMessage("计分规则添加失败。");
@@ -296,7 +296,7 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
 void SystemSettingsController::handleViewAllScoreRules() {
     UIManager::showMessage("\n--- 所有计分规则 ---");
     std::vector<utils::RefConst<ScoreRule>> rules;
-    for (const auto& val : settings_.getAllScoreRules() | std::views::values) {
+    for (const auto& val : settings_.rules.getAll() | std::views::values) {
         rules.push_back(std::cref(val));
     }
     
@@ -316,7 +316,7 @@ void SystemSettingsController::handleManageExistingScoreRule() {
     int ruleId = UIManager::getIntInput("请输入要管理的规则ID (输入0返回): ");
     if (ruleId == 0) return;
     
-    auto ruleOpt = settings_.getScoreRule(ruleId);
+    auto ruleOpt = settings_.rules.get(ruleId);
     if (!ruleOpt.has_value()) {
         UIManager::showErrorMessage("规则ID " + std::to_string(ruleId) + " 不存在。");
         return;

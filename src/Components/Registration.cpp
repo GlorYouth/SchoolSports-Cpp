@@ -147,7 +147,7 @@ bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eve
     // 使用计分规则来判断项目最少人数，而非全局设置
     if (!event_ref.getIsCancelled()) {
         // 优先使用默认规则（ID=1）
-        auto scoreRuleOpt = settings.getScoreRule(1);
+        auto scoreRuleOpt = settings.rules.get(1);
         if (scoreRuleOpt.has_value()) {
             ScoreRule& mainRule = scoreRuleOpt.value().get();
             // 检查当前参与人数是否满足规则的最小要求
@@ -176,7 +176,7 @@ int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 
     }
 
     // 优先获取默认计分规则（ID=1）
-    auto scoreRuleOpt = settings.getScoreRule(1);
+    auto scoreRuleOpt = settings.rules.get(1);
     int minRequiredParticipants = 4; // 默认值，以防找不到规则
     if (scoreRuleOpt.has_value()) {
         ScoreRule& mainRule = scoreRuleOpt.value().get();

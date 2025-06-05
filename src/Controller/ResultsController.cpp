@@ -73,7 +73,7 @@ void ResultsController::handleRecordEventResults() {
 
     // 使用规则的最小参赛人数
     // 默认情况下应该只有一个主规则（ID=1），包含多个子规则
-    auto scoreRuleOpt = settings_.getScoreRule(1); // 默认使用ID=1的规则
+    auto scoreRuleOpt = settings_.rules.get(1); // 默认使用ID=1的规则
     if (!scoreRuleOpt) {
         UIManager::showErrorMessage("找不到默认计分规则（ID=1）。请初始化系统设置。");
         return;
