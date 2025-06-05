@@ -6,6 +6,8 @@
 #define DATAMANAGER_H
 
 #include <string>
+#include <vector>
+#include <utility>
 #include "SystemSettings.h"
 #include "DataFileManager.h"
 
@@ -50,10 +52,22 @@ public:
      *
      * 此操作会覆盖当前系统中的大部分数据（如默认设置、计分规则），
      * 然后从文件中加载并重构所有单位、运动员、项目、成绩等。
-     * @param filePath 包含备份数据的文件路径。
+     * @param filePath 包含备份数据的文件路径或者备份文件ID。
      * @return 如果数据成功恢复返回 true，否则返回 false（例如，文件不存在、格式错误、数据不一致）。
      */
     bool restoreData(const std::string& filePath);
+    
+    /**
+     * @brief 获取备份文件夹中的所有备份文件
+     * @return 按时间排序的备份文件列表，每个元素包含ID和文件路径
+     */
+    std::vector<std::pair<int, std::string>> getBackupFiles() const;
+    
+    /**
+     * @brief 确保备份目录存在
+     * @return 如果备份目录存在或成功创建返回true，否则返回false
+     */
+    bool ensureBackupDirectoryExists() const;
 
     /**
      * @brief 向当前系统中加载一套预定义示例数据。

@@ -161,12 +161,7 @@ void SystemSettingsController::handleAddEvent() {
     int durationMinutes = UIManager::getIntInput("请输入项目持续时间（分钟）: ", 1, 1440);  // 最多24小时
     
     // 使用新的方法添加项目
-    if (settings_.addCompetitionEvent(name, eventType, gender, scoreRuleId, durationMinutes)) {
-        UIManager::showSuccessMessage("项目 '" + name + "' 添加成功。计分规则ID: " + std::to_string(scoreRuleId) + 
-                                      ", 持续时间: " + std::to_string(durationMinutes) + "分钟");
-    } else {
-        UIManager::showErrorMessage("项目添加失败。");
-    }
+    settings_.addCompetitionEvent(name, eventType, gender, scoreRuleId);
 }
 
 void SystemSettingsController::handleViewAllEvents() {

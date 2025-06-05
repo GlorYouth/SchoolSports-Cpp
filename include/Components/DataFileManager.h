@@ -46,6 +46,31 @@ public:
      * @return 生成的文件名
      */
     std::string generateDefaultBackupFilename() const;
+    
+    /**
+     * @brief 确保备份文件夹存在，如果不存在则创建
+     * @return 如果操作成功返回true，否则返回false
+     */
+    bool ensureBackupDirectoryExists() const;
+    
+    /**
+     * @brief 列出备份文件夹中的所有备份文件
+     * @return 按时间降序排列的备份文件信息列表，每项包含ID和文件路径
+     */
+    std::vector<std::pair<int, std::string>> listBackupFiles() const;
+    
+    /**
+     * @brief 通过ID获取备份文件路径
+     * @param id 备份文件ID
+     * @return 对应ID的备份文件路径，如果ID无效则返回空字符串
+     */
+    std::string getBackupFilePathById(int id) const;
+
+    /**
+     * @brief 获取备份文件夹路径
+     * @return 备份文件夹路径
+     */
+    std::string getBackupDirectoryPath() const;
 
 private:
     // ===== 文件保存辅助方法 =====

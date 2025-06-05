@@ -60,6 +60,13 @@ public:
      */
     bool addUnit(const std::string& unitName);
     /**
+     * @brief 使用指定ID添加一个新的参赛单位。
+     * @param unitName 单位的名称。
+     * @param id 指定的单位ID。
+     * @return 如果单位名称未重复且成功添加，返回 true；否则返回 false。
+     */
+    bool addUnitWithId(const std::string& unitName, int id);
+    /**
      * @brief 根据单位ID获取单位对象的可修改引用。
      * @param unitId 要查找的单位ID。
      * @return 如果找到，返回一个包含 Unit 引用的 std::optional；否则返回 std::nullopt。
@@ -85,6 +92,8 @@ public:
     bool removeUnit(int unitId);
     /** @brief 清除系统中所有的单位数据。 */
     void clearUnits();
+    /** @brief 重置单位ID计数器。 */
+    void resetUnitIdCounter();
 
     // --- 运动员管理 ---
     /**
@@ -95,6 +104,15 @@ public:
      * @return 如果所属单位存在且成功添加运动员，返回 true；否则返回 false。
      */
     bool addAthlete(const std::string& name, Gender gender, int unitId);
+    /**
+     * @brief 使用指定ID添加一名新的运动员。
+     * @param name 运动员姓名。
+     * @param gender 运动员性别。
+     * @param unitId 运动员所属单位的ID。
+     * @param id 指定的运动员ID。
+     * @return 如果所属单位存在且成功添加运动员，返回 true；否则返回 false。
+     */
+    bool addAthleteWithId(const std::string& name, Gender gender, int unitId, int id);
     /**
      * @brief 根据运动员ID获取运动员对象的可修改引用。
      * @param athleteId 要查找的运动员ID。
@@ -121,35 +139,19 @@ public:
     bool removeAthlete(int athleteId);
     /** @brief 清除系统中所有的运动员数据。 */
     void clearAthletes();
+    /** @brief 重置运动员ID计数器。 */
+    void resetAthleteIdCounter();
 
     // --- 项目管理 ---
     /**
-     * @brief 添加一个新的比赛项目，并自动关联适用的计分规则。
-     * @param eventName 项目名称。
-     * @param type 项目类型 (径赛/田赛)。
-     * @param genderReq 项目性别要求。
-     * @return 如果项目名称未重复且成功添加，返回 true；否则返回 false。
-     */
-    bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq);
-    /**
-     * @brief 添加一个新的比赛项目，并手动指定计分规则ID。
+     * @brief 使用指定ID添加一个新的比赛项目。
      * @param eventName 项目名称。
      * @param type 项目类型。
      * @param genderReq 项目性别要求。
      * @param scoreRuleId 要关联的计分规则ID。
-     * @return 如果项目名称未重复且指定的计分规则存在，则成功添加并返回 true；否则返回 false。
+     * @return 返回项目ID。
      */
-    bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
-    /**
-     * @brief 添加一个增强的添加项目方法，包含计分规则ID和持续时间
-     * @param eventName 项目名称。
-     * @param type 项目类型。
-     * @param genderReq 项目性别要求。
-     * @param scoreRuleId 要关联的计分规则ID。
-     * @param durationMinutes 持续时间（分钟）。
-     * @return 如果项目名称未重复且指定的计分规则存在，则成功添加并返回 true；否则返回 false。
-     */
-    bool addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId, int durationMinutes);
+    int addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
     /**
      * @brief 根据项目ID获取比赛项目对象的可修改引用。
      * @param eventId 要查找的项目ID。
@@ -176,6 +178,8 @@ public:
     bool removeCompetitionEvent(int eventId);
     /** @brief 清除系统中所有的比赛项目数据。 */
     void clearCompetitionEvents();
+    /** @brief 重置比赛项目ID计数器。 */
+    void resetCompetitionEventIdCounter();
 
     // --- 计分规则管理 ---
     /**
@@ -219,7 +223,8 @@ public:
     [[nodiscard]] const std::map<int, ScoreRule>& getAllScoreRules() const;
     /** @brief 清除系统中所有的自定义计分规则（默认规则通常保留）。 */
     void clearScoreRules();
-
+    /** @brief 重置计分规则ID计数器。 */
+    void resetScoreRuleIdCounter();
 
     // --- 系统参数设置 ---
     /**

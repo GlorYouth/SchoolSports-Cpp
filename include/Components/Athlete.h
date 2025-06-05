@@ -46,6 +46,13 @@ public:
     [[nodiscard]] int getId() const;
 
     /**
+     * @brief 设置运动员的ID。
+     * @param id 要设置的ID。
+     * @note 此方法主要用于数据恢复，正常情况下不应直接调用。
+     */
+    void setId(int id);
+
+    /**
      * @brief 获取运动员的姓名。
      * @return 返回运动员姓名。
      */

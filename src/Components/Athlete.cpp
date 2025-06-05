@@ -18,6 +18,10 @@ int Athlete::getId() const {
     return id;
 }
 
+void Athlete::setId(int newId) {
+    id = newId;
+}
+
 std::string Athlete::getName() const {
     return name;
 }

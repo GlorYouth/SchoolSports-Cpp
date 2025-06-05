@@ -8,6 +8,8 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <filesystem> // 添加C++17文件系统库
+#include <algorithm>  // 用于排序
 
 #include "../../include/Components/Unit.h"
 #include "../../include/Components/Athlete.h"
@@ -17,8 +19,84 @@
 #include "../../include/Components/Constants.h"
 #include "../../include/utils.h"
 
+// 定义命名空间别名，简化代码
+namespace fs = std::filesystem;
+
 DataFileManager::DataFileManager() {
     // 构造函数暂无需初始化内容
+}
+
+std::string DataFileManager::getBackupDirectoryPath() const {
+    return "backup";
+}
+
+bool DataFileManager::ensureBackupDirectoryExists() const {
+    std::string backupDir = getBackupDirectoryPath();
+    
+    try {
+        // 检查目录是否存在
+        if (!fs::exists(backupDir)) {
+            // 创建目录
+            bool created = fs::create_directory(backupDir);
+            if (!created) {
+                std::cerr << "错误: 无法创建备份目录: " << backupDir << std::endl;
+                return false;
+            }
+            std::cout << "已创建备份目录: " << backupDir << std::endl;
+        }
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "创建备份目录时发生错误: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+std::vector<std::pair<int, std::string>> DataFileManager::listBackupFiles() const {
+    std::vector<std::pair<int, std::string>> result;
+    std::string backupDir = getBackupDirectoryPath();
+    
+    // 确保备份目录存在
+    if (!ensureBackupDirectoryExists()) {
+        return result; // 返回空列表
+    }
+    
+    try {
+        // 收集所有.dat文件
+        std::vector<fs::directory_entry> entries;
+        for (const auto& entry : fs::directory_iterator(backupDir)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".dat") {
+                entries.push_back(entry);
+            }
+        }
+        
+        // 按最后修改时间排序（降序）
+        std::sort(entries.begin(), entries.end(), 
+            [](const fs::directory_entry& a, const fs::directory_entry& b) {
+                return fs::last_write_time(a.path()) > fs::last_write_time(b.path());
+            });
+        
+        // 为每个文件分配ID
+        int id = 1;
+        for (const auto& entry : entries) {
+            result.emplace_back(id++, entry.path().string());
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "列出备份文件时发生错误: " << e.what() << std::endl;
+    }
+    
+    return result;
+}
+
+std::string DataFileManager::getBackupFilePathById(int id) const {
+    auto backupFiles = listBackupFiles();
+    
+    for (const auto& [fileId, filePath] : backupFiles) {
+        if (fileId == id) {
+            return filePath;
+        }
+    }
+    
+    return ""; // 未找到对应ID的文件
 }
 
 std::string DataFileManager::generateDefaultBackupFilename() const {
@@ -28,17 +106,27 @@ std::string DataFileManager::generateDefaultBackupFilename() const {
     
     // 格式化时间为字符串
     std::stringstream ss;
-    ss << "SchoolSports_" << std::put_time(localTime, "%Y-%m-%d_%H-%M-%S") << ".dat";
+    ss << getBackupDirectoryPath() << "/SchoolSports_" 
+       << std::put_time(localTime, "%Y-%m-%d_%H-%M-%S") << ".dat";
     
     return ss.str();
 }
 
 bool DataFileManager::saveDataToFile(const SystemSettings& settings, const std::string& filePath) const {
+    // 确保备份目录存在
+    if (!ensureBackupDirectoryExists()) {
+        std::cerr << "错误: 无法确保备份目录存在，保存操作取消" << std::endl;
+        return false;
+    }
+    
     std::string actualFilePath = filePath;
     
     // 如果没有提供文件路径，创建默认文件名与时间戳
     if (actualFilePath.empty()) {
         actualFilePath = generateDefaultBackupFilename();
+    } else if (actualFilePath.find('/') == std::string::npos && actualFilePath.find('\\') == std::string::npos) {
+        // 如果只提供了文件名而非完整路径，则将其放在备份目录中
+        actualFilePath = getBackupDirectoryPath() + "/" + actualFilePath;
     }
     
     // 打开文件
@@ -209,7 +297,7 @@ void DataFileManager::saveVenues(std::ofstream& outFile, const SystemSettings& s
 
 std::string DataFileManager::createRestoreBackup(const SystemSettings& settings) const {
     // 备份操作前创建一份临时备份
-    std::string backupFilePath = "auto_backup_before_restore_" + std::to_string(time(0)) + ".dat";
+    std::string backupFilePath = getBackupDirectoryPath() + "/auto_backup_before_restore_" + std::to_string(time(0)) + ".dat";
     if (saveDataToFile(settings, backupFilePath)) {
         std::cout << "已创建自动备份: " << backupFilePath << std::endl;
         return backupFilePath;
@@ -220,9 +308,28 @@ std::string DataFileManager::createRestoreBackup(const SystemSettings& settings)
 }
 
 bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::string& filePath) {
-    std::ifstream inFile(filePath);
+    // 检查文件路径是否为ID
+    std::string actualFilePath = filePath;
+    
+    // 尝试将filePath转换为整数ID
+    try {
+        int id = std::stoi(filePath);
+        std::string pathById = getBackupFilePathById(id);
+        
+        if (!pathById.empty()) {
+            actualFilePath = pathById;
+            std::cout << "使用ID " << id << " 加载备份文件: " << actualFilePath << std::endl;
+        } else {
+            std::cerr << "错误: 无法找到ID为 " << id << " 的备份文件" << std::endl;
+            return false;
+        }
+    } catch (const std::exception&) {
+        // 不是ID，保持原路径不变
+    }
+
+    std::ifstream inFile(actualFilePath);
     if (!inFile.is_open()) {
-        std::cerr << "错误: 无法打开文件进行恢复: " << filePath << std::endl;
+        std::cerr << "错误: 无法打开文件进行恢复: " << actualFilePath << std::endl;
         return false;
     }
 
@@ -241,7 +348,7 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
         settings.removeVenue(venue);
     }
 
-    std::cout << "开始从 " << filePath << " 恢复数据..." << std::endl;
+    std::cout << "开始从 " << actualFilePath << " 恢复数据..." << std::endl;
     
     std::string line;
     std::string currentSection;
@@ -347,17 +454,18 @@ void DataFileManager::processUnit(const std::string& line, SystemSettings& setti
     std::getline(ss, token, '|');
     std::string name = token;
     
-    // 添加单位
-    int newId = settings.addUnit(name);
-    if (newId != id) {
-        std::cerr << "警告: 单位ID不匹配。期望: " << id << ", 实际: " << newId << std::endl;
+    // 添加单位 - 使用指定ID
+    bool success = settings.addUnitWithId(name, id);
+    if (!success) {
+        std::cerr << "警告: 添加单位失败: " << name << " (ID: " << id << ")" << std::endl;
+        return;
     }
     
     // 总分
     std::getline(ss, token, '|');
     double totalScore = std::stod(token);
     if (totalScore > 0) {
-        settings.addScoreToUnit(newId, totalScore); // 添加总分（如果有）
+        settings.addScoreToUnit(id, totalScore); // 添加总分（如果有）
     }
 }
 
@@ -474,7 +582,7 @@ void DataFileManager::processEvent(const std::string& line, SystemSettings& sett
     }
     
     // 添加或更新比赛项目
-    int newId = settings.addCompetitionEvent(name, eventType, gender, scoreRuleId);
+    int newId = settings.addCompetitionEvent(name, eventType, gender,scoreRuleId);
     if (newId != id) {
         std::cerr << "警告: 比赛项目ID不匹配。期望: " << id << ", 实际: " << newId << std::endl;
     }

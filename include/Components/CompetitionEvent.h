@@ -64,6 +64,13 @@ public:
     [[nodiscard]] int getId() const;
 
     /**
+     * @brief 设置项目的ID。
+     * @param id 要设置的ID。
+     * @note 此方法主要用于数据恢复，正常情况下不应直接调用。
+     */
+    void setId(int id);
+
+    /**
      * @brief 获取项目名称。
      * @return 返回项目名称。
      */

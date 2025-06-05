@@ -42,6 +42,13 @@ public:
     [[nodiscard]] int getId() const;
 
     /**
+     * @brief 设置单位的ID。
+     * @param id 要设置的ID。
+     * @note 此方法主要用于数据恢复，正常情况下不应直接调用。
+     */
+    void setId(int id);
+
+    /**
      * @brief 获取单位的名称。
      * @return 返回单位名称。
      */

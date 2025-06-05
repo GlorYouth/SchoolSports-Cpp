@@ -19,6 +19,10 @@ int CompetitionEvent::getId() const {
     return id;
 }
 
+void CompetitionEvent::setId(int newId) {
+    id = newId;
+}
+
 std::string CompetitionEvent::getName() const {
     return name;
 }

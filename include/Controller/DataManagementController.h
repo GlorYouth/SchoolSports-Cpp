@@ -23,6 +23,9 @@ private:
     void handleBackupData();
     void handleRestoreData();
     
+    // 显示备份文件列表
+    void displayBackupFiles() const;
+    
     // 分阶段导入示例数据的处理方法
     void handleLoadSampleStage1Data();
     void handleLoadSampleStage2Data();

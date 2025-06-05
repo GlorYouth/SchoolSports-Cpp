@@ -12,6 +12,10 @@ int Unit::getId() const {
     return id;
 }
 
+void Unit::setId(int newId) {
+    id = newId;
+}
+
 std::string Unit::getName() const {
     return name;
 }

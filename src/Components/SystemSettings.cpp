@@ -34,6 +34,32 @@ bool SystemSettings::addUnit(const std::string& unitName) {
     return true;
 }
 
+// 新增：使用指定ID添加单位
+bool SystemSettings::addUnitWithId(const std::string& unitName, int id) {
+    // 检查单位名是否已存在
+    for (const auto &val : units | std::views::values) {
+        if (val.getName() == unitName) {
+            std::cerr << "错误: 单位名称 '" << unitName << "' 已存在。" << std::endl;
+            return false; // 单位名已存在
+        }
+    }
+    
+    // 检查ID是否已被使用
+    if (units.find(id) != units.end()) {
+        std::cerr << "错误: 单位ID " << id << " 已被使用。" << std::endl;
+        return false;
+    }
+    
+    // 创建单位并设置ID
+    Unit newUnit(unitName);
+    // 重置ID计数器到指定ID的下一个值
+    Unit::resetNextId(id + 1);
+    // 手动设置ID
+    newUnit.setId(id);
+    units.insert({id, newUnit});
+    return true;
+}
+
 std::optional<utils::Ref<Unit>> SystemSettings::getUnit(const int unitId) {
     if (const auto it = units.find(unitId); it != units.end()) {
         return it->second;
@@ -70,10 +96,14 @@ bool SystemSettings::removeUnit(int unitId) {
     return units.erase(unitId) > 0;
 }
 
-// 新增：清除所有单位数据
+// 新增：重置单位ID计数器
+void SystemSettings::resetUnitIdCounter() {
+    Unit::resetNextId(1);
+}
+
+// 修改：清除所有单位数据
 void SystemSettings::clearUnits() {
     // 清除单位前，需要确保所有关联的运动员也被处理
-    // 为避免复杂循环依赖和迭代器失效，可以先收集所有单位ID，然后逐个移除
     std::vector<int> unitIds;
     for(const auto& pair : units) {
         unitIds.push_back(pair.first);
@@ -82,7 +112,7 @@ void SystemSettings::clearUnits() {
         removeUnit(id); // removeUnit 应该处理其下的运动员
     }
     units.clear(); // 最后确保 map 清空
-    // Unit::nextId = 1; // 如果需要重置ID计数器（通常用于测试）
+    resetUnitIdCounter(); // 重置ID计数器
 }
 
 
@@ -96,6 +126,31 @@ bool SystemSettings::addAthlete(const std::string& name, Gender gender, int unit
     Athlete newAthlete(name, gender, unitId);
     athletes.insert({newAthlete.getId(), newAthlete});
     optional_unit.value().get().addAthleteId(newAthlete.getId()); // 将运动员ID关联到单位
+    return true;
+}
+
+// 新增：使用指定ID添加运动员
+bool SystemSettings::addAthleteWithId(const std::string& name, Gender gender, int unitId, int id) {
+    const auto optional_unit = getUnit(unitId);
+    if (!optional_unit.has_value()) {
+        std::cerr << "错误: 添加运动员失败，单位ID " << unitId << " 不存在。" << std::endl;
+        return false; // 单位不存在
+    }
+    
+    // 检查ID是否已被使用
+    if (athletes.find(id) != athletes.end()) {
+        std::cerr << "错误: 运动员ID " << id << " 已被使用。" << std::endl;
+        return false;
+    }
+    
+    // 创建运动员并设置ID
+    Athlete newAthlete(name, gender, unitId);
+    // 重置ID计数器到指定ID的下一个值
+    Athlete::resetNextId(id + 1);
+    // 手动设置ID
+    newAthlete.setId(id);
+    athletes.insert({id, newAthlete});
+    optional_unit.value().get().addAthleteId(id); // 将运动员ID关联到单位
     return true;
 }
 
@@ -144,7 +199,12 @@ bool SystemSettings::removeAthlete(const int athleteId) {
     return athletes.erase(athleteId) > 0;
 }
 
-// 新增：清除所有运动员数据
+// 新增：重置运动员ID计数器
+void SystemSettings::resetAthleteIdCounter() {
+    Athlete::resetNextId(1);
+}
+
+// 修改：清除所有运动员数据
 void SystemSettings::clearAthletes() {
     // 移除运动员会处理其在单位和项目中的关联
     std::vector<int> athleteIds;
@@ -155,30 +215,14 @@ void SystemSettings::clearAthletes() {
         removeAthlete(id);
     }
     athletes.clear(); // 最后确保 map 清空
-    // Athlete::nextId = 1; // 如果需要重置ID计数器
+    resetAthleteIdCounter(); // 重置ID计数器
 }
 
-// --- 项目管理 ---
-bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq) {
-    // 使用带默认参数的构造函数，不需要显式传递scoreRuleId和durationMinutes
-    CompetitionEvent newEvent(eventName, type, genderReq);  // 默认scoreRuleId=-1, durationMinutes=0
-    competitionEvents.insert({newEvent.getId(), newEvent});
-    return true;
-}
 
-// 新增重载：允许直接指定计分规则ID
-bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
-    CompetitionEvent newEvent(eventName, type, genderReq);
-    newEvent.setScoreRuleId(scoreRuleId); // 设置计分规则ID
+int SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
+    CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId);
     competitionEvents.insert({newEvent.getId(), newEvent});
-    return true;
-}
-
-// 新增重载：允许直接指定计分规则ID和持续时间
-bool SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId, int durationMinutes) {
-    CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId, durationMinutes);
-    competitionEvents.insert({newEvent.getId(), newEvent});
-    return true;
+    return newEvent.getId();
 }
 
 std::optional<utils::Ref<CompetitionEvent>> SystemSettings::getCompetitionEvent(int eventId) {
@@ -223,7 +267,12 @@ bool SystemSettings::removeCompetitionEvent(const int eventId) {
     return competitionEvents.erase(eventId) > 0;
 }
 
-// 新增：清除所有比赛项目数据
+// 新增：重置比赛项目ID计数器
+void SystemSettings::resetCompetitionEventIdCounter() {
+    CompetitionEvent::resetNextId(1);
+}
+
+// 修改：清除所有比赛项目数据
 void SystemSettings::clearCompetitionEvents() {
     // 移除项目会处理其运动员关联和成绩
     std::vector<int> eventIds;
@@ -234,7 +283,7 @@ void SystemSettings::clearCompetitionEvents() {
         removeCompetitionEvent(id);
     }
     competitionEvents.clear(); // 最后确保 map 清空
-    // CompetitionEvent::nextId = 1; // 如果需要重置ID计数器
+    resetCompetitionEventIdCounter(); // 重置ID计数器
 }
 
 // --- 计分规则管理 ---
@@ -275,10 +324,15 @@ const std::map<int, ScoreRule>& SystemSettings::getAllScoreRules() const {
     return scoreRules;
 }
 
-// 新增：清除所有计分规则
+// 新增：重置计分规则ID计数器
+void SystemSettings::resetScoreRuleIdCounter() {
+    ScoreRule::resetNextId(1);
+}
+
+// 修改：清除所有计分规则
 void SystemSettings::clearScoreRules() {
     scoreRules.clear();
-    // ScoreRule::nextId = 1; // 如果需要重置ID计数器（通常用于测试，且ScoreRule类需提供此功能）
+    resetScoreRuleIdCounter(); // 重置ID计数器
     std::cout << "所有计分规则已清除。" << std::endl;
 }
 

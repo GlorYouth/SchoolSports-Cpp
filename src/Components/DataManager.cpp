@@ -6,6 +6,7 @@
 #include <iostream> // 用于输出信息
 #include <ranges>
 #include <vector>   // 为 std::vector
+#include <filesystem>
 
 // 包含业务实现头文件（SystemSettings中返回涉及的所有类）
 #include <sstream>
@@ -27,13 +28,29 @@ DataManager::DataManager(SystemSettings& sysSettings) :
     stage3DataImported(false) {}
 
 bool DataManager::backupData(const std::string& filePath) const {
-    // 直接使用文件管理器处理数据备份
-    return fileManager.saveDataToFile(settings, filePath);
+    try {
+        return fileManager.saveDataToFile(settings, filePath);
+    } catch (const std::exception& e) {
+        std::cerr << "备份数据时发生异常: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 bool DataManager::restoreData(const std::string& filePath) {
-    // 直接使用文件管理器处理数据恢复
-    return fileManager.loadDataFromFile(settings, filePath);
+    try {
+        return fileManager.loadDataFromFile(settings, filePath);
+    } catch (const std::exception& e) {
+        std::cerr << "恢复数据时发生异常: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+std::vector<std::pair<int, std::string>> DataManager::getBackupFiles() const {
+    return fileManager.listBackupFiles();
+}
+
+bool DataManager::ensureBackupDirectoryExists() const {
+    return fileManager.ensureBackupDirectoryExists();
 }
 
 // 为兼容数据备份原有的loadSampleData方法

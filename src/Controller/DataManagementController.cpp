@@ -4,6 +4,11 @@
 
 #include "../../include/Controller/DataManagementController.h"
 #include "../../include/UI/UIManager.h"
+#include <filesystem>
+#include <iomanip>
+#include <sstream>
+
+namespace fs = std::filesystem;
 
 DataManagementController::DataManagementController(DataManager& dataManager)
     : dataManager_(dataManager) {}
@@ -28,22 +33,73 @@ void DataManagementController::manage() {
 }
 
 void DataManagementController::handleBackupData() {
-    std::string filePath = UIManager::getStringInput("请输入备份文件名 (例如: backup.dat): ");
-    if (dataManager_.backupData(filePath)) { // 假设 backupData 返回 bool
-        UIManager::showSuccessMessage("数据已成功备份到 " + filePath);
+    // 确保备份目录存在
+    if (!dataManager_.ensureBackupDirectoryExists()) {
+        UIManager::showErrorMessage("无法创建备份目录，操作已取消。");
+        return;
+    }
+    
+    // 允许用户输入备份文件名，为空则使用默认（带时间戳）的文件名
+    std::string filePath = UIManager::getStringInput("请输入备份文件名 (留空则使用时间戳生成名称): ");
+    
+    if (dataManager_.backupData(filePath)) {
+        UIManager::showSuccessMessage("数据已成功备份！");
     } else {
         UIManager::showErrorMessage("数据备份失败。");
     }
 }
 
+void DataManagementController::displayBackupFiles() const {
+    auto backupFiles = dataManager_.getBackupFiles();
+    
+    if (backupFiles.empty()) {
+        UIManager::showInfoMessage("没有找到备份文件。");
+        return;
+    }
+    
+    UIManager::showTitleMessage("可用备份文件：");
+    UIManager::showMessage("ID | 备份文件");
+    UIManager::showMessage("---------------------------");
+    
+    for (const auto& [id, path] : backupFiles) {
+        // 获取文件名
+        fs::path filePath(path);
+        
+        // 显示文件信息（简化版，不显示时间）
+        UIManager::showMessage(std::to_string(id) + " | " + filePath.filename().string());
+    }
+    UIManager::showMessage("---------------------------");
+    UIManager::showMessage("备份文件已按最新时间排序，ID 1为最新备份");
+}
+
 void DataManagementController::handleRestoreData() {
-    std::string filePath = UIManager::getStringInput("请输入要恢复数据的文件名: ");
-    if (dataManager_.restoreData(filePath)) { // 假设 restoreData 返回 bool
-        UIManager::showSuccessMessage("数据已成功从 " + filePath + " 恢复。");
+    // 显示备份文件列表
+    displayBackupFiles();
+    
+    // 提示用户输入ID或文件路径
+    UIManager::showMessage("请输入要恢复的备份ID或完整文件路径：");
+    UIManager::showMessage("(输入数字将按ID恢复，输入文件路径将直接使用该路径)");
+    std::string input = UIManager::getStringInput("请输入: ");
+    
+    if (input.empty()) {
+        UIManager::showErrorMessage("未提供备份ID或路径，操作已取消。");
+        return;
+    }
+    
+    // 确认操作
+    UIManager::showWarningMessage("警告：恢复操作将替换当前系统的所有数据！");
+    std::string confirm = UIManager::getStringInput("确定要继续吗？(y/n): ");
+    if (confirm != "y" && confirm != "Y") {
+        UIManager::showMessage("操作已取消。");
+        return;
+    }
+    
+    // 执行恢复
+    if (dataManager_.restoreData(input)) {
+        UIManager::showSuccessMessage("数据已成功恢复！");
         UIManager::showMessage("注意：恢复数据后，请检查数据是否正确，特别是单位总分。");
-        UIManager::showMessage("若系统支持，您可能需要重新计算单位分或通过其他方式验证。");
     } else {
-        UIManager::showErrorMessage("数据恢复失败或尚未完全实现。");
+        UIManager::showErrorMessage("数据恢复失败。请检查ID或文件路径是否正确。");
     }
 }
 
