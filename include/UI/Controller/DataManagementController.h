@@ -5,8 +5,8 @@
 #ifndef DATAMANAGEMENTCONTROLLER_H
 #define DATAMANAGEMENTCONTROLLER_H
 
-#include "../Components/Manager/DataManager.h"
-#include "../Components/Core/SystemSettings.h"
+#include "../../Components/Manager/DataManager.h"
+#include "../../Components/Core/SystemSettings.h"
 #include <string>
 
 class DataManagementController {

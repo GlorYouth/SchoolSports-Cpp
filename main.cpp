@@ -9,12 +9,12 @@
 #include "include/Components/Core/Workflow.h"
 
 #include "include/UI/UIManager.h"
-#include "include/Controller/SystemSettingsController.h"
-#include "include/Controller/RegistrationController.h"
-#include "include/Controller/ScheduleController.h"
-#include "include/Controller/ResultsController.h"
-#include "include/Controller/QueryController.h"
-#include "include/Controller/DataManagementController.h"
+#include "include/UI/Controller/SystemSettingsController.h"
+#include "include/UI/Controller/RegistrationController.h"
+#include "include/UI/Controller/ScheduleController.h"
+#include "include/UI/Controller/ResultsController.h"
+#include "include/UI/Controller/QueryController.h"
+#include "include/UI/Controller/DataManagementController.h"
 
 #include <vector>
 #include <algorithm> // for std::sort for unit standings

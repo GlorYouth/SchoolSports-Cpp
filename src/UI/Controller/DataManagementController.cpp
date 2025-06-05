@@ -2,8 +2,8 @@
 // Created by GlorYouth on 2025/6/3.
 //
 
-#include "../../include/Controller/DataManagementController.h"
-#include "../../include/UI/UIManager.h"
+#include "../../../include/UI/Controller/DataManagementController.h"
+#include "../../../include/UI/UIManager.h"
 #include <filesystem>
 #include <iomanip>
 #include <sstream>

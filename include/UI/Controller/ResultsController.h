@@ -6,7 +6,7 @@
 #define RESULTSCONTROLLER_H
 
 
-#include "../Components/Core/SystemSettings.h"
+#include "../../Components/Core/SystemSettings.h"
 
 class ResultsController {
 public:

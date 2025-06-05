@@ -2,13 +2,13 @@
 // Created by GlorYouth on 2025/6/3.
 //
 
-#include "../../include/Controller/SystemSettingsController.h"
-#include "../../include/UI/UIManager.h"
-#include "../../include/Components/Core/Unit.h"
-#include "../../include/Components/Core/Athlete.h"
-#include "../../include/Components/Core/CompetitionEvent.h"
-#include "../../include/Components/Core/ScoreRule.h"
-#include "../../include/Components/Core/Schedule.h"
+#include "../../../include/UI/Controller/SystemSettingsController.h"
+#include "../../../include/UI/UIManager.h"
+#include "../../../include/Components/Core/Unit.h"
+#include "../../../include/Components/Core/Athlete.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/Components/Core/ScoreRule.h"
+#include "../../../include/Components/Core/Schedule.h"
 #include <algorithm> // for std::sort, std::find (如果需要)
 #include <ranges>    // for std::views::values (C++20)
 #include <limits>

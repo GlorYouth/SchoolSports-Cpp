@@ -2,19 +2,19 @@
 // Created by GlorYouth on 2025/6/3.
 //
 
-#include "../../include/Controller/ResultsController.h"
-#include "../../include/UI/UIManager.h"
-#include "../../include/Components/Core/CompetitionEvent.h"
-#include "../../include/Components/Core/Athlete.h"
-#include "../../include/Components/Core/ScoreRule.h"
-#include "../../include/Components/Core/Result.h"
+#include "../../../include/UI/Controller/ResultsController.h"
+#include "../../../include/UI/UIManager.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/Components/Core/Athlete.h"
+#include "../../../include/Components/Core/ScoreRule.h"
+#include "../../../include/Components/Core/Result.h"
 #include <vector>
 #include <string>
 #include <algorithm> // For std::find, std::sort
 #include <map>       // For scoresMap in rule
 #include <ranges>
 
-#include "../../include/utils.h"
+#include "../../../include/utils.h"
 
 ResultsController::ResultsController(SystemSettings& settings)
     : settings_(settings) {}

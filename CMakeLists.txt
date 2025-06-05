@@ -55,16 +55,16 @@ add_executable(SchoolSports-Cpp main.cpp
         include/Components/Core/AutoTest.h
         src/UI/UIManager.cpp
         include/UI/UIManager.h
-        src/Controller/SystemSettingsController.cpp
-        include/Controller/SystemSettingsController.h
-        src/Controller/RegistrationController.cpp
-        include/Controller/RegistrationController.h
-        src/Controller/ScheduleController.cpp
-        include/Controller/ScheduleController.h
-        src/Controller/ResultsController.cpp
-        include/Controller/ResultsController.h
-        src/Controller/QueryController.cpp
-        include/Controller/QueryController.h
-        src/Controller/DataManagementController.cpp
-        include/Controller/DataManagementController.h
+        src/UI/Controller/SystemSettingsController.cpp
+        include/UI/Controller/SystemSettingsController.h
+        src/UI/Controller/RegistrationController.cpp
+        include/UI/Controller/RegistrationController.h
+        src/UI/Controller/ScheduleController.cpp
+        include/UI/Controller/ScheduleController.h
+        src/UI/Controller/ResultsController.cpp
+        include/UI/Controller/ResultsController.h
+        src/UI/Controller/QueryController.cpp
+        include/UI/Controller/QueryController.h
+        src/UI/Controller/DataManagementController.cpp
+        include/UI/Controller/DataManagementController.h
         include/utils.h)

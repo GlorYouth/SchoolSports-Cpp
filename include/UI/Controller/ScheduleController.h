@@ -7,8 +7,8 @@
 
 
 
-#include "../Components/Core/Schedule.h"
-#include "../Components/Core/SystemSettings.h"
+#include "../../Components/Core/Schedule.h"
+#include "../../Components/Core/SystemSettings.h"
 
 class ScheduleController {
 public:

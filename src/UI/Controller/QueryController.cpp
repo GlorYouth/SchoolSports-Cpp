@@ -2,10 +2,10 @@
 // Created by GlorYouth on 2025/6/3.
 //
 
-#include "../../include/Controller/QueryController.h"
-#include "../../include/UI/UIManager.h"
-#include "../../include/Components/Core/Unit.h"
-#include "../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/UI/Controller/QueryController.h"
+#include "../../../include/UI/UIManager.h"
+#include "../../../include/Components/Core/Unit.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
 #include <vector>
 #include <functional>
 
