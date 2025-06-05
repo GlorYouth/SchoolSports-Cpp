@@ -1,6 +1,3 @@
-//
-// Created by GlorYouth on 2025/6/3.
-//
 
 #ifndef SCHEDULECONTROLLER_H
 #define SCHEDULECONTROLLER_H

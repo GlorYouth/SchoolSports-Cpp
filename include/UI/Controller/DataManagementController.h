@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/3.
-//
+
 
 #ifndef DATAMANAGEMENTCONTROLLER_H
 #define DATAMANAGEMENTCONTROLLER_H

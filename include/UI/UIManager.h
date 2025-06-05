@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/3.
-//
+
 
 #ifndef UIMANAGER_H
 #define UIMANAGER_H

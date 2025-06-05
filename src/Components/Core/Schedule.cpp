@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
+
 
 #include "../../../include/Components/Core/Schedule.h"
 #include <iostream> // 用于打印等

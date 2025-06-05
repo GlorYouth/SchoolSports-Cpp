@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/3.
-//
+
 
 #ifndef REGISTRATIONCONTROLLER_H
 #define REGISTRATIONCONTROLLER_H

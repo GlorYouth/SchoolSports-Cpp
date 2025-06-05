@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/3.
-//
+
 
 #ifndef QUERYCONTROLLER_H
 #define QUERYCONTROLLER_H

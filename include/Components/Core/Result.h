@@ -1,6 +1,3 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
 
 #ifndef RESULT_H
 #define RESULT_H

@@ -1,6 +1,3 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
 
 #include "../../../include/Components/Core/SystemSettings.h"
 #include <iostream> // 用于演示输出

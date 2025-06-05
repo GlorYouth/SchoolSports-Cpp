@@ -1,6 +1,3 @@
-//
-// Created by User on 2025/6/15.
-//
 
 #include "../../../include/Components/Manager/DataFileManager.h"
 #include <fstream>

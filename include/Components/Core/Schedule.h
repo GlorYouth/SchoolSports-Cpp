@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
+
 
 #ifndef SCHEDULE_H
 #define SCHEDULE_H

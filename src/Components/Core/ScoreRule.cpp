@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
+
 
 #include "../../../include/Components/Core/ScoreRule.h"
 #include <utility>

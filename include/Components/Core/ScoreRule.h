@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
+
 
 #ifndef SCORERULE_H
 #define SCORERULE_H

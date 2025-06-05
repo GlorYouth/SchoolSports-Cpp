@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
+
 
 #ifndef ATHLETE_H
 #define ATHLETE_H

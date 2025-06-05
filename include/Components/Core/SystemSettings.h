@@ -25,6 +25,9 @@
 #include "../Manager/ScheduleLockManager.h"
 #include "../Manager/SystemArgsManager.h"
 
+// 前向声明
+class RegistrationTransaction;
+
 // 系统设置类，负责管理全局配置信息
 class SystemSettings {
     friend class UnitManager;  // 允许UnitManager访问私有成员
@@ -37,6 +40,7 @@ class SystemSettings {
     friend class VenueManager; // 允许VenueManager访问私有成员
     friend class ScheduleLockManager; // 允许ScheduleLockManager访问私有成员
     friend class SystemArgsManager; // 允许SystemArgsManager访问私有成员
+    friend class RegistrationTransaction; // 允许RegistrationTransaction访问私有成员
 
 private:
     std::map<int, Unit> _unitsMap;                   // 参赛单位列表 <UnitId, Unit>

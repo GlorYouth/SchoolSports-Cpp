@@ -1,6 +1,3 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
 
 #include "../../../include/Components/Manager/DataManager.h"
 #include <iostream> // 用于输出信息

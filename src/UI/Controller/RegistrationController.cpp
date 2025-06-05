@@ -1,6 +1,4 @@
-//
-// Created by GlorYouth on 2025/6/3.
-//
+
 
 #include "../../../include/UI/Controller/RegistrationController.h"
 

@@ -1,7 +1,3 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
-
 #ifndef REGISTRATION_H
 #define REGISTRATION_H
 #include "SystemSettings.h"

@@ -1,6 +1,3 @@
-//
-// Created by GlorYouth on 2025/6/2.
-//
 
 #ifndef COMPETITIONEVENT_H
 #define COMPETITIONEVENT_H

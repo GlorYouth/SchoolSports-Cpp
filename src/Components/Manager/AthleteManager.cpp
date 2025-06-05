@@ -1,6 +1,8 @@
 #include "../../../include/Components/Manager/AthleteManager.h"
 #include "../../../include/Components/Core/SystemSettings.h"
+#include "../../../include/Components/Core/RegistrationTransaction.h"
 #include "../../../include/utils.h"
+#include <algorithm>
 
 AthleteManager::AthleteManager(SystemSettings& settings) : settings(settings) {}
 
@@ -169,73 +171,100 @@ bool AthleteManager::contains(const std::string& name) const {
     return false;
 }
 
-// 报名相关
+// 报名相关方法，使用RegistrationTransaction
 bool AthleteManager::registerForEvent(int athleteId, int eventId) {
-    auto athleteOpt = get(athleteId);
-    auto eventOpt = settings.events.get(eventId);
-
-    if (!athleteOpt) {
-        std::cerr << "错误：报名失败，运动员ID " << athleteId << " 未找到。" << std::endl;
+    // 使用事务模式处理跨对象操作
+    RegistrationTransaction transaction(settings);
+    if (!transaction.begin()) {
+        std::cerr << "错误：无法开始报名事务。" << std::endl;
         return false;
     }
-    if (!eventOpt) {
-        std::cerr << "错误：报名失败，项目ID " << eventId << " 未找到。" << std::endl;
-        return false;
+    
+    bool success = transaction.registerForEvent(athleteId, eventId);
+    
+    if (success) {
+        transaction.commit();
+    } else {
+        transaction.rollback();
     }
-
-    Athlete& athlete = athleteOpt.value().get();
-    CompetitionEvent& event = eventOpt.value().get();
-
-    // 检查性别是否符合
-    if (!event.canAthleteRegister(athlete.getGender())) {
-        std::cerr << "错误：运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 的性别不符合项目 " << event.getName() << " (ID: " << eventId << ") 的要求。" << std::endl;
-        return false;
-    }
-
-    // 检查运动员报名项目数量是否超限
-    int maxAllowed = getMaxEventsAllowed();
-    if (athlete.getRegisteredEventsCount() >= maxAllowed) {
-        std::cerr << "错误：运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 已达到最大报名项目数 (" << maxAllowed << ")。" << std::endl;
-        return false;
-    }
-
-    // 尝试将运动员注册到项目中
-    if (!athlete.registerForEvent(eventId, maxAllowed)) {
-        // registerForEvent 内部可能已打印错误，或有其他逻辑 (如重复报名)
-        std::cerr << "运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 报名项目 " << event.getName() << " (ID: " << eventId << ") 失败（运动员侧）。" << std::endl;
-        return false;
-    }
-
-    // 尝试将项目添加到运动员的参与列表
-    if (!event.addParticipant(athleteId)) {
-        // 如果 addParticipant 失败，需要回滚运动员的报名操作
-        athlete.unregisterFromEvent(eventId);
-        std::cerr << "运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 报名项目 " << event.getName() << " (ID: " << eventId << ") 失败（项目侧）。" << std::endl;
-        return false;
-    }
-
-    std::cout << "信息：运动员 " << athlete.getName() << " (ID: " << athleteId
-              << ") 成功报名项目 " << event.getName() << " (ID: " << eventId << ")。" << std::endl;
-    return true;
+    
+    return success;
 }
 
 bool AthleteManager::unregisterFromEvent(int athleteId, int eventId) {
-    const auto athlete = get(athleteId);
-    if (!athlete.has_value()) {
+    RegistrationTransaction transaction(settings);
+    if (!transaction.begin()) {
+        std::cerr << "错误：无法开始取消报名事务。" << std::endl;
         return false;
     }
-
-    if (const auto eventOpt = settings.events.get(eventId); eventOpt.has_value()) {
-        eventOpt.value().get().removeParticipant(athleteId);
+    
+    bool success = transaction.unregisterFromEvent(athleteId, eventId);
+    
+    if (success) {
+        transaction.commit();
+    } else {
+        transaction.rollback();
     }
     
-    return athlete.value().get().unregisterFromEvent(eventId);
+    return success;
 }
 
 int AthleteManager::getMaxEventsAllowed() const {
     return settings._athleteMaxEventsAllowed;
+}
+
+// 新增：验证运动员报名数据一致性
+bool AthleteManager::validateRegistrationConsistency() const {
+    bool consistencyOk = true;
+    
+    // 检查所有运动员的报名项目
+    for (const auto& [athleteId, athlete] : getAthletesMapConst()) {
+        for (int eventId : athlete.getRegisteredEventIds()) {
+            auto eventOpt = settings.events.getConst(eventId);
+            if (!eventOpt) {
+                std::cerr << "数据一致性错误: 运动员 " << athlete.getName() 
+                          << " 报名了不存在的项目ID " << eventId << std::endl;
+                consistencyOk = false;
+                continue;
+            }
+            
+            const CompetitionEvent& event = eventOpt.value().get();
+            const auto& participants = event.getParticipantAthleteIds();
+            if (std::find(participants.begin(), participants.end(), athleteId) == participants.end()) {
+                std::cerr << "数据一致性错误: 运动员 " << athlete.getName() 
+                          << " 报名了项目 " << event.getName() 
+                          << " 但该项目的参赛者列表中没有此运动员" << std::endl;
+                consistencyOk = false;
+            }
+        }
+    }
+    
+    // 检查所有比赛项目的参赛运动员
+    for (const auto& [eventId, event] : settings.events.getAllConst()) {
+        for (int athleteId : event.get().getParticipantAthleteIds()) {
+            auto athleteOpt = getConst(athleteId);
+            if (!athleteOpt) {
+                std::cerr << "数据一致性错误: 项目 " << event.get().getName() 
+                          << " 包含不存在的运动员ID " << athleteId << std::endl;
+                consistencyOk = false;
+                continue;
+            }
+            
+            const Athlete& athlete = athleteOpt.value().get();
+            if (!athlete.isRegisteredForEvent(eventId)) {
+                std::cerr << "数据一致性错误: 项目 " << event.get().getName() 
+                          << " 包含运动员 " << athlete.getName() 
+                          << " 但该运动员的报名列表中没有此项目" << std::endl;
+                consistencyOk = false;
+            }
+        }
+    }
+    
+    if (consistencyOk) {
+        std::cout << "验证通过: 运动员报名数据一致性检查成功。" << std::endl;
+    } else {
+        std::cerr << "验证失败: 发现运动员报名数据一致性问题，请考虑修复。" << std::endl;
+    }
+    
+    return consistencyOk;
 } 
