@@ -236,15 +236,10 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
     int maxP = UIManager::getIntInput("请输入适用此规则的最大参赛人数 (-1表示无上限): ");
     
     if (isComposite) {
-        auto* mainRule = ScoreRule::createCompositeRule(desc, minP, maxP);
-        int ruleId = mainRule->getId();
+        auto mainRule = ScoreRule::createCompositeRule(desc, minP, maxP);
+        int ruleId = mainRule.getId();
         
-        bool added = settings_.rules.addCustom(mainRule);
-        if (!added) {
-            UIManager::showErrorMessage("添加复合规则失败。");
-            delete mainRule;
-            return;
-        }
+        settings_.rules.addCustom(mainRule);
         
         int subRuleCount = UIManager::getIntInput("请输入要添加的子规则数量: ", 1, 10);
         for (int i = 1; i <= subRuleCount; ++i) {
@@ -261,16 +256,15 @@ void SystemSettingsController::handleAddScoreRule(bool isComposite) {
                 scoresMap[j] = scoreVal;
             }
             
-            auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
+            auto subRule = ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
             
             auto mainRuleOpt = settings_.rules.get(ruleId);
             if (mainRuleOpt.has_value()) {
                 ScoreRule& ruleRef = mainRuleOpt.value().get();
-                ruleRef.addSubRule(*subRule);
+                ruleRef.addSubRule(subRule);
                 UIManager::showSuccessMessage("子规则 " + std::to_string(i) + " 添加成功。");
             } else {
                 UIManager::showErrorMessage("获取主规则失败，无法添加子规则。");
-                delete subRule;
                 return;
             }
         }
@@ -369,8 +363,8 @@ void SystemSettingsController::handleManageExistingScoreRule() {
                 scoresMap[j] = scoreVal;
             }
             
-            auto* subRule = new ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
-            rule.addSubRule(*subRule);
+            auto subRule = ScoreRule(subDesc, subMinP, subMaxP, ranks, scoresMap);
+            rule.addSubRule(subRule);
             
             UIManager::showSuccessMessage("新的子规则添加成功。");
         }

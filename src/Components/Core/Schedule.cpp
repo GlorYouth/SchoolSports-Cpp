@@ -70,6 +70,16 @@ bool Schedule::generateSchedule() {
     for (const auto& venue : venueList) {
         venueUsageCount[venue] = 0;
     }
+    
+    // 新增：记录每个运动员的赛程安排
+    // 格式：运动员ID -> {(天, 开始时间, 结束时间, 项目ID)}
+    struct AthleteTimeSlot {
+        int day;
+        int startMin;
+        int endMin;
+        int eventId;
+    };
+    std::map<int, std::vector<AthleteTimeSlot>> athleteSchedules;
 
     // 5. 依次为每个项目分配时间
     for (int eventId : eventIds) {
@@ -83,6 +93,9 @@ bool Schedule::generateSchedule() {
         auto& event = eventOpt.value().get(); // 获取原始项目的引用
         int duration = event.getDurationMinutes();
         bool scheduled = false;
+        
+        // 获取该项目的所有参与运动员
+        const std::vector<int>& participantIds = event.getParticipantAthleteIds();
         
         // 尝试从第1天开始，直到找到可排入的空隙
         for (day = 1; day < 100; ++day) { // 最多排100天
@@ -106,16 +119,56 @@ bool Schedule::generateSchedule() {
                     
                     for (const auto& [start, end] : slots) {
                         if (start - lastEnd >= duration) {
-                            // 找到空隙
+                            // 找到空隙，尝试分配
                             int s = lastEnd, e = lastEnd + duration;
+                            
+                            // 新增：检查运动员时间冲突
+                            bool athleteConflict = false;
+                            for (int athleteId : participantIds) {
+                                // 检查该运动员在该天是否有冲突的比赛安排
+                                if (athleteSchedules.find(athleteId) != athleteSchedules.end()) {
+                                    for (const auto& slot : athleteSchedules[athleteId]) {
+                                        if (slot.day == day) {
+                                            // 检查时间是否重叠
+                                            if (!(e <= slot.startMin || s >= slot.endMin)) {
+                                                athleteConflict = true;
+                                                std::cout << "运动员ID " << athleteId << " 在项目 " 
+                                                          << event.getName() << " 和项目ID " << slot.eventId 
+                                                          << " 之间存在时间冲突，尝试其他时间段。" << std::endl;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (athleteConflict) break;
+                                }
+                            }
+                            
+                            if (athleteConflict) {
+                                // 如果有运动员冲突，继续寻找下一个空隙
+                                lastEnd = end;
+                                continue;
+                            }
                             
                             // 分配 - 现在修改的是原始对象
                             event.setVenue(venue);
                             char bufS[6], bufE[6];
                             snprintf(bufS, 6, "%02d:%02d", s/60, s%60);
                             snprintf(bufE, 6, "%02d:%02d", e/60, e%60);
+                            
+                            // 设置时间并验证是否成功应用
+                            std::string originalStartTime = event.getStartTime();
+                            std::string originalEndTime = event.getEndTime();
+                            
                             event.setStartTime(bufS);
                             event.setEndTime(bufE);
+                            
+                            // 检查时间是否成功设置
+                            if (event.getStartTime() != bufS || event.getEndTime() != bufE) {
+                                std::cerr << "警告：项目 \"" << event.getName() << "\" 的时间设置未成功应用。"
+                                          << "可能是由于时间格式验证失败。" << std::endl;
+                                continue; // 尝试下一个空隙
+                            }
+                            
                             slots.push_back({s, e});
                             
                             // 更新场地使用计数
@@ -128,6 +181,11 @@ bool Schedule::generateSchedule() {
                             entry.startTime = bufS;
                             entry.endTime = bufE;
                             scheduleEntries.push_back(entry);
+                            
+                            // 新增：记录该项目所有运动员的时间安排
+                            for (int athleteId : participantIds) {
+                                athleteSchedules[athleteId].push_back({day, s, e, eventId});
+                            }
                             
                             std::cout << "项目[" << event.getName() << "] 安排在 场地[" << venue 
                                       << "] 时间[" << bufS << "-" << bufE << "]" << std::endl;
@@ -143,13 +201,52 @@ bool Schedule::generateSchedule() {
                     if (!found && sessionEnd - lastEnd >= duration) {
                         int s = lastEnd, e = lastEnd + duration;
                         
+                        // 新增：检查运动员时间冲突
+                        bool athleteConflict = false;
+                        for (int athleteId : participantIds) {
+                            // 检查该运动员在该天是否有冲突的比赛安排
+                            if (athleteSchedules.find(athleteId) != athleteSchedules.end()) {
+                                for (const auto& slot : athleteSchedules[athleteId]) {
+                                    if (slot.day == day) {
+                                        // 检查时间是否重叠
+                                        if (!(e <= slot.startMin || s >= slot.endMin)) {
+                                            athleteConflict = true;
+                                            std::cout << "运动员ID " << athleteId << " 在项目 " 
+                                                      << event.getName() << " 和项目ID " << slot.eventId 
+                                                      << " 之间存在时间冲突，尝试其他时间段。" << std::endl;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (athleteConflict) break;
+                            }
+                        }
+                        
+                        if (athleteConflict) {
+                            // 如果有运动员冲突，跳过此空隙
+                            continue;
+                        }
+                        
                         // 修改原始对象
                         event.setVenue(venue);
                         char bufS[6], bufE[6];
                         snprintf(bufS, 6, "%02d:%02d", s/60, s%60);
                         snprintf(bufE, 6, "%02d:%02d", e/60, e%60);
+                        
+                        // 设置时间并验证是否成功应用
+                        std::string originalStartTime = event.getStartTime();
+                        std::string originalEndTime = event.getEndTime();
+                        
                         event.setStartTime(bufS);
                         event.setEndTime(bufE);
+                        
+                        // 检查时间是否成功设置
+                        if (event.getStartTime() != bufS || event.getEndTime() != bufE) {
+                            std::cerr << "警告：项目 \"" << event.getName() << "\" 的时间设置未成功应用。"
+                                      << "可能是由于时间格式验证失败。" << std::endl;
+                            continue; // 尝试其他时间段
+                        }
+                        
                         slots.push_back({s, e});
                         
                         // 更新场地使用计数
@@ -161,6 +258,11 @@ bool Schedule::generateSchedule() {
                         entry.startTime = bufS;
                         entry.endTime = bufE;
                         scheduleEntries.push_back(entry);
+                        
+                        // 新增：记录该项目所有运动员的时间安排
+                        for (int athleteId : participantIds) {
+                            athleteSchedules[athleteId].push_back({day, s, e, eventId});
+                        }
                         
                         std::cout << "项目[" << event.getName() << "] 安排在 场地[" << venue 
                                   << "] 时间[" << bufS << "-" << bufE << "]" << std::endl;
@@ -177,13 +279,37 @@ bool Schedule::generateSchedule() {
         }
         
         if (!scheduled) {
-            std::cout << "错误：项目[" << event.getName() << "]无法排入赛程，请检查场地和时间段设置。" << std::endl;
+            std::cout << "错误：项目[" << event.getName() << "]无法排入赛程，请检查场地和时间段设置或运动员参赛项目重叠情况。" << std::endl;
             return false;
         }
     }
     
+    // 新增：检查和报告运动员参与多个项目的情况
+    std::map<int, int> athleteEventCount;
+    for (const auto& [athleteId, slots] : athleteSchedules) {
+        athleteEventCount[athleteId] = static_cast<int>(slots.size());
+    }
+    
+    std::vector<std::pair<int, int>> athletesWithMultipleEvents;
+    for (const auto& [athleteId, count] : athleteEventCount) {
+        if (count > 1) {
+            athletesWithMultipleEvents.push_back({athleteId, count});
+        }
+    }
+    
+    if (!athletesWithMultipleEvents.empty()) {
+        std::cout << "\n多项目参赛运动员情况：" << std::endl;
+        for (const auto& [athleteId, count] : athletesWithMultipleEvents) {
+            auto athleteOpt = settings.athletes.getConst(athleteId);
+            if (athleteOpt.has_value()) {
+                std::cout << "运动员 " << athleteOpt.value().get().getName() 
+                          << " (ID: " << athleteId << ") 参加 " << count << " 个项目" << std::endl;
+            }
+        }
+    }
+    
     // 打印场地使用情况统计
-    std::cout << "场地使用统计：" << std::endl;
+    std::cout << "\n场地使用统计：" << std::endl;
     for (const auto& [venue, count] : venueUsageCount) {
         std::cout << "场地[" << venue << "] 使用 " << count << " 次" << std::endl;
     }

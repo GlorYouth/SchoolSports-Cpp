@@ -22,15 +22,9 @@ bool ScoreRuleManager::add(const std::string& desc, int minP, int maxP, int rank
     return true; // 目前实现总是成功，未来可能扩展验证等功能
 }
 
-bool ScoreRuleManager::addCustom(ScoreRule* rule) {
-    if (!rule) {
-        return false; // 空指针检查
-    }
-    
-    int ruleId = rule->getId();
-    getRulesMap().emplace(ruleId, std::move(*rule)); // 移动构造进map
-    delete rule; // 删除原对象，因为已经被移动到map中
-    return true;
+void ScoreRuleManager::addCustom(ScoreRule rule) {
+    int ruleId = rule.getId();
+    getRulesMap().emplace(ruleId, std::move(rule)); // 移动构造进map
 }
 
 void ScoreRuleManager::clear() {

@@ -41,7 +41,7 @@ public:
      * @return 如果报名成功，返回 true。如果因任何检查失败导致无法报名，则返回 false。
      *         相关的错误或警告信息会通过 UIManager 显示。
      */
-    [[nodiscard]] bool registerAthleteForEvent(int athleteId, int eventId) const;
+    [[nodiscard]] bool registerAthleteForEvent(int athleteId, int eventId);
 
     /**
      * @brief 为指定运动员取消报名指定的比赛项目。
@@ -56,7 +56,7 @@ public:
      * @return 如果取消报名成功，返回 true。如果因任何原因无法取消，则返回 false。
      *         相关的错误信息会通过 UIManager 显示。
      */
-    [[nodiscard]] bool unregisterAthleteFromEvent(int athleteId, int eventId) const;
+    [[nodiscard]] bool unregisterAthleteFromEvent(int athleteId, int eventId);
 
     /**
      * @brief 检查所有比赛项目，对于报名人数不足的项目，将其标记为"已取消"。
@@ -66,7 +66,7 @@ public:
      * @return 返回因此次检查而被取消的项目数量。
      * @note 此操作通常在报名截止后，赛程生成前执行。
      */
-    int checkAndCancelEventsDueToLowParticipation() const;
+    int checkAndCancelEventsDueToLowParticipation();
 
     // 其他报名相关功能...
 };

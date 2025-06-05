@@ -21,7 +21,7 @@ public:
     
     // »ù±¾²Ù×÷
     bool add(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
-    bool addCustom(ScoreRule* rule);
+    void addCustom(ScoreRule rule);
     void clear();
     static void resetIdCounter();
     

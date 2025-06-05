@@ -89,9 +89,9 @@ void ScoreRule::resetNextId(int startId) {
 }
 
 // 实现创建复合规则的静态工厂方法
-ScoreRule* ScoreRule::createCompositeRule(const std::string& desc, int minP, int maxP) {
+ScoreRule ScoreRule::createCompositeRule(const std::string& desc, int minP, int maxP) {
     // 创建一个空的分数映射表，因为复合规则本身不直接使用分数
     std::map<int, double> emptyScores;
     // 创建并返回一个复合规则，最后参数true表示这是一个复合规则
-    return new ScoreRule(desc, minP, maxP, 0, emptyScores, true);
+    return ScoreRule(desc, minP, maxP, 0, emptyScores, true);
 }

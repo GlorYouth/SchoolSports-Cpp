@@ -147,6 +147,6 @@ public:
      * @param maxP 最大参赛人数
      * @return 返回创建的复合规则指针（由调用者负责管理内存）
      */
-    static ScoreRule* createCompositeRule(const std::string& desc, int minP, int maxP);
+    static ScoreRule createCompositeRule(const std::string& desc, int minP, int maxP);
 };
 #endif //SCORERULE_H

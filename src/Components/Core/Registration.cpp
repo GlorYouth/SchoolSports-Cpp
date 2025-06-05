@@ -20,7 +20,7 @@ static int timeStringToMinutes(const std::string& timeStr) {
     return hour * 60 + min;
 }
 
-bool Registration::registerAthleteForEvent(const int athleteId, const int eventId) const { // 移除了 const
+bool Registration::registerAthleteForEvent(const int athleteId, const int eventId) {
     const auto athleteOpt = settings.athletes.get(athleteId);
     const auto eventOpt = settings.events.get(eventId);
 
@@ -110,7 +110,7 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
     return true;
 }
 
-bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eventId) const { // 移除了 const
+bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eventId) {
     const auto athleteOpt = settings.athletes.get(athleteId);
     const auto eventOpt = settings.events.get(eventId);
 
@@ -177,7 +177,7 @@ bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eve
     return true;
 }
 
-int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 const
+int Registration::checkAndCancelEventsDueToLowParticipation() {
     std::cout << "\n正在检查并处理因人数不足而需取消的项目..." << std::endl;
     bool changed = false;
     // 收集所有项目ID
