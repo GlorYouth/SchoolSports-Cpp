@@ -106,7 +106,7 @@ void SystemSettingsController::manage() {
 
 void SystemSettingsController::handleAddUnit() const{
     const std::string name = UIManager::getStringInput("请输入单位名称: ");
-    if (settings_.addUnit(name)) { // 假设 addUnit 返回 bool 并且不再打印
+    if (settings_.units.add(name)) { // 假设 addUnit 返回 bool 并且不再打印
         UIManager::showSuccessMessage("单位 '" + name + "' 添加成功。");
     } else {
         UIManager::showErrorMessage("单位添加失败 (可能名称已存在或输入无效)。");
@@ -117,7 +117,7 @@ void SystemSettingsController::handleViewAllUnits() {
     // 从 settings_ 获取数据
     // C++20 ranges approach:
     std::vector<utils::RefConst<Unit>> units;
-    for (const auto& val : settings_.getAllUnits() | std::views::values) { // getAllUnits() 返回 const auto&
+    for (const auto& val : settings_.units.getAll() | std::views::values) { // getAllUnits() 返回 const auto&
         units.push_back(std::cref(val));
     }
     UIManager::displayUnits(units);
@@ -173,7 +173,7 @@ void SystemSettingsController::handleViewAllEvents() {
 }
 
 void SystemSettingsController::handleAddAthlete() {
-    if (settings_.getAllUnits().empty()) {
+    if (settings_.units.getAll().empty()) {
         UIManager::showErrorMessage("请先添加参赛单位。");
         return;
     }

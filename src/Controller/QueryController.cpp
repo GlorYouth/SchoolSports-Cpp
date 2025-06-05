@@ -33,7 +33,7 @@ void QueryController::manage() {
 
 void QueryController::handleViewUnits() {
     UIManager::showMessage("\n--- 参赛单位信息 ---");
-    const auto& allUnitsMap = settings_.getAllUnits();
+    const auto& allUnitsMap = settings_.units.getAll();
     if (allUnitsMap.empty()) {
         UIManager::showMessage("暂无参赛单位。");
         return;

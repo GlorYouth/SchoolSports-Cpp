@@ -85,7 +85,7 @@ bool DataManager::loadSampleStage1Data() {
     }
 
     // 清除所有单位和场馆数据
-    settings.clearUnits();
+    settings.units.clear();
     settings.resetUnitIdCounter();
     
     // 清除所有场馆数据
@@ -95,14 +95,14 @@ bool DataManager::loadSampleStage1Data() {
     }
     
     // 添加各个示例单位（8个学院）
-    settings.addUnit("计算机学院");     // 预计ID 1
-    settings.addUnit("法律学院");       // 预计ID 2
-    settings.addUnit("医学学院");       // 预计ID 3
-    settings.addUnit("文学学院");       // 预计ID 4
-    settings.addUnit("经济学院");       // 预计ID 5
-    settings.addUnit("物学学院");       // 预计ID 6
-    settings.addUnit("外语学院");       // 预计ID 7
-    settings.addUnit("艺术学院");       // 预计ID 8
+    settings.units.add("计算机学院");     // 预计ID 1
+    settings.units.add("法律学院");       // 预计ID 2
+    settings.units.add("医学学院");       // 预计ID 3
+    settings.units.add("文学学院");       // 预计ID 4
+    settings.units.add("经济学院");       // 预计ID 5
+    settings.units.add("物学学院");       // 预计ID 6
+    settings.units.add("外语学院");       // 预计ID 7
+    settings.units.add("艺术学院");       // 预计ID 8
     
     // 添加各个示例场馆
     settings.addVenue("田径场A");
@@ -155,7 +155,7 @@ bool DataManager::loadSampleStage1Data() {
     setEventDetails(11, 30, "田径场A"); // 混合接力
     
     std::cout << "阶段1示例数据导入成功！" << std::endl;
-    std::cout << "当前单位数量: " << settings.getAllUnits().size() << std::endl;
+    std::cout << "当前单位数量: " << settings.units.getAll().size() << std::endl;
     std::cout << "当前比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << std::endl;
     std::cout << "当前场馆数: " << settings.getAllVenues().size() << std::endl;
 

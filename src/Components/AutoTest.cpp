@@ -32,8 +32,8 @@
 //
 // // 获取第一个单位的ID（辅助函数）
 // int getFirstUnitId(const SystemSettings& settings) {
-//     if (settings.getAllUnits().empty()) return -1;
-//     return settings.getAllUnits().begin()->first;
+//     if (settings.units.getAll().empty()) return -1;
+//     return settings.units.getAll().begin()->first;
 // }
 //
 // // 获取第一个运动员的ID（辅助函数）
@@ -65,21 +65,21 @@
 // // 测试单位管理
 // void testUnitManagement(SystemSettings& settings) {
 //     std::cout << "\n--- 开始测试单位管理 ---" << std::endl;
-//     const int initialUnitCount = settings.getAllUnits().size();
+//     const int initialUnitCount = settings.units.getAll().size();
 //     const std::string testUnitName = " UNIQUE_TEST_COLLEGE_123 "; // 使用一个唯一的名字以避免与示例数据冲突
 //
 //     // 1. 测试添加新单位
-//     bool success = settings.addUnit(testUnitName);
-//     printTestResult("单位管理：添加新单位 " + testUnitName, success && settings.getAllUnits().size() == initialUnitCount + 1);
+//     bool success = settings.units.add(testUnitName);
+//     printTestResult("单位管理：添加新单位 " + testUnitName, success && settings.units.getAll().size() == initialUnitCount + 1);
 //
 //     // 2. 测试添加同名单位 (应失败)
-//     success = !settings.addUnit(testUnitName); // 期望返回false
-//     printTestResult("单位管理：尝试添加同名单位 " + testUnitName, success && settings.getAllUnits().size() == initialUnitCount + 1);
+//     success = !settings.units.add(testUnitName); // 期望返回false
+//     printTestResult("单位管理：尝试添加同名单位 " + testUnitName, success && settings.units.getAll().size() == initialUnitCount + 1);
 //
 //     // 3. 获取刚添加的单位
 //     int testUnitId = -1;
 //     bool foundByName = false;
-//     for(const auto& pair : settings.getAllUnits()){
+//     for(const auto& pair : settings.units.getAll()){
 //         if(pair.second.getName() == testUnitName){
 //             testUnitId = pair.first;
 //             foundByName = true;
@@ -88,14 +88,14 @@
 //     }
 //     printTestResult("单位管理：通过名称找到新添加的单位 " + testUnitName, foundByName);
 //
-//     auto unitOpt = settings.getUnit(testUnitId);
+//     auto unitOpt = settings.units.get(testUnitId);
 //     printTestResult("单位管理：通过ID获取新添加的单位 " + testUnitName, unitOpt.has_value() && unitOpt.value().get().getName() == testUnitName);
 //
 //     // 4. 测试删除单位
 //     if (testUnitId != -1) {
 //         success = settings.removeUnit(testUnitId);
-//         printTestResult("单位管理：删除新添加的单位 " + testUnitName, success && settings.getAllUnits().size() == initialUnitCount);
-//         unitOpt = settings.getUnit(testUnitId);
+//         printTestResult("单位管理：删除新添加的单位 " + testUnitName, success && settings.units.getAll().size() == initialUnitCount);
+//         unitOpt = settings.units.get(testUnitId);
 //         printTestResult("单位管理：确认单位 " + testUnitName + " 已被删除", !unitOpt.has_value());
 //     } else {
 //         printTestResult("单位管理：删除单位前未能获取其ID (测试逻辑问题)", false);
@@ -204,9 +204,9 @@
 //     std::cout << "\n--- 开始测试报名管理 ---" << std::endl;
 //
 //     // 准备测试数据
-//     settings.addUnit("报名测试学院");
+//     settings.units.add("报名测试学院");
 //     int testUnitId = -1;
-//     for(const auto& u : settings.getAllUnits()){ if(u.second.getName() == "报名测试学院") testUnitId = u.first; }
+//     for(const auto& u : settings.units.getAll()){ if(u.second.getName() == "报名测试学院") testUnitId = u.first; }
 //     assert(testUnitId != -1 && "测试单位创建失败");
 //
 //
@@ -333,9 +333,9 @@
 //     bool success;
 //
 //     // 准备数据
-//     settings.addUnit("成绩测试学院");
+//     settings.units.add("成绩测试学院");
 //     int unitId = -1;
-//     for(const auto& u : settings.getAllUnits()){ if(u.second.getName() == "成绩测试学院") unitId = u.first; }
+//     for(const auto& u : settings.units.getAll()){ if(u.second.getName() == "成绩测试学院") unitId = u.first; }
 //
 //     std::vector<int> athleteIds;
 //     for (int i = 0; i < 7; ++i) { // 创建7个运动员
@@ -381,7 +381,7 @@
 //
 //     // 2. 检查单位总分
 //     double expectedScore = 7.0 + 5.0 + 3.0 + 2.0 + 1.0; // 18分
-//     auto unitOpt = settings.getUnit(unitId);
+//     auto unitOpt = settings.units.get(unitId);
 //     // 注意：由于 addScore 是累加的，如果之前单位有分数，这里需要特殊处理。
 //     // 假设 initializeDefaultSettings 后单位分数为0，或者我们只关注这个项目的增量。
 //     // 为了简单，我们直接在录入成绩时更新单位分数，但SystemSettings::addOrUpdateEventResults内部并没有直接更新单位分。
@@ -428,9 +428,9 @@
 //     std::vector<std::string> unitNames = {"计算机学院", "外国语学院", "体育学院"};
 //     std::vector<int> unitIds;
 //     for (const auto& name : unitNames) {
-//         settings.addUnit(name);
+//         settings.units.add(name);
 //         // 获取刚添加的单位ID
-//         for (const auto& pair : settings.getAllUnits()) {
+//         for (const auto& pair : settings.units.getAll()) {
 //             if (pair.second.getName() == name) {
 //                 unitIds.push_back(pair.first);
 //                 break;
@@ -527,15 +527,15 @@
 //     std::cout << "运动员最大报名项目数: " << settings.getAthleteMaxEventsAllowed() << std::endl;
 //     std::cout << "项目最少举行人数: " << settings.getMinParticipantsToHoldEvent() << std::endl;
 //     // 此时，单位、运动员、项目列表应该是空的，由后续步骤或 loadSampleData 填充
-//     std::cout << "初始化后单位数量: " << settings.getAllUnits().size() << " (预期为0)" << std::endl;
+//     std::cout << "初始化后单位数量: " << settings.units.getAll().size() << " (预期为0)" << std::endl;
 //     std::cout << "初始化后运动员数量: " << settings.getAllAthletes().size() << " (预期为0)" << std::endl;
 //     std::cout << "初始化后比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << " (预期为0)" << std::endl;
 //
 //     // --- 步骤 0.1: 导入标准SampleData ---
 //     std::cout << "\n--- 步骤 0.1: 导入标准SampleData --- " << std::endl;
 //     importSampleData(settings);
-//     printTestResult("导入标准SampleData", !settings.getAllUnits().empty() && !settings.getAllAthletes().empty() && !settings.getAllCompetitionEventsConst().empty());
-//     std::cout << "SampleData导入后单位数量: " << settings.getAllUnits().size() << std::endl;
+//     printTestResult("导入标准SampleData", !settings.units.getAll().empty() && !settings.getAllAthletes().empty() && !settings.getAllCompetitionEventsConst().empty());
+//     std::cout << "SampleData导入后单位数量: " << settings.units.getAll().size() << std::endl;
 //     std::cout << "SampleData导入后运动员数量: " << settings.getAllAthletes().size() << std::endl;
 //     std::cout << "SampleData导入后比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << std::endl;
 //

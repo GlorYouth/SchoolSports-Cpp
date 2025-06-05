@@ -165,8 +165,8 @@ void DataFileManager::saveMetadata(std::ofstream& outFile, const SystemSettings&
 // 保存单位段
 void DataFileManager::saveUnits(std::ofstream& outFile, const SystemSettings& settings) const {
     outFile << std::endl << "[UNITS]" << std::endl;
-    outFile << "COUNT=" << settings.getAllUnits().size() << std::endl;
-    for (const auto& pair : settings.getAllUnits()) {
+    outFile << "COUNT=" << settings.units.getAll().size() << std::endl;
+    for (const auto& pair : settings.units.getAll()) {
         const Unit& unit = pair.second;
         outFile << unit.getId() << "|" << unit.getName() << "|" << unit.getTotalScore() << std::endl;
     }
@@ -327,7 +327,7 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
     }
     
     // 清空当前系统数据
-    settings.clearUnits();
+    settings.units.clear();
     settings.clearAthletes();
     settings.clearCompetitionEvents();
     settings.clearAllEventResults();
@@ -430,7 +430,7 @@ void DataFileManager::processUnit(const std::string& line, SystemSettings& setti
     std::string name = token;
     
     // 添加单位 - 使用指定ID
-    bool success = settings.addUnit(name);
+    bool success = settings.units.add(name);
     if (!success) {
         std::cerr << "警告: 添加单位失败: " << name << " (ID: " << id << ")" << std::endl;
         return;

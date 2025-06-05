@@ -15,112 +15,42 @@
 // Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
 // #include "../../include/Components/Workflow.h" // 通常不需要重复包含
 
-SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3) {
+SystemSettings::SystemSettings() : units(*this), athletes(*this), athleteMaxEventsAllowed(3) {
     // 构造函数中可以进行一些初始化
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
 
 void SystemSettings::resetAllIdCounter() {
-    resetUnitIdCounter();
+    units.resetIdCounter();
     resetAthleteIdCounter();
     resetCompetitionEventIdCounter();
     resetScoreRuleIdCounter();
 }
 
 
-// --- 单位管理 ---
-bool SystemSettings::addUnit(const std::string& unitName) {
-    // 检查单位名是否已存在
-    for (const auto &val : units | std::views::values) {
-        if (val.getName() == unitName) {
-            std::cerr << "错误: 单位名称 '" << unitName << "' 已存在。" << std::endl;
-            return false; // 单位名已存在
-        }
-    }
-    Unit newUnit(unitName);
-    units.insert({newUnit.getId(), newUnit});
-    return true;
-}
-
-std::optional<utils::Ref<Unit>> SystemSettings::getUnit(const int unitId) {
-    if (const auto it = units.find(unitId); it != units.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-std::optional<utils::RefConst<Unit>> SystemSettings::getUnitConst(const int unitId) const {
-    if (const auto it = units.find(unitId); it != units.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-const std::map<int, Unit>& SystemSettings::getAllUnits() const {
-    return units;
-}
-
-bool SystemSettings::removeUnit(int unitId) {
-    // 注意：移除单位前，应处理该单位下的运动员
-    // 还需要处理相关的成绩、报名信息等，这里简化处理
-    auto unitToRemove = units.find(unitId);
-    if (unitToRemove == units.end()) {
-        return false; // 单位不存在
-    }
-
-    // 移除该单位下的所有运动员
-    std::vector<int> athletesToRemove = unitToRemove->second.getAthleteIds();
-    // 使用迭代器或基于索引的循环来安全地移除，避免在遍历时修改导致的问题
-    for (size_t i = 0; i < athletesToRemove.size(); ++i) {
-        removeAthlete(athletesToRemove[i]); // 调用 removeAthlete 来处理相关清理
-    }
-
-    return units.erase(unitId) > 0;
-}
-
-// 新增：重置单位ID计数器
-void SystemSettings::resetUnitIdCounter() {
-    Unit::resetNextId(1);
-}
-
-// 修改：清除所有单位数据
-void SystemSettings::clearUnits() {
-    // 清除单位前，需要确保所有关联的运动员也被处理
-    std::vector<int> unitIds;
-    for(const auto& pair : units) {
-        unitIds.push_back(pair.first);
-    }
-    for(int id : unitIds) {
-        removeUnit(id); // removeUnit 应该处理其下的运动员
-    }
-    units.clear(); // 最后确保 map 清空
-    // resetUnitIdCounter(); // 重置ID计数器
-}
-
-
 // --- 运动员管理 ---
 bool SystemSettings::addAthlete(const std::string& name, Gender gender, int unitId) {
-    const auto optional_unit = getUnit(unitId);
+    const auto optional_unit = units.get(unitId);
     if (!optional_unit.has_value()) {
         std::cerr << "错误: 添加运动员失败，单位ID " << unitId << " 不存在。" << std::endl;
         return false; // 单位不存在
     }
     Athlete newAthlete(name, gender, unitId);
-    athletes.insert({newAthlete.getId(), newAthlete});
+    athletesMap.insert({newAthlete.getId(), newAthlete});
     optional_unit.value().get().addAthleteId(newAthlete.getId()); // 将运动员ID关联到单位
     return true;
 }
 
 
 std::optional<utils::Ref<Athlete>> SystemSettings::getAthlete(const int athleteId) {
-    if (const auto it = athletes.find(athleteId); it != athletes.end()) {
+    if (const auto it = athletesMap.find(athleteId); it != athletesMap.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
 std::optional<utils::RefConst<Athlete>> SystemSettings::getAthleteConst(const int athleteId) const {
-    if (const auto it = athletes.find(athleteId); it != athletes.end()) {
+    if (const auto it = athletesMap.find(athleteId); it != athletesMap.end()) {
         return it->second;
     }
     return std::nullopt;
@@ -128,18 +58,18 @@ std::optional<utils::RefConst<Athlete>> SystemSettings::getAthleteConst(const in
 
 
 const std::map<int, Athlete>& SystemSettings::getAllAthletes() const {
-    return athletes;
+    return athletesMap;
 }
 
 bool SystemSettings::removeAthlete(const int athleteId) {
-    const auto athleteIt = athletes.find(athleteId);
-    if (athleteIt == athletes.end()) {
+    const auto athleteIt = athletesMap.find(athleteId);
+    if (athleteIt == athletesMap.end()) {
         return false; // 运动员不存在
     }
     const Athlete& athlete_ref = athleteIt->second;
 
     // 从所属单位中移除运动员ID
-    if (const auto unit = getUnit(athlete_ref.getUnitId())) {
+    if (const auto unit = units.get(athlete_ref.getUnitId())) {
         unit.value().get().removeAthleteId(athleteId);
     }
 
@@ -154,7 +84,7 @@ bool SystemSettings::removeAthlete(const int athleteId) {
     // 这是一个更复杂的操作，可能需要遍历所有EventResults
     // 为简化，此处不直接处理成绩的移除，成绩查询时若运动员不存在则忽略
 
-    return athletes.erase(athleteId) > 0;
+    return athletesMap.erase(athleteId) > 0;
 }
 
 // 新增：重置运动员ID计数器
@@ -166,16 +96,15 @@ void SystemSettings::resetAthleteIdCounter() {
 void SystemSettings::clearAthletes() {
     // 移除运动员会处理其在单位和项目中的关联
     std::vector<int> athleteIds;
-    for(const auto& pair : athletes) {
+    for(const auto& pair : athletesMap) {
         athleteIds.push_back(pair.first);
     }
     for(int id : athleteIds) {
         removeAthlete(id);
     }
-    athletes.clear(); // 最后确保 map 清空
+    athletesMap.clear(); // 最后确保 map 清空
     // resetAthleteIdCounter(); // 重置ID计数器
 }
-
 
 int SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
     CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId);
@@ -369,7 +298,7 @@ void SystemSettings::clearResultsForEvent(const int eventId) {
         const EventResults& results_ref = resultsIt->second;
         for (const auto& result : results_ref.getResultsList()) {
             if (auto athleteOpt = getAthleteConst(result.getAthleteId())) {
-                if (auto unitOpt = getUnit(athleteOpt.value().get().getUnitId())) {
+                if (auto unitOpt = units.get(athleteOpt.value().get().getUnitId())) {
                     // 从单位分数中减去此成绩的分数
                     // 假设 Unit::addScore 可以接受负值来扣分
                     unitOpt.value().get().addScore(-result.getPointsAwarded()); 
@@ -397,23 +326,12 @@ void SystemSettings::clearAllEventResults() {
 }
 
 void SystemSettings::resetAllUnitScores() {
-    for (auto &val : units | std::views::values) {
-        val.resetScore();
-    }
-    // std::cout << "所有单位的总分已重置。" << std::endl;
+    units.resetAllScores();
 }
 
-// 新增：为指定单位增加分数
 void SystemSettings::addScoreToUnit(int unitId, double score) {
-    if (const auto unitOpt = getUnit(unitId)) {
-        unitOpt.value().get().addScore(score);
-        // 可选: 可以在此处添加日志或成功消息，但通常调用方会处理用户反馈
-        // std::cout << "成功为单位ID " << unitId << " 增加了 " << score << " 分。" << std::endl;
-    } else {
-        std::cerr << "错误: 尝试为不存在的单位ID " << unitId << " 加分失败。" << std::endl;
-    }
+    units.addScore(unitId, score);
 }
-
 
 // --- 交互操作 (例如报名等) ---
 // 新增：为运动员报名项目，并更新项目和运动员的关联
@@ -524,8 +442,8 @@ void SystemSettings::initializeDefaultSettings() {
 
 std::vector<utils::RefConst<Athlete>> SystemSettings::getAllAthlesConst() const {
     std::vector<utils::RefConst<Athlete>> refs;
-    refs.reserve(athletes.size()); // athletes_ 是 std::map<int, Athlete> m_athletes;
-    for (const auto& val : athletes | std::views::values) {
+    refs.reserve(athletesMap.size()); // athletes_ 是 std::map<int, Athlete> m_athletes;
+    for (const auto& val : athletesMap | std::views::values) {
         refs.push_back(std::cref(val)); // 从 pair 中取出 Athlete 对象
     }
     return refs;

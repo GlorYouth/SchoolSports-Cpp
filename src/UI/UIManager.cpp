@@ -388,7 +388,7 @@ void UIManager::displayAthletes(const std::vector<utils::RefConst<Athlete>>& ath
     std::cout << "-----|-----------------|----------|----------------------|--------------------" << std::endl;
     for (const auto& athlete_ref : athletes) {
         const Athlete& athlete = athlete_ref.get();
-        auto unitOpt = settings.getUnitConst(athlete.getUnitId());
+        auto unitOpt = settings.units.getConst(athlete.getUnitId());
         std::string unitNameAndId = (unitOpt ? unitOpt.value().get().getName() : "δ֪") + " (" + std::to_string(athlete.getUnitId()) + ")";
 
         std::cout << std::left

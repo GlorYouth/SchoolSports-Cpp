@@ -56,7 +56,7 @@ void viewPublishedEvents(const SystemSettings& settings) {
 // 查看单位总分排名 (旧主菜单选项7的逻辑)
 void viewUnitStandingsOverall(const SystemSettings& settings) {
     UIManager::showTitleMessage("总成绩统计 (单位排名)");
-    const auto& allUnitsMap = settings.getAllUnits(); // 返回 const std::map<int, Unit>&
+    const auto& allUnitsMap = settings.units.getAll(); // 返回 const std::map<int, Unit>&
     if (allUnitsMap.empty()) {
         UIManager::showInfoMessage("系统中没有单位信息。");
         return;
