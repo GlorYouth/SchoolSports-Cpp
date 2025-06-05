@@ -33,16 +33,31 @@ void EventResultsManager::clearForEvent(const int eventId) {
     auto& resultsMap = getResultsMap();
     if (const auto resultsIt = resultsMap.find(eventId); resultsIt != resultsMap.end()) {
         const EventResults& results_ref = resultsIt->second;
-        for (const auto& result : results_ref.getResultsList()) {
-            if (auto athleteOpt = settings.athletes.getConst(result.getAthleteId())) {
-                if (auto unitOpt = settings.units.get(athleteOpt.value().get().getUnitId())) {
-                    // 从单位分数中减去此成绩的分数
-                    // 假设 Unit::addScore 可以接受负值来扣分
-                    unitOpt.value().get().addScore(-result.getPointsAwarded()); 
+        const std::vector<Result> resultsList = results_ref.getResultsList(); // 复制结果列表
+        std::cout << "正在清除项目ID " << eventId << " 的 " << resultsList.size() << " 条成绩记录..." << std::endl;
+        
+        // 从各单位分数中扣除该项目的得分
+        for (const auto& result : resultsList) {
+            const int athleteId = result.getAthleteId();
+            const double points = result.getPointsAwarded();
+            
+            auto athleteOpt = settings.athletes.getConst(athleteId);
+            if (athleteOpt) {
+                const int unitId = athleteOpt.value().get().getUnitId();
+                auto unitOpt = settings.units.get(unitId);
+                if (unitOpt) {
+                    // 从单位总分中扣除此项目得分
+                    unitOpt.value().get().addScore(-points);
+                    std::cout << "  从单位ID " << unitId << " 的总分中扣除 " << points << " 分" << std::endl;
                 }
             }
         }
-        resultsMap.erase(resultsIt); // 移除项目成绩记录
+        
+        // 移除项目成绩记录
+        resultsMap.erase(resultsIt); 
+        std::cout << "成功清除项目ID " << eventId << " 的所有成绩" << std::endl;
+    } else {
+        std::cout << "项目ID " << eventId << " 没有成绩记录，无需清除" << std::endl;
     }
 }
 

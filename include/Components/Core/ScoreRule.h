@@ -1,5 +1,3 @@
-
-
 #ifndef SCORERULE_H
 #define SCORERULE_H
 
@@ -33,7 +31,7 @@ private:
     std::map<int, double> scoresForRanks;   // 名次对应的分数 <名次, 分数> (例如: {1:7, 2:5, ...})
     
     // 子规则列表（对于复合规则）
-    std::vector<utils::Ref<ScoreRule>> subRules;       // 存储子规则引用
+    std::vector<ScoreRule> subRules;       // 存储子规则
     bool isCompositeRule;                   // 是否为复合规则标志
 
 public:
@@ -130,7 +128,6 @@ public:
         }
         return result;
     }
-
     /**
      * @brief 重置计数器，生成新的一组计分规则ID的静态方法
      * @param startId 可选，指定从指定ID重新开始的初始值，默认为1

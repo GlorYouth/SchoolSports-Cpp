@@ -28,10 +28,13 @@ bool CompetitionEventManager::remove(int eventId) {
     if (eventIt == eventsMap.end()) {
         return false; // 项目不存在
     }
-    const CompetitionEvent& event_ref = eventIt->second;
-
+    
+    // 在进行任何修改前，先复制所有必要信息
+    const std::string eventName = eventIt->second.getName();
+    std::vector<int> participantIds = eventIt->second.getParticipantAthleteIds(); // 复制参与者列表
+    
     // 从所有已报名该项目的运动员的报名列表中移除该项目
-    for (const int athleteId : event_ref.getParticipantAthleteIds()) {
+    for (const int athleteId : participantIds) {
         if (auto athlete = settings.athletes.get(athleteId); athlete.has_value()) {
             athlete.value().get().unregisterFromEvent(eventId);
         }
@@ -40,7 +43,11 @@ bool CompetitionEventManager::remove(int eventId) {
     // 移除该项目的成绩记录
     settings.results.clearForEvent(eventId);
 
-    return eventsMap.erase(eventId) > 0;
+    bool removed = eventsMap.erase(eventId) > 0;
+    if (removed) {
+        std::cout << "成功移除项目: " << eventName << " (ID: " << eventId << ")" << std::endl;
+    }
+    return removed;
 }
 
 void CompetitionEventManager::clear() {

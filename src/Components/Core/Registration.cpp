@@ -115,68 +115,123 @@ bool Registration::unregisterAthleteFromEvent(int athleteId, int eventId) {
 }
 
 int Registration::checkAndCancelEventsDueToLowParticipation() {
-    std::cout << "\n正在检查并处理因人数不足而需取消的项目..." << std::endl;
+    std::cout << "\n正在检查并根据参赛人数不足取消相关项目..." << std::endl;
     
     // 收集所有项目ID
     std::vector<int> eventIdsToCheck;
     for(const auto& pair : settings.events.getAllConst()){
-        eventIdsToCheck.push_back(pair.first);
+        if (!pair.second.get().getIsCancelled()) {  // 只收集未取消的项目
+            eventIdsToCheck.push_back(pair.first);
+        }
+    }
+
+    const int totalEvents = eventIdsToCheck.size();
+    std::cout << "共需检查 " << totalEvents << " 个未取消的项目" << std::endl;
+
+    if (totalEvents == 0) {
+        std::cout << "没有需要检查的项目，跳过检测。" << std::endl;
+        return 0;
     }
 
     int eventToCancelCount = 0;
+    std::vector<std::string> canceledEventNames;
+    
     for (const int eventId : eventIdsToCheck) {
-        if (auto eventOpt = settings.events.get(eventId); eventOpt.has_value()) {
-            CompetitionEvent& event_ref = eventOpt.value().get();
-            
-            // 只检查未被取消的项目
-            if (event_ref.getIsCancelled()) {
-                continue;
-            }
-            
-            // 获取项目自身的计分规则ID
-            int ruleId = event_ref.getScoreRuleId();
-            
-            // 如果项目未指定计分规则，使用默认规则（ID=1）
-            if (ruleId <= 0) {
-                ruleId = 1;
-            }
-            
-            // 通过规则ID获取对应的计分规则对象
-            auto ruleOpt = settings.rules.get(ruleId);
-            if (!ruleOpt.has_value()) {
-                std::cerr << "警告: 项目 \"" << event_ref.getName() << "\" (ID: " << event_ref.getId()
-                          << ") 指定的计分规则ID " << ruleId << " 不存在。无法检查最低人数要求。" << std::endl;
-                continue;
-            }
-            
-            ScoreRule& rule = ruleOpt.value().get();
-            int currentParticipants = event_ref.getParticipantCount();
-            
-            // 对于复合规则，需要找到适用于当前参赛人数的具体子规则
-            auto applicableRuleOpt = rule.getApplicableRule(currentParticipants);
-            
-            // 如果未找到适用规则或当前人数不满足规则要求
-            if (!applicableRuleOpt.has_value() || 
-                !applicableRuleOpt.value().get().appliesTo(currentParticipants)) {
-                
-                // 将项目标记为已取消
-                event_ref.setCancelled(true);
-                eventToCancelCount++;
-                
-                std::cout << "已取消: 项目 \"" << event_ref.getName() << "\" (ID: " << event_ref.getId()
-                          << ") 因参赛人数 (" << currentParticipants
-                          << ") 不满足计分规则要求。" << std::endl;
+        // 强有力的防止异常循环
+        if (eventToCancelCount > totalEvents || eventToCancelCount > 100) {
+            std::cerr << "警告: 检测到异常的取消项目数量(" << eventToCancelCount 
+                      << ")，可能存在循环引用，中断处理" << std::endl;
+            break;
+        }
+
+        auto eventOpt = settings.events.get(eventId);
+        if (!eventOpt.has_value()) {
+            std::cerr << "错误: 项目ID " << eventId << " 不存在，跳过处理" << std::endl;
+            continue;
+        }
+
+        CompetitionEvent& event = eventOpt.value().get();
+        
+        // 获取项目配置的计分规则ID
+        int ruleId = event.getScoreRuleId();
+        
+        // 如果项目未指定计分规则使用默认规则ID=1
+        if (ruleId <= 0) {
+            ruleId = 1;
+        }
+        
+        std::cout << "检查项目: \"" << event.getName() << "\" (ID: " << event.getId()
+                  << ") 当前参赛人数: " << event.getParticipantCount() 
+                  << ", 使用规则ID: " << ruleId << std::endl;
+        
+        // 通过规则ID获取对应的计分规则对象
+        auto ruleOpt = settings.rules.get(ruleId);
+        if (!ruleOpt.has_value()) {
+            std::cerr << "错误: 项目 \"" << event.getName() << "\" (ID: " << event.getId()
+                      << ") 指定的计分规则ID " << ruleId << " 不存在。无法检查参赛人数要求。" << std::endl;
+            continue;
+        }
+        
+        ScoreRule& rule = ruleOpt.value().get();
+        int currentParticipants = event.getParticipantCount();
+        
+        // 检查规则本身是否适用于当前参赛人数
+        std::cout << "  直接检查规则适用性: ";
+        bool basicApplies = rule.appliesTo(currentParticipants);
+        std::cout << (basicApplies ? "适用" : "不适用") << std::endl;
+        
+        // 对于复合规则，要找到适用于当前参赛人数的具体子规则
+        std::cout << "  尝试获取适用规则: ";
+        auto applicableRuleOpt = rule.getApplicableRule(currentParticipants);
+
+        bool shouldCancel = false;
+        std::string cancelReason;
+
+        // 如果未找到适用规则，参赛人数不满足要求
+        if (!applicableRuleOpt.has_value()) {
+            shouldCancel = true;
+            cancelReason = "无适用的计分规则";
+            std::cout << "失败 - " << cancelReason << std::endl;
+        } else {
+            std::cout << "成功 - 找到适用规则ID: " << applicableRuleOpt.value().get().getId() << std::endl;
+
+            // 即使找到了规则，再次确认它确实适用
+            bool actuallyApplies = applicableRuleOpt.value().get().appliesTo(currentParticipants);
+            std::cout << "  二次确认适用性: " << (actuallyApplies ? "适用" : "不适用") << std::endl;
+
+            if (!actuallyApplies) {
+                shouldCancel = true;
+                cancelReason = "计分规则不适用于当前参赛人数";
             }
         }
+
+        if (shouldCancel) {
+            // 将项目标记为已取消
+            event.setCancelled(true);
+            eventToCancelCount++;
+            canceledEventNames.push_back(event.getName());
+
+            std::cout << "已取消: 项目 \"" << event.getName() << "\" (ID: " << event.getId()
+                      << ") 参赛人数 (" << currentParticipants
+                      << ") 不满足计分规则要求，原因: " << cancelReason << std::endl;
+        } else {
+            std::cout << "项目 \"" << event.getName() << "\" 参赛人数满足要求" << std::endl;
+        }
+        
+        std::cout << std::endl; // 添加空行分隔不同项目
     }
     
     if (eventToCancelCount > 0) {
-        std::cout << "共有 " << eventToCancelCount << " 个项目因参赛人数不足被取消。" << std::endl;
+        std::cout << "共有 " << eventToCancelCount << " 个项目因参赛人数不足被取消: ";
+        for (const auto& name : canceledEventNames) {
+            std::cout << "\"" << name << "\" ";
+        }
+        std::cout << std::endl;
     } else {
-        std::cout << "检查完成，所有项目参赛人数均满足要求。" << std::endl;
+        std::cout << "检查完成，所有项目参赛人数满足要求。" << std::endl;
     }
     
-    // 验证运动员与赛事数据一致性
+    // 验证运动员报名数据一致性
     settings.athletes.validateRegistrationConsistency();
     
     return eventToCancelCount;

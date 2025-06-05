@@ -1,4 +1,3 @@
-
 #include "../../../include/Components/Manager/DataFileManager.h"
 #include <fstream>
 #include <iostream>
@@ -491,8 +490,9 @@ bool DataFileManager::processScoreRule(const std::string& line, SystemSettings& 
             std::cout << "成功添加计分规则" << description << std::endl;
         } else {
             std::cerr << "添加计分规则失败：" << description << std::endl;
+            return false;
         }
-        return false;
+        return true;
     }
 }
 

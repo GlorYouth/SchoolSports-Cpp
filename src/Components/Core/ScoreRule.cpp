@@ -1,5 +1,3 @@
-
-
 #include "../../../include/Components/Core/ScoreRule.h"
 #include <utility>
 #include <iostream>
@@ -29,7 +27,7 @@ bool ScoreRule::appliesTo(int participantCount) const {
     // 如果是复合规则，只要有任一子规则适用即可
     if (isCompositeRule && !subRules.empty()) {
         for (const auto subRule : subRules) {
-            if (subRule.get().appliesTo(participantCount)) {
+            if (subRule.appliesTo(participantCount)) {
                 return true;
             }
         }
@@ -43,27 +41,71 @@ bool ScoreRule::appliesTo(int participantCount) const {
 }
 
 std::optional<utils::RefConst<ScoreRule>> ScoreRule::getApplicableRule(int participantCount) const {
-    // 如果是复合规则，查找适用的子规则
-    if (isCompositeRule && !subRules.empty()) {
-        for (const auto subRule : subRules) {
-            if (subRule.get().appliesTo(participantCount)) {
-                return subRule.get();
-            }
+    // 先判断自身是否适用(非复合规则)
+    if (!isCompositeRule) {
+        if (appliesTo(participantCount)) {
+            return std::cref(*this);  // 返回自身的引用
+        } else {
+            return std::nullopt;
         }
     }
     
-    // 如果没有适用的子规则或者不是复合规则，检查自身是否适用
-    if (appliesTo(participantCount)) {
-        return std::cref(*this);  // 返回对自身的引用
+    // 对于复合规则，如果没有子规则，检查自身
+    if (subRules.empty()) {
+        if (appliesTo(participantCount)) {
+            return std::cref(*this);
+        } else {
+            return std::nullopt;
+        }
     }
     
-    // 没有找到任何适用的规则
+    for (const auto& subRule : subRules) {
+
+        // 检查子规则是否适用
+
+        if (subRule.appliesTo(participantCount)) {
+            // 如果子规则不是复合规则，直接返回
+            if (!subRule.isCompositeRule) {
+                return std::cref(subRule);
+            }
+            if (!subRule.subRules.empty()) {
+                // 如果子规则是复合规则且有子规则，递归查找
+                return subRule.getApplicableRule(participantCount);
+            }
+            // 没有找到适用的规则
+            return std::nullopt;
+        }
+    }
+    
+    // 没有找到适用的规则
     return std::nullopt;
 }
 
 void ScoreRule::addSubRule(ScoreRule &subRule) {
-    subRules.push_back(std::ref(subRule));
+    // 防止添加自身为子规则 - 这会导致循环引用
+    if (&subRule == this || subRule.getId() == this->getId()) {
+        std::cerr << "错误: 尝试将规则ID " << id << " 添加为自身的子规则，这会导致循环引用。操作已被忽略" << std::endl;
+        return;
+    }
+
+    // 检查是否已经添加过该子规则，避免重复
+    for (const auto& existingRule : subRules) {
+        try {
+            if (existingRule.getId() == subRule.getId()) {
+                std::cerr << "警告: 规则ID " << subRule.getId() << " 已经是规则ID " 
+                         << id << " 的子规则，不重复添加" << std::endl;
+                return;
+            }
+        } catch (...) {
+            // 忽略无效引用的比较
+        }
+    }
+
+    // 添加子规则并标记为复合规则
+    subRules.push_back(subRule);
     isCompositeRule = true;
+    
+    std::cout << "已将规则ID " << subRule.getId() << " 添加为规则ID " << id << " 的子规则" << std::endl;
 }
 
 int ScoreRule::getRanksToAward() const {

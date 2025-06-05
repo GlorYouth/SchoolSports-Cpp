@@ -119,4 +119,4 @@ bool ScoreRuleManager::empty() const {
 
 bool ScoreRuleManager::contains(int ruleId) const {
     return getRulesMapConst().find(ruleId) != getRulesMapConst().end();
-} 
+}

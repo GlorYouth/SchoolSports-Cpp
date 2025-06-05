@@ -35,15 +35,19 @@ bool AthleteManager::remove(int athleteId) {
     if (athleteIt == athletesMap.end()) {
         return false; // 运动员不存在
     }
-    const Athlete& athlete_ref = athleteIt->second;
-
+    
+    // 在进行任何修改前，先复制所有必要信息
+    const int unitId = athleteIt->second.getUnitId();
+    const std::string athleteName = athleteIt->second.getName();
+    std::vector<int> registeredEventIds = athleteIt->second.getRegisteredEventIds(); // 复制报名项目列表
+    
     // 从所属单位中移除运动员ID
-    if (const auto unit = settings.units.get(athlete_ref.getUnitId())) {
+    if (const auto unit = settings.units.get(unitId)) {
         unit.value().get().removeAthleteId(athleteId);
     }
 
     // 从所有其报名的项目中移除该运动员的参与记录
-    for (const int eventId : athlete_ref.getRegisteredEventIds()) {
+    for (const int eventId : registeredEventIds) {
         if (auto event = settings.events.get(eventId); event.has_value()) {
             event.value().get().removeParticipant(athleteId);
         }
@@ -53,7 +57,11 @@ bool AthleteManager::remove(int athleteId) {
     // 这是一个更复杂的操作，可能需要遍历所有EventResults
     // 为简化，此处不直接处理成绩的移除，成绩查询时若运动员不存在则忽略
 
-    return athletesMap.erase(athleteId) > 0;
+    bool removed = athletesMap.erase(athleteId) > 0;
+    if (removed) {
+        std::cout << "成功移除运动员: " << athleteName << " (ID: " << athleteId << ")" << std::endl;
+    }
+    return removed;
 }
 
 void AthleteManager::clear() {
