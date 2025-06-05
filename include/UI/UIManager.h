@@ -15,7 +15,7 @@
 #include <iomanip>  // 用于 std::setw, std::fixed, std::setprecision
 #include <functional> // 用于 std::reference_wrapper
 #include <set>
-#include "../Components/Workflow.h" // 添加WorkflowStage枚举类型的引用
+#include "../Components/Core/Workflow.h"
 
 // 前向声明核心数据结构，避免不必要的头文件依赖
 // 实际项目中，如果 UIManager 需要访问这些类的成员，可能需要包含它们的完整头文件
@@ -28,7 +28,7 @@ class EventResults;
 class SystemSettings; // 包含以访问如 getMaxEventsAllowed 等设置
 
 // 假设 Constants.h 中的枚举和转换函数在此可用或已移至更合适的位置
-#include "../Components/Constants.h"
+#include "../Components/Core/Constants.h"
 #include "../utils.h"
 
 class UIManager {

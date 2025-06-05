@@ -29,7 +29,7 @@ void ScheduleController::manage() {
 }
 
 void ScheduleController::handleGenerateSchedule() {
-    if (settings_.isScheduleLocked()) {
+    if (settings_.schedule.isLocked()) {
         UIManager::showErrorMessage("赛程已锁定，无法重新生成。如需操作，请先解锁赛程。");
         return;
     }
@@ -68,7 +68,7 @@ void ScheduleController::handleValidateSchedule() {
 }
 
 void ScheduleController::handleLockSchedule() {
-    if (settings_.isScheduleLocked()) {
+    if (settings_.schedule.isLocked()) {
         UIManager::showMessage("赛程当前已是锁定状态。");
         return;
     }
@@ -91,7 +91,7 @@ void ScheduleController::handleLockSchedule() {
     UIManager::showSuccessMessage("赛程已成功生成！");
 
     // 锁定赛程（这会自动将阶段切换为REGISTRATION_OPEN）
-    settings_.lockSchedule();
+    settings_.schedule.lock();
     UIManager::showSuccessMessage("赛程已成功锁定，系统已进入运动员报名阶段。");
 }
 
@@ -116,11 +116,11 @@ bool ScheduleController::validateEventsForScheduling() {
 }
 
 void ScheduleController::handleUnlockSchedule() {
-    if (!settings_.isScheduleLocked()) {
+    if (!settings_.schedule.isLocked()) {
         UIManager::showMessage("赛程当前并未锁定。");
         return;
     }
-    settings_.unlockSchedule();
+    settings_.schedule.unlock();
     UIManager::showSuccessMessage("赛程已成功解锁。");
 }
 

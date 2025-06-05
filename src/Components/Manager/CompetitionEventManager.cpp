@@ -1,10 +1,10 @@
-#include "../../include/Components/CompetitionEventManager.h"
-#include "../../include/Components/SystemSettings.h"
-#include "../../include/utils.h"
+#include "../../../include/Components/Manager/CompetitionEventManager.h"
+#include "../../../include/Components/Core/SystemSettings.h"
+#include "../../../include/utils.h"
 
 CompetitionEventManager::CompetitionEventManager(SystemSettings& settings) : settings(settings) {}
 
-// å†…éƒ¨è®¿é—®æ–¹æ³•
+// ÄÚ²¿·ÃÎÊ·½·¨
 std::map<int, CompetitionEvent>& CompetitionEventManager::getEventsMap() {
     return settings._competitionEvents;
 }
@@ -13,7 +13,7 @@ const std::map<int, CompetitionEvent>& CompetitionEventManager::getEventsMapCons
     return settings._competitionEvents;
 }
 
-// åŸºæœ¬æ“ä½œ
+// »ù±¾²Ù×÷
 int CompetitionEventManager::add(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
     CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId);
     auto& eventsMap = getEventsMap();
@@ -26,25 +26,25 @@ bool CompetitionEventManager::remove(int eventId) {
     auto& eventsMap = getEventsMap();
     const auto eventIt = eventsMap.find(eventId);
     if (eventIt == eventsMap.end()) {
-        return false; // é¡¹ç›®ä¸å­˜åœ¨
+        return false; // ÏîÄ¿²»´æÔÚ
     }
     const CompetitionEvent& event_ref = eventIt->second;
 
-    // ä»æ‰€æœ‰å·²æŠ¥åè¯¥é¡¹ç›®çš„è¿åŠ¨å‘˜çš„æŠ¥ååˆ—è¡¨ä¸­ç§»é™¤è¯¥é¡¹ç›®
+    // ´ÓËùÓĞÒÑ±¨Ãû¸ÃÏîÄ¿µÄÔË¶¯Ô±µÄ±¨ÃûÁĞ±íÖĞÒÆ³ı¸ÃÏîÄ¿
     for (const int athleteId : event_ref.getParticipantAthleteIds()) {
         if (auto athlete = settings.athletes.get(athleteId); athlete.has_value()) {
             athlete.value().get().unregisterFromEvent(eventId);
         }
     }
 
-    // ç§»é™¤è¯¥é¡¹ç›®çš„æˆç»©è®°å½•
-    settings.clearResultsForEvent(eventId);
+    // ÒÆ³ı¸ÃÏîÄ¿µÄ³É¼¨¼ÇÂ¼
+    settings.results.clearForEvent(eventId);
 
     return eventsMap.erase(eventId) > 0;
 }
 
 void CompetitionEventManager::clear() {
-    // ç§»é™¤é¡¹ç›®ä¼šå¤„ç†å…¶è¿åŠ¨å‘˜å…³è”å’Œæˆç»©
+    // ÒÆ³ıÏîÄ¿»á´¦ÀíÆäÔË¶¯Ô±¹ØÁªºÍ³É¼¨
     auto& eventsMap = getEventsMap();
     std::vector<int> eventIds;
     for(const auto& pair : eventsMap) {
@@ -53,14 +53,14 @@ void CompetitionEventManager::clear() {
     for(int id : eventIds) {
         remove(id);
     }
-    eventsMap.clear(); // æœ€åç¡®ä¿ map æ¸…ç©º
+    eventsMap.clear(); // ×îºóÈ·±£ map Çå¿Õ
 }
 
 void CompetitionEventManager::resetIdCounter() {
     CompetitionEvent::resetNextId(1);
 }
 
-// è·å–æ–¹æ³•
+// »ñÈ¡·½·¨
 std::optional<utils::Ref<CompetitionEvent>> CompetitionEventManager::get(int eventId) {
     auto& eventsMap = getEventsMap();
     if (const auto it = eventsMap.find(eventId); it != eventsMap.end()) {
@@ -86,7 +86,7 @@ std::map<int, utils::RefConst<CompetitionEvent>> CompetitionEventManager::getAll
     return map;
 }
 
-// è¿­ä»£å™¨æ”¯æŒ
+// µü´úÆ÷Ö§³Ö
 CompetitionEventManager::iterator CompetitionEventManager::begin() {
     return getEventsMap().begin();
 }
@@ -103,7 +103,7 @@ CompetitionEventManager::const_iterator CompetitionEventManager::end() const {
     return getEventsMapConst().end();
 }
 
-// æŸ¥æ‰¾æ–¹æ³•
+// ²éÕÒ·½·¨
 std::optional<utils::Ref<CompetitionEvent>> CompetitionEventManager::findByName(const std::string& name) {
     auto& eventsMap = getEventsMap();
     for (auto& [id, event] : eventsMap) {
@@ -153,7 +153,7 @@ std::vector<utils::RefConst<CompetitionEvent>> CompetitionEventManager::findActi
     return result;
 }
 
-// ç»Ÿè®¡æ–¹æ³•
+// Í³¼Æ·½·¨
 size_t CompetitionEventManager::count() const {
     return getEventsMapConst().size();
 }

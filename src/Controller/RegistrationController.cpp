@@ -5,8 +5,8 @@
 #include "../../include/Controller/RegistrationController.h"
 
 #include "../../include/UI/UIManager.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/CompetitionEvent.h"
+#include "../../include/Components/Core/Athlete.h"
+#include "../../include/Components/Core/CompetitionEvent.h"
 #include <vector>
 #include <functional> // For std::reference_wrapper
 #include <ranges>
@@ -38,7 +38,7 @@ void RegistrationController::manage() {
 
 void RegistrationController::handleRegisterAthleteForEvent() {
     // 新增：报名前检查赛程是否已锁定
-    if (!settings_.isScheduleLocked()) {
+    if (!settings_.schedule.isLocked()) {
         UIManager::showRegistrationLockedMessage();
         return;
     }
@@ -125,7 +125,7 @@ void RegistrationController::handleRegisterAthleteForEvent() {
 
 void RegistrationController::handleUnregisterAthleteFromEvent() {
     // 提示信息，如果赛程已锁定
-    if (settings_.isScheduleLocked()) {
+    if (settings_.schedule.isLocked()) {
         UIManager::showMessage("提示：当前赛程已锁定。运动员退赛后，若相关项目因此人数不足，其状态需管理员后续关注。已锁定的赛程本身可能不会自动更新项目取消状态。");
         // 注意：此处不直接返回，允许退赛操作继续，但提示管理员关注后续状态。
     }
@@ -204,7 +204,7 @@ void RegistrationController::handleViewEventRegistrations() {
 }
 
 void RegistrationController::handleCheckAndCancelLowParticipationEvents() {
-    if (settings_.isScheduleLocked()) {
+    if (settings_.schedule.isLocked()) {
         UIManager::showErrorMessage("赛程已锁定，无法自动取消人数不足的项目。如需操作，请先解锁赛程。");
         return;
     }

@@ -7,7 +7,7 @@
 
 
 
-#include "../Components/SystemSettings.h"
+#include "../Components/Core/SystemSettings.h"
 #include <string> // For std::string
 #include <vector> // For std::vector
 #include <map>    // For std::map for scores

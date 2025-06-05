@@ -6,7 +6,7 @@
 #define QUERYCONTROLLER_H
 
 
-#include "../Components/SystemSettings.h"
+#include "../Components/Core/SystemSettings.h"
 
 class QueryController {
 public:

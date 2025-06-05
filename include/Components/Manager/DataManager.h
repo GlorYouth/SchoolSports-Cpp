@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "SystemSettings.h"
+#include "../Core/SystemSettings.h"
 #include "DataFileManager.h"
 
 // 数据管理器 (处理数据持久化如备份和恢复)

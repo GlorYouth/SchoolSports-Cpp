@@ -6,13 +6,13 @@
 #include <optional>
 #include <vector>
 #include <iostream>
-#include "../utils.h"
-#include "Athlete.h"
+#include "../../utils.h"
+#include "../Core/Athlete.h"
 
-// å‰å‘å£°æ˜
+// Ç°ÏòÉùÃ÷
 class SystemSettings;
 
-// AthleteManagerä»£ç†ç±»å£°æ˜
+// AthleteManager´úÀíÀàÉùÃ÷
 class AthleteManager {
 public:
     using iterator = std::map<int, Athlete>::iterator;
@@ -20,42 +20,42 @@ public:
 
     explicit AthleteManager(SystemSettings& settings);
     
-    // åŸºæœ¬æ“ä½œ
+    // »ù±¾²Ù×÷
     bool add(const std::string& name, Gender gender, int unitId);
     bool remove(int athleteId);
     void clear();
     static void resetIdCounter();
     
-    // è·å–æ–¹æ³•
+    // »ñÈ¡·½·¨
     std::optional<utils::Ref<Athlete>> get(int athleteId);
     std::optional<utils::RefConst<Athlete>> getConst(int athleteId) const;
     const std::map<int, Athlete>& getAll() const;
     
-    // è¿­ä»£å™¨æ”¯æŒ
+    // µü´úÆ÷Ö§³Ö
     iterator begin();
     iterator end();
     const_iterator begin() const;
     const_iterator end() const;
     
-    // æŸ¥æ‰¾æ–¹æ³•
+    // ²éÕÒ·½·¨
     std::optional<utils::Ref<Athlete>> findByName(const std::string& name);
     std::vector<utils::Ref<Athlete>> findByUnitId(int unitId);
     std::vector<utils::RefConst<Athlete>> getAllConst() const;
     
-    // ç»Ÿè®¡æ–¹æ³•
+    // Í³¼Æ·½·¨
     size_t count() const;
     bool empty() const;
     bool contains(int athleteId) const;
     bool contains(const std::string& name) const;
 
-    // æŠ¥åç›¸å…³
+    // ±¨ÃûÏà¹Ø
     bool registerForEvent(int athleteId, int eventId);
     bool unregisterFromEvent(int athleteId, int eventId);
     int getMaxEventsAllowed() const;
 
 private:
     SystemSettings& settings;
-    // å†…éƒ¨æ–¹æ³•ï¼Œç›´æ¥æ“ä½œè¿åŠ¨å‘˜æ•°æ®ç»“æ„
+    // ÄÚ²¿·½·¨£¬Ö±½Ó²Ù×÷ÔË¶¯Ô±Êı¾İ½á¹¹
     std::map<int, Athlete>& getAthletesMap();
     const std::map<int, Athlete>& getAthletesMapConst() const;
 };

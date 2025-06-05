@@ -2,8 +2,8 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/Components/Athlete.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/Components/Core/Athlete.h"
 #include <algorithm> // For std::remove, std::find
 #include <utility>
 #include <iostream> // 用于调试输出

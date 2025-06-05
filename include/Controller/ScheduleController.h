@@ -7,8 +7,8 @@
 
 
 
-#include "../Components/Schedule.h"
-#include "../../include/Components/SystemSettings.h" // Schedule 可能需要访问 SystemSettings
+#include "../Components/Core/Schedule.h"
+#include "../Components/Core/SystemSettings.h"
 
 class ScheduleController {
 public:

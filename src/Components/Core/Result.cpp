@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../../include/Components/Result.h"
+#include "../../../include/Components/Core/Result.h"
 #include <algorithm> // 如果在 EventResults 内部需要排序，则包含此文件
 
 // Result 类实现

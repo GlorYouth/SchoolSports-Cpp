@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../../include/Components/DataManager.h"
+#include "../../../include/Components/Manager/DataManager.h"
 #include <iostream> // 用于输出信息
 #include <ranges>
 #include <vector>   // 为 std::vector
@@ -11,14 +11,14 @@
 // 包含业务实现头文件（SystemSettings中返回涉及的所有类）
 #include <sstream>
 
-#include "../../include/Components/SystemSettings.h" // 已包含在SystemSettings中引用的方法
-#include "../../include/Components/Unit.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/Components/ScoreRule.h"      // utils::RefConst<ScoreRule> in getScoreRuleConst
-#include "../../include/Components/Constants.h"     // 为了 EventType, Gender 等
-#include "../../include/utils.h" // For utils::RefConst
-#include "../../include/Components/Result.h" // 为了导入成绩
+#include "../../../include/Components/Core/SystemSettings.h"
+#include "../../../include/Components/Core/Unit.h"
+#include "../../../include/Components/Core/Athlete.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/Components/Core/ScoreRule.h"
+#include "../../../include/Components/Core/Constants.h"
+#include "../../../include/utils.h"
+#include "../../../include/Components/Core/Result.h"
 
 DataManager::DataManager(SystemSettings& sysSettings) : 
     settings(sysSettings),
@@ -88,9 +88,9 @@ bool DataManager::loadSampleStage1Data() {
     settings.athletes.resetIdCounter();
     
     // 清除所有场馆数据
-    std::set<std::string> oldVenues = settings.getAllVenues();
+    std::set<std::string> oldVenues = settings.venues.getAll();
     for (const auto& v : oldVenues) {
-        settings.removeVenue(v);
+        settings.venues.remove(v);
     }
     
     // 添加各个示例单位（8个学院）
@@ -104,12 +104,12 @@ bool DataManager::loadSampleStage1Data() {
     settings.units.add("艺术学院");       // 预计ID 8
     
     // 添加各个示例场馆
-    settings.addVenue("田径场A");
-    settings.addVenue("田径场B");
-    settings.addVenue("跳远区A");
-    settings.addVenue("跳远区B");
-    settings.addVenue("投掷区A");
-    settings.addVenue("投掷区B");
+    settings.venues.add("田径场A");
+    settings.venues.add("田径场B");
+    settings.venues.add("跳远区A");
+    settings.venues.add("跳远区B");
+    settings.venues.add("投掷区A");
+    settings.venues.add("投掷区B");
     
     // 添加示例比赛项目（不带时间和场地）
     // 男子项目
@@ -156,7 +156,7 @@ bool DataManager::loadSampleStage1Data() {
     std::cout << "阶段1示例数据导入成功！" << std::endl;
     std::cout << "当前单位数量: " << settings.units.getAll().size() << std::endl;
     std::cout << "当前比赛项目数量: " << settings.events.getAllConst().size() << std::endl;
-    std::cout << "当前场馆数: " << settings.getAllVenues().size() << std::endl;
+    std::cout << "当前场馆数: " << settings.venues.getAll().size() << std::endl;
 
     // 设置阶段1数据已导入
     stage1DataImported = true;
@@ -409,12 +409,12 @@ bool DataManager::loadSampleStage3Data() {
                 auto athleteOpt = settings.athletes.getConst(athleteId);
                 if (athleteOpt.has_value()) {
                     int unitId = athleteOpt.value().get().getUnitId();
-                    settings.addScoreToUnit(unitId, points);
+                    settings.results.addScoreToUnit(unitId, points);
                 }
             }
             
             // 将成绩记录添加到系统中
-            settings.addOrUpdateEventResults(results);
+            settings.results.addOrUpdate(results);
         }
     }
     
