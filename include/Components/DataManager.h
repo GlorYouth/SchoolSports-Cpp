@@ -56,7 +56,7 @@ public:
      * @return 如果数据成功恢复返回 true，否则返回 false（例如，文件不存在、格式错误、数据不一致）。
      */
     bool restoreData(const std::string& filePath);
-    
+
     /**
      * @brief 获取备份文件夹中的所有备份文件
      * @return 按时间排序的备份文件列表，每个元素包含ID和文件路径
@@ -78,7 +78,7 @@ public:
      * @return 如果示例数据集加载成功返回 true，否则返回 false。
      */
     bool loadSampleData();
-    
+
     /**
      * @brief 加载阶段1示例数据：单位、场地、计分规则
      * @return 如果加载成功返回 true，否则返回 false。
