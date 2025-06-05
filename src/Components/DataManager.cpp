@@ -86,6 +86,7 @@ bool DataManager::loadSampleStage1Data() {
 
     // 清除所有单位和场馆数据
     settings.clearUnits();
+    settings.resetUnitIdCounter();
     
     // 清除所有场馆数据
     std::set<std::string> oldVenues = settings.getAllVenues();

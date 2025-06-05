@@ -334,10 +334,7 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
     settings.resetAllUnitScores();
     
     // 重置ID计数器
-    settings.resetUnitIdCounter();
-    settings.resetAthleteIdCounter();
-    settings.resetCompetitionEventIdCounter();
-    settings.resetScoreRuleIdCounter();
+    settings.resetAllIdCounter();
     
     // 打开文件
     std::ifstream inFile(actualFilePath);

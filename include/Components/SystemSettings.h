@@ -52,6 +52,8 @@ public:
      */
     SystemSettings();
 
+
+    static void resetAllIdCounter();
     // --- 单位管理 ---
     /**
      * @brief 添加一个新的参赛单位。
@@ -86,7 +88,7 @@ public:
     /** @brief 清除系统中所有的单位数据。 */
     void clearUnits();
     /** @brief 重置单位ID计数器。 */
-    void resetUnitIdCounter();
+    static void resetUnitIdCounter();
 
     // --- 运动员管理 ---
     /**
@@ -124,7 +126,7 @@ public:
     /** @brief 清除系统中所有的运动员数据。 */
     void clearAthletes();
     /** @brief 重置运动员ID计数器。 */
-    void resetAthleteIdCounter();
+    static void resetAthleteIdCounter();
 
     // --- 项目管理 ---
     /**
@@ -163,7 +165,7 @@ public:
     /** @brief 清除系统中所有的比赛项目数据。 */
     void clearCompetitionEvents();
     /** @brief 重置比赛项目ID计数器。 */
-    void resetCompetitionEventIdCounter();
+    static void resetCompetitionEventIdCounter();
 
     // --- 计分规则管理 ---
     /**
@@ -208,7 +210,7 @@ public:
     /** @brief 清除系统中所有的自定义计分规则（默认规则通常保留）。 */
     void clearScoreRules();
     /** @brief 重置计分规则ID计数器。 */
-    void resetScoreRuleIdCounter();
+    static void resetScoreRuleIdCounter();
 
     // --- 系统参数设置 ---
     /**

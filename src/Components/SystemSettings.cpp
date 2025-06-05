@@ -20,6 +20,14 @@ SystemSettings::SystemSettings() : athleteMaxEventsAllowed(3) {
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
 
+void SystemSettings::resetAllIdCounter() {
+    resetUnitIdCounter();
+    resetAthleteIdCounter();
+    resetCompetitionEventIdCounter();
+    resetScoreRuleIdCounter();
+}
+
+
 // --- 单位管理 ---
 bool SystemSettings::addUnit(const std::string& unitName) {
     // 检查单位名是否已存在
@@ -86,7 +94,7 @@ void SystemSettings::clearUnits() {
         removeUnit(id); // removeUnit 应该处理其下的运动员
     }
     units.clear(); // 最后确保 map 清空
-    resetUnitIdCounter(); // 重置ID计数器
+    // resetUnitIdCounter(); // 重置ID计数器
 }
 
 
@@ -165,7 +173,7 @@ void SystemSettings::clearAthletes() {
         removeAthlete(id);
     }
     athletes.clear(); // 最后确保 map 清空
-    resetAthleteIdCounter(); // 重置ID计数器
+    // resetAthleteIdCounter(); // 重置ID计数器
 }
 
 
@@ -233,7 +241,7 @@ void SystemSettings::clearCompetitionEvents() {
         removeCompetitionEvent(id);
     }
     competitionEvents.clear(); // 最后确保 map 清空
-    resetCompetitionEventIdCounter(); // 重置ID计数器
+    // resetCompetitionEventIdCounter(); // 重置ID计数器
 }
 
 // --- 计分规则管理 ---
