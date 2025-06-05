@@ -15,7 +15,7 @@
 // Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
 // #include "../../include/Components/Workflow.h" // 通常不需要重复包含
 
-SystemSettings::SystemSettings() : units(*this), athletes(*this), athleteMaxEventsAllowed(3) {
+SystemSettings::SystemSettings() : units(*this), athletes(*this), events(*this), athleteMaxEventsAllowed(3) {
     // 构造函数中可以进行一些初始化
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
@@ -23,75 +23,8 @@ SystemSettings::SystemSettings() : units(*this), athletes(*this), athleteMaxEven
 void SystemSettings::resetAllIdCounter() {
     units.resetIdCounter();
     athletes.resetIdCounter();
-    resetCompetitionEventIdCounter();
+    events.resetIdCounter();
     resetScoreRuleIdCounter();
-}
-
-int SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
-    CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId);
-    competitionEvents.insert({newEvent.getId(), newEvent});
-    return newEvent.getId();
-}
-
-std::optional<utils::Ref<CompetitionEvent>> SystemSettings::getCompetitionEvent(int eventId) {
-    if (const auto it = competitionEvents.find(eventId); it != competitionEvents.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-std::optional<utils::RefConst<CompetitionEvent>> SystemSettings::getCompetitionEventConst(int eventId) const {
-    if (const auto it = competitionEvents.find(eventId); it != competitionEvents.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-    std::map<int, utils::RefConst<CompetitionEvent>> SystemSettings::getAllCompetitionEventsConst() const {
-        auto map = std::map<int, utils::RefConst<CompetitionEvent>>();
-        for (const auto& [fst, snd] : competitionEvents){
-            map.insert({fst, std::cref(snd)});
-        }
-        return map;
-    }
-
-bool SystemSettings::removeCompetitionEvent(const int eventId) {
-    const auto eventIt = competitionEvents.find(eventId);
-    if (eventIt == competitionEvents.end()) {
-        return false; // 项目不存在
-    }
-    const CompetitionEvent& event_ref = eventIt->second;
-
-    // 从所有已报名该项目的运动员的报名列表中移除该项目
-    for (const int athleteId : event_ref.getParticipantAthleteIds()) {
-        if (auto athlete = athletes.get(athleteId); athlete.has_value()) {
-            athlete.value().get().unregisterFromEvent(eventId);
-        }
-    }
-
-    // 移除该项目的成绩记录
-    eventResultsMap.erase(eventId);
-
-    return competitionEvents.erase(eventId) > 0;
-}
-
-// 新增：重置比赛项目ID计数器
-void SystemSettings::resetCompetitionEventIdCounter() {
-    CompetitionEvent::resetNextId(1);
-}
-
-// 修改：清除所有比赛项目数据
-void SystemSettings::clearCompetitionEvents() {
-    // 移除项目会处理其运动员关联和成绩
-    std::vector<int> eventIds;
-    for(const auto& pair : competitionEvents) {
-        eventIds.push_back(pair.first);
-    }
-    for(int id : eventIds) {
-        removeCompetitionEvent(id);
-    }
-    competitionEvents.clear(); // 最后确保 map 清空
-    // resetCompetitionEventIdCounter(); // 重置ID计数器
 }
 
 // --- 计分规则管理 ---
@@ -187,7 +120,7 @@ int SystemSettings::getAthleteMaxEventsAllowed() const {
 
 // --- 比赛结果管理 ---
 bool SystemSettings::addOrUpdateEventResults(const EventResults& er) {
-    if (!competitionEvents.contains(er.getEventId())) {
+    if (!events.contains(er.getEventId())) {
         std::cerr << "错误: 无法为不存在的项目ID " << er.getEventId() << " 添加成绩。" << std::endl;
         return false;
     }

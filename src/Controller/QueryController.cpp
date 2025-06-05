@@ -45,7 +45,7 @@ void QueryController::handleViewUnits() {
 
 void QueryController::handleViewEvents() {
     UIManager::showMessage("\n--- 比赛项目信息 ---");
-    const auto& allEventsMap = settings_.getAllCompetitionEventsConst();
+    const auto& allEventsMap = settings_.events.getAllConst();
     if (allEventsMap.empty()) {
         UIManager::showMessage("暂无比赛项目。");
         return;

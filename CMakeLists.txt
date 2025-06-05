@@ -23,6 +23,7 @@ add_executable(SchoolSports-Cpp main.cpp
         include/Components/Constants.h
         include/Components/UnitManager.h
         include/Components/AthleteManager.h
+        include/Components/CompetitionEventManager.h
         src/Components/Athlete.cpp
         src/Components/CompetitionEvent.cpp
         src/Components/Unit.cpp
@@ -36,6 +37,7 @@ add_executable(SchoolSports-Cpp main.cpp
         src/Components/AutoTest.cpp
         src/Components/UnitManager.cpp
         src/Components/AthleteManager.cpp
+        src/Components/CompetitionEventManager.cpp
         include/Components/AutoTest.h
         src/UI/UIManager.cpp
         include/UI/UIManager.h

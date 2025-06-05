@@ -44,7 +44,7 @@
 //
 // // 获取第一个男子项目ID（辅助函数）
 // int getFirstMaleEventId(const SystemSettings& settings) {
-//     for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+//     for (const auto& pair : settings.events.getAllConst()) {
 //         if (pair.second.getGenderRequirement() == Gender::MALE) {
 //             return pair.first;
 //         }
@@ -53,7 +53,7 @@
 // }
 // // 获取第一个女子项目ID（辅助函数）
 // int getFirstFemaleEventId(const SystemSettings& settings) {
-//     for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+//     for (const auto& pair : settings.events.getAllConst()) {
 //         if (pair.second.getGenderRequirement() == Gender::FEMALE) {
 //             return pair.first;
 //         }
@@ -170,13 +170,13 @@
 // // 测试比赛项目管理
 // void testCompetitionEventManagement(SystemSettings& settings) {
 //     std::cout << "\n--- 开始测试比赛项目管理 ---" << std::endl;
-//     const int initialEventCount = settings.getAllCompetitionEventsConst().size();
+//     const int initialEventCount = settings.events.getAllConst().size();
 //
 //     // 1. 添加新项目
-//     bool success = settings.addCompetitionEvent("测试男子跳远", EventType::FIELD, Gender::MALE);
-//     printTestResult("添加新项目 '测试男子跳远'", success && settings.getAllCompetitionEventsConst().size() == initialEventCount + 1);
+//     bool success = settings.events.add("测试男子跳远", EventType::FIELD, Gender::MALE);
+//     printTestResult("添加新项目 '测试男子跳远'", success && settings.events.getAllConst().size() == initialEventCount + 1);
 //     int testEventId = -1;
-//     for(const auto& pair : settings.getAllCompetitionEventsConst()){
+//     for(const auto& pair : settings.events.getAllConst()){
 //         if(pair.second.getName() == "测试男子跳远"){
 //             testEventId = pair.first;
 //             break;
@@ -185,15 +185,15 @@
 //
 //     // 2. 获取项目
 //     if(testEventId != -1){
-//         auto eventOpt = settings.getCompetitionEvent(testEventId);
+//         auto eventOpt = settings.events.get(testEventId);
 //         printTestResult("获取存在的项目 '测试男子跳远'", eventOpt.has_value() && eventOpt.value().get().getName() == "测试男子跳远");
 //     }
 //
 //     // 3. 删除项目
 //     if (testEventId != -1) {
 //         success = settings.removeCompetitionEvent(testEventId);
-//         printTestResult("删除项目 '测试男子跳远'", success && settings.getAllCompetitionEventsConst().size() == initialEventCount);
-//         auto eventOpt = settings.getCompetitionEvent(testEventId);
+//         printTestResult("删除项目 '测试男子跳远'", success && settings.events.getAllConst().size() == initialEventCount);
+//         auto eventOpt = settings.events.get(testEventId);
 //         printTestResult("确认项目 '测试男子跳远' 已被删除", !eventOpt.has_value());
 //     }
 //     std::cout << "--- 比赛项目管理测试结束 ---\n";
@@ -220,19 +220,19 @@
 //     for(const auto& a : settings.athletes.getAll()){ if(a.second.getName() == "报名选手女") femaleAthleteId = a.first; }
 //     assert(femaleAthleteId != -1 && "测试女选手创建失败");
 //
-//     settings.addCompetitionEvent("报名测试男项目", EventType::TRACK, Gender::MALE);
+//     settings.events.add("报名测试男项目", EventType::TRACK, Gender::MALE);
 //     int maleEventId = -1;
-//     for(const auto& e : settings.getAllCompetitionEventsConst()){ if(e.second.getName() == "报名测试男项目") maleEventId = e.first; }
+//     for(const auto& e : settings.events.getAllConst()){ if(e.second.getName() == "报名测试男项目") maleEventId = e.first; }
 //     assert(maleEventId != -1 && "测试男项目创建失败");
 //
-//     settings.addCompetitionEvent("报名测试女项目", EventType::TRACK, Gender::FEMALE);
+//     settings.events.add("报名测试女项目", EventType::TRACK, Gender::FEMALE);
 //     int femaleEventId = -1;
-//     for(const auto& e : settings.getAllCompetitionEventsConst()){ if(e.second.getName() == "报名测试女项目") femaleEventId = e.first; }
+//     for(const auto& e : settings.events.getAllConst()){ if(e.second.getName() == "报名测试女项目") femaleEventId = e.first; }
 //     assert(femaleEventId != -1 && "测试女项目创建失败");
 //
-//     settings.addCompetitionEvent("报名测试不限性别项目", EventType::FIELD, Gender::UNSPECIFIED);
+//     settings.events.add("报名测试不限性别项目", EventType::FIELD, Gender::UNSPECIFIED);
 //     int unspecEventId = -1;
-//     for(const auto& e : settings.getAllCompetitionEventsConst()){ if(e.second.getName() == "报名测试不限性别项目") unspecEventId = e.first; }
+//     for(const auto& e : settings.events.getAllConst()){ if(e.second.getName() == "报名测试不限性别项目") unspecEventId = e.first; }
 //     assert(unspecEventId != -1 && "测试不限性别项目创建失败");
 //
 //
@@ -241,7 +241,7 @@
 //     printTestResult("男选手报名男子项目", success);
 //     if(success){
 //         const auto ath = settings.athletes.get(maleAthleteId);
-//         const auto evt = settings.getCompetitionEvent(maleEventId);
+//         const auto evt = settings.events.get(maleEventId);
 //         printTestResult("男选手报名后项目数检查", ath.value().get().getRegisteredEventsCount() == 1);
 //         printTestResult("男子项目报名人数检查", evt.value().get().getParticipantCount() == 1);
 //     }
@@ -267,13 +267,13 @@
 //
 //
 //     // 6. 报名超限额 (运动员最多报3项，maleAthleteId已报2项)
-//     settings.addCompetitionEvent("额外测试男项目1", EventType::TRACK, Gender::MALE);
+//     settings.events.add("额外测试男项目1", EventType::TRACK, Gender::MALE);
 //     int extraMaleEventId1 = -1;
-//     for(const auto& e : settings.getAllCompetitionEventsConst()){ if(e.second.getName() == "额外测试男项目1") extraMaleEventId1 = e.first; }
+//     for(const auto& e : settings.events.getAllConst()){ if(e.second.getName() == "额外测试男项目1") extraMaleEventId1 = e.first; }
 //
-//     settings.addCompetitionEvent("额外测试男项目2", EventType::TRACK, Gender::MALE);
+//     settings.events.add("额外测试男项目2", EventType::TRACK, Gender::MALE);
 //     int extraMaleEventId2 = -1;
-//     for(const auto& e : settings.getAllCompetitionEventsConst()){ if(e.second.getName() == "额外测试男项目2") extraMaleEventId2 = e.first; }
+//     for(const auto& e : settings.events.getAllConst()){ if(e.second.getName() == "额外测试男项目2") extraMaleEventId2 = e.first; }
 //
 //     success = registration.registerAthleteForEvent(maleAthleteId, extraMaleEventId1); // 第3项
 //     printTestResult("男选手报名第3个项目", success);
@@ -287,28 +287,28 @@
 //     printTestResult("男选手取消报名男子项目", success);
 //     if(success){
 //         auto ath = settings.athletes.get(maleAthleteId);
-//         auto evt = settings.getCompetitionEvent(maleEventId); // maleEventId 此时应无参赛者
+//         auto evt = settings.events.get(maleEventId); // maleEventId 此时应无参赛者
 //         printTestResult("男选手取消报名后项目数检查", ath.value().get().getRegisteredEventsCount() == 2); // 之前报了3项，取消1项剩2项
 //         printTestResult("男子项目取消报名后人数检查", evt.value().get().getParticipantCount() == 0);
 //     }
 //
 //     // 8. 测试因人数不足取消项目
 //     // 创建一个新项目，报名1人，然后取消报名，看项目是否被取消
-//     settings.addCompetitionEvent("人数不足测试项目", EventType::TRACK, Gender::MALE);
+//     settings.events.add("人数不足测试项目", EventType::TRACK, Gender::MALE);
 //     int lowPartEventId = -1;
-//     for(const auto& [eventId, competition] : settings.getAllCompetitionEventsConst()){ if(competition.getName() == "人数不足测试项目") lowPartEventId = eventId; }
+//     for(const auto& [eventId, competition] : settings.events.getAllConst()){ if(competition.getName() == "人数不足测试项目") lowPartEventId = eventId; }
 //
 //     settings.athletes.add("临时选手", Gender::MALE, testUnitId);
 //     int tempAthleteId = -1;
 //     for(const auto& a : settings.athletes.getAll()){ if(a.second.getName() == "临时选手") tempAthleteId = a.first; }
 //
 //     registration.registerAthleteForEvent(tempAthleteId, lowPartEventId); // 1人报名
-//     auto lowEvent = settings.getCompetitionEvent(lowPartEventId);
+//     auto lowEvent = settings.events.get(lowPartEventId);
 //     printTestResult("项目有1人报名，未取消", lowEvent.has_value() && !lowEvent.value().get().getIsCancelled());
 //
 //     registration.unregisterAthleteFromEvent(tempAthleteId, lowPartEventId); // 0人报名
 //     registration.checkAndCancelEventsDueToLowParticipation(); // 手动触发检查，或依赖unregister内部逻辑
-//     lowEvent = settings.getCompetitionEvent(lowPartEventId);
+//     lowEvent = settings.events.get(lowPartEventId);
 //     printTestResult("项目无人报名后应被取消 (最少4人)", lowEvent.has_value() && lowEvent.value().get().getIsCancelled());
 //
 //
@@ -350,9 +350,9 @@
 //     assert(athleteIds.size() == 7 && "运动员创建不足7人");
 //
 //
-//     settings.addCompetitionEvent("100米决赛", EventType::TRACK, Gender::MALE);
+//     settings.events.add("100米决赛", EventType::TRACK, Gender::MALE);
 //     int eventId = -1;
-//     for(const auto& e : settings.getAllCompetitionEventsConst()){ if(e.second.getName() == "100米决赛") eventId = e.first; }
+//     for(const auto& e : settings.events.getAllConst()){ if(e.second.getName() == "100米决赛") eventId = e.first; }
 //     assert(eventId != -1 && "比赛项目创建失败");
 //
 //
@@ -360,7 +360,7 @@
 //     for (int athId : athleteIds) {
 //         reg.registerAthleteForEvent(athId, eventId); // 全部报名
 //     }
-//     auto eventOpt = settings.getCompetitionEvent(eventId);
+//     auto eventOpt = settings.events.get(eventId);
 //     assert(eventOpt.has_value() && eventOpt.value().get().getParticipantCount() == 7 && "报名人数不为7");
 //
 //     // 1. 录入成绩 (7人参赛，应使用规则1：取前5名，7,5,3,2,1分)
@@ -451,12 +451,12 @@
 //     }
 //
 //     // 3. 添加比赛项目
-//     settings.addCompetitionEvent("男子100米", EventType::TRACK, Gender::MALE);
-//     settings.addCompetitionEvent("女子跳远", EventType::FIELD, Gender::FEMALE);
-//     settings.addCompetitionEvent("男子铅球", EventType::FIELD, Gender::MALE);
-//     settings.addCompetitionEvent("女子200米", EventType::TRACK, Gender::FEMALE);
+//     settings.events.add("男子100米", EventType::TRACK, Gender::MALE);
+//     settings.events.add("女子跳远", EventType::FIELD, Gender::FEMALE);
+//     settings.events.add("男子铅球", EventType::FIELD, Gender::MALE);
+//     settings.events.add("女子200米", EventType::TRACK, Gender::FEMALE);
 //     std::vector<int> eventIds;
-//     for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+//     for (const auto& pair : settings.events.getAllConst()) {
 //         eventIds.push_back(pair.first);
 //     }
 //
@@ -529,15 +529,15 @@
 //     // 此时，单位、运动员、项目列表应该是空的，由后续步骤或 loadSampleData 填充
 //     std::cout << "初始化后单位数量: " << settings.units.getAll().size() << " (预期为0)" << std::endl;
 //     std::cout << "初始化后运动员数量: " << settings.athletes.getAll().size() << " (预期为0)" << std::endl;
-//     std::cout << "初始化后比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << " (预期为0)" << std::endl;
+//     std::cout << "初始化后比赛项目数量: " << settings.events.getAllConst().size() << " (预期为0)" << std::endl;
 //
 //     // --- 步骤 0.1: 导入标准SampleData ---
 //     std::cout << "\n--- 步骤 0.1: 导入标准SampleData --- " << std::endl;
 //     importSampleData(settings);
-//     printTestResult("导入标准SampleData", !settings.units.getAll().empty() && !settings.athletes.getAll().empty() && !settings.getAllCompetitionEventsConst().empty());
+//     printTestResult("导入标准SampleData", !settings.units.getAll().empty() && !settings.athletes.getAll().empty() && !settings.events.getAllConst().empty());
 //     std::cout << "SampleData导入后单位数量: " << settings.units.getAll().size() << std::endl;
 //     std::cout << "SampleData导入后运动员数量: " << settings.athletes.getAll().size() << std::endl;
-//     std::cout << "SampleData导入后比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << std::endl;
+//     std::cout << "SampleData导入后比赛项目数量: " << settings.events.getAllConst().size() << std::endl;
 //
 //     // --- 步骤 0.2: 测试默认计分规则 ---
 //     testDefaultScoreRules(settings);

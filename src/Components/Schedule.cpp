@@ -16,7 +16,7 @@ bool Schedule::generateSchedule() {
     
     // 1. 收集所有未取消项目的ID，而不是创建副本
     std::vector<int> eventIds;
-    for (const auto& event : settings.getAllCompetitionEventsConst() | std::views::values) {
+    for (const auto& event : settings.events.getAllConst() | std::views::values) {
         if (!event.get().getIsCancelled()) {
             eventIds.push_back(event.get().getId());
         }
@@ -24,8 +24,8 @@ bool Schedule::generateSchedule() {
     
     // 按持续时间降序排序项目ID
     std::ranges::sort(eventIds, [&](int a, int b) {
-        auto eventA = settings.getCompetitionEventConst(a);
-        auto eventB = settings.getCompetitionEventConst(b);
+        auto eventA = settings.events.getConst(a);
+        auto eventB = settings.events.getConst(b);
         if (eventA.has_value() && eventB.has_value()) {
             return eventA.value().get().getDurationMinutes() > eventB.value().get().getDurationMinutes();
         }
@@ -74,7 +74,7 @@ bool Schedule::generateSchedule() {
     // 5. 依次为每个项目分配时间
     for (int eventId : eventIds) {
         // 获取项目的可修改引用
-        auto eventOpt = settings.getCompetitionEvent(eventId);
+        auto eventOpt = settings.events.get(eventId);
         if (!eventOpt.has_value()) {
             std::cout << "错误：项目ID " << eventId << " 无效，跳过此项目。" << std::endl;
             continue;
@@ -203,7 +203,7 @@ void Schedule::printSchedule() const {
         return;
     }
     for (const auto& entry : scheduleEntries) {
-        if (auto event = settings.getCompetitionEvent(entry.eventId); event.has_value()) {
+        if (auto event = settings.events.get(entry.eventId); event.has_value()) {
             auto event_ref = event.value().get();
             std::cout << "项目: " << event_ref.getName() << " (ID: " << entry.eventId << ")"
                       << "\n  时间: " << entry.startTime << " - " << entry.endTime
@@ -232,7 +232,7 @@ std::string Schedule::getScheduleContentAsString() const {
         return oss.str();
     }
     for (const auto& entry : scheduleEntries) {
-        auto eventOpt = settings.getCompetitionEventConst(entry.eventId); // 使用 getCompetitionEventConst
+        auto eventOpt = settings.events.getConst(entry.eventId); // 使用 getCompetitionEventConst
         if (eventOpt) { // 检查 optional 是否有值
             const CompetitionEvent& event_ref = eventOpt.value().get();
             oss << "项目: " << event_ref.getName() << " (ID: " << entry.eventId << ")"

@@ -114,25 +114,25 @@ bool DataManager::loadSampleStage1Data() {
     
     // 添加示例比赛项目（不带时间和场地）
     // 男子项目
-    settings.addCompetitionEvent("男子100米", EventType::TRACK, Gender::MALE, 1);     // 预计ID 1
-    settings.addCompetitionEvent("男子200米", EventType::TRACK, Gender::MALE, 1);     // 预计ID 2
-    settings.addCompetitionEvent("男子400米", EventType::TRACK, Gender::MALE, 1);     // 预计ID 3
-    settings.addCompetitionEvent("男子跳远", EventType::FIELD, Gender::MALE, 1);      // 预计ID 4
-    settings.addCompetitionEvent("男子三级跳远", EventType::FIELD, Gender::MALE, 1);  // 预计ID 5
-    settings.addCompetitionEvent("男子铅球", EventType::FIELD, Gender::MALE, 1);      // 预计ID 6
+    settings.events.add("男子100米", EventType::TRACK, Gender::MALE, 1);     // 预计ID 1
+    settings.events.add("男子200米", EventType::TRACK, Gender::MALE, 1);     // 预计ID 2
+    settings.events.add("男子400米", EventType::TRACK, Gender::MALE, 1);     // 预计ID 3
+    settings.events.add("男子跳远", EventType::FIELD, Gender::MALE, 1);      // 预计ID 4
+    settings.events.add("男子三级跳远", EventType::FIELD, Gender::MALE, 1);  // 预计ID 5
+    settings.events.add("男子铅球", EventType::FIELD, Gender::MALE, 1);      // 预计ID 6
     
     // 女子项目
-    settings.addCompetitionEvent("女子100米", EventType::TRACK, Gender::FEMALE, 1);   // 预计ID 7
-    settings.addCompetitionEvent("女子200米", EventType::TRACK, Gender::FEMALE, 1);   // 预计ID 8
-    settings.addCompetitionEvent("女子跳远", EventType::FIELD, Gender::FEMALE, 1);    // 预计ID 9
-    settings.addCompetitionEvent("女子铅球", EventType::FIELD, Gender::FEMALE, 1);    // 预计ID 10
+    settings.events.add("女子100米", EventType::TRACK, Gender::FEMALE, 1);   // 预计ID 7
+    settings.events.add("女子200米", EventType::TRACK, Gender::FEMALE, 1);   // 预计ID 8
+    settings.events.add("女子跳远", EventType::FIELD, Gender::FEMALE, 1);    // 预计ID 9
+    settings.events.add("女子铅球", EventType::FIELD, Gender::FEMALE, 1);    // 预计ID 10
     
     // 混合项目
-    settings.addCompetitionEvent("混合接力4x100米", EventType::TRACK, Gender::UNSPECIFIED, 1); // 预计ID 11
+    settings.events.add("混合接力4x100米", EventType::TRACK, Gender::UNSPECIFIED, 1); // 预计ID 11
     
     // 设置项目的时间和场地
     auto setEventDetails = [&](int eventId, int durationMinutes, const std::string& venue) {
-        auto eventOpt = settings.getCompetitionEvent(eventId);
+        auto eventOpt = settings.events.get(eventId);
         if (eventOpt.has_value()) {
             eventOpt.value().get().setDurationMinutes(durationMinutes);
             eventOpt.value().get().setVenue(venue);
@@ -156,7 +156,7 @@ bool DataManager::loadSampleStage1Data() {
     
     std::cout << "阶段1示例数据导入成功！" << std::endl;
     std::cout << "当前单位数量: " << settings.units.getAll().size() << std::endl;
-    std::cout << "当前比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << std::endl;
+    std::cout << "当前比赛项目数量: " << settings.events.getAllConst().size() << std::endl;
     std::cout << "当前场馆数: " << settings.getAllVenues().size() << std::endl;
 
     // 设置阶段1数据已导入
@@ -336,7 +336,7 @@ bool DataManager::loadSampleStage3Data() {
     }
     
     // 对每个项目的参赛人数与规则进行检查及取消
-    for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+    for (const auto& pair : settings.events.getAllConst()) {
         int eventId = pair.first;
         const CompetitionEvent& event = pair.second;
         int participantCount = event.getParticipantCount();
@@ -352,7 +352,7 @@ bool DataManager::loadSampleStage3Data() {
                       << "，不满足计分规则要求，将被取消！" << std::endl;
             
             // 获取项目的可修改引用，设置取消状态
-            auto eventOpt = settings.getCompetitionEvent(eventId);
+            auto eventOpt = settings.events.get(eventId);
             if (eventOpt.has_value()) {
                 eventOpt.value().get().setCancelled(true);
             }

@@ -37,9 +37,9 @@ void viewPublishedEvents(const SystemSettings& settings) {
     UIManager::showTitleMessage("当前已发布的比赛项目");
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
     bool found = false;
-    // 使用 getAllCompetitionEventsConst() 返回的是 std::map<int, utils::RefConst<CompetitionEvent>>
+    // 使用 getAllConst() 返回的是 std::map<int, utils::RefConst<CompetitionEvent>>
     // 需要从 map 的值中提取 CompetitionEvent
-    for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+    for (const auto& pair : settings.events.getAllConst()) {
         const CompetitionEvent& event = pair.second.get(); // 获取 CompetitionEvent 的 const 引用
         if (!event.getIsCancelled()) {
              events_refs.push_back(std::cref(event)); // 传递 const CompetitionEvent&

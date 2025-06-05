@@ -201,8 +201,8 @@ void DataFileManager::saveScoreRules(std::ofstream& outFile, const SystemSetting
 // 保存比赛项目段
 void DataFileManager::saveEvents(std::ofstream& outFile, const SystemSettings& settings) const {
     outFile << std::endl << "[EVENTS]" << std::endl;
-    outFile << "COUNT=" << settings.getAllCompetitionEventsConst().size() << std::endl;
-    for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+    outFile << "COUNT=" << settings.events.getAllConst().size() << std::endl;
+    for (const auto& pair : settings.events.getAllConst()) {
         const CompetitionEvent& event = pair.second;
         outFile << event.getId() << "|"
                 << event.getName() << "|"
@@ -258,7 +258,7 @@ void DataFileManager::saveResults(std::ofstream& outFile, const SystemSettings& 
     
     // 计算所有成绩条目总数
     int resultCount = 0;
-    for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+    for (const auto& pair : settings.events.getAllConst()) {
         int eventId = pair.first;
         auto eventResultsOpt = settings.getEventResultsConst(eventId);
         if (eventResultsOpt) {
@@ -269,7 +269,7 @@ void DataFileManager::saveResults(std::ofstream& outFile, const SystemSettings& 
     outFile << "COUNT=" << resultCount << std::endl;
     
     // 写入成绩详细
-    for (const auto& pair : settings.getAllCompetitionEventsConst()) {
+    for (const auto& pair : settings.events.getAllConst()) {
         int eventId = pair.first;
         auto eventResultsOpt = settings.getEventResultsConst(eventId);
         if (eventResultsOpt) {
@@ -329,7 +329,7 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
     // 清空当前系统数据
     settings.units.clear();
     settings.athletes.clear();
-    settings.clearCompetitionEvents();
+    settings.events.clear();
     settings.clearAllEventResults();
     settings.resetAllUnitScores();
     
@@ -557,13 +557,13 @@ void DataFileManager::processEvent(const std::string& line, SystemSettings& sett
     }
     
     // 添加或更新比赛项目
-    int newId = settings.addCompetitionEvent(name, eventType, gender,scoreRuleId);
+    int newId = settings.events.add(name, eventType, gender,scoreRuleId);
     if (newId != id) {
         std::cerr << "警告: 比赛项目ID不匹配。期望: " << id << ", 实际: " << newId << std::endl;
     }
     
     // 获取比赛项目引用进行设置
-    auto eventOpt = settings.getCompetitionEvent(newId);
+    auto eventOpt = settings.events.get(newId);
     if (eventOpt) {
         CompetitionEvent& event = eventOpt.value().get();
         if (isCancelled) {

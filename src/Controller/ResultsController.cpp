@@ -39,13 +39,13 @@ void ResultsController::manage() {
 
 void ResultsController::handleRecordEventResults() {
     UIManager::showMessage("\n--- 录入/修改项目成绩 ---");
-    if (settings_.getAllCompetitionEventsConst().empty()) {
+    if (settings_.events.getAllConst().empty()) {
         UIManager::showErrorMessage("系统中没有比赛项目，无法录入成绩。");
         return;
     }
 
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
-    for(const auto& [id, event_ref] : settings_.getAllCompetitionEventsConst()) {
+    for(const auto& [id, event_ref] : settings_.events.getAllConst()) {
         // 通常只为未取消且可能已结束的项目录入成绩
         if (!event_ref.get().getIsCancelled()) { // 简单起见，只检查未取消
             events_refs.push_back(std::cref(event_ref));
@@ -59,7 +59,7 @@ void ResultsController::handleRecordEventResults() {
 
     int eventId = UIManager::getIntInput("请输入要录入成绩的项目ID: ");
 
-    auto eventOpt = settings_.getCompetitionEvent(eventId); // 非 const 获取，因为可能要更新其状态
+    auto eventOpt = settings_.events.get(eventId); // 非 const 获取，因为可能要更新其状态
     if (!eventOpt) {
         UIManager::showErrorMessage("项目ID " + std::to_string(eventId) + " 不存在。");
         return;
@@ -175,18 +175,18 @@ void ResultsController::handleRecordEventResults() {
 
 void ResultsController::handleViewEventResults() {
     UIManager::showMessage("\n--- 查看项目成绩 ---");
-    if (settings_.getAllCompetitionEventsConst().empty()) {
+    if (settings_.events.getAllConst().empty()) {
         UIManager::showErrorMessage("系统中没有比赛项目。");
         return;
     }
 
     std::vector<utils::RefConst<CompetitionEvent>> events_refs;
-    for(const auto& val : settings_.getAllCompetitionEventsConst() | std::views::values) events_refs.push_back(std::cref(val));
+    for(const auto& val : settings_.events.getAllConst() | std::views::values) events_refs.push_back(std::cref(val));
     UIManager::displayEvents(events_refs, settings_);
 
     int eventId = UIManager::getIntInput("请输入要查看成绩的项目ID: ");
 
-    auto eventOpt = settings_.getCompetitionEventConst(eventId);
+    auto eventOpt = settings_.events.getConst(eventId);
     if (!eventOpt) {
         UIManager::showErrorMessage("项目ID " + std::to_string(eventId) + " 不存在。");
         return;

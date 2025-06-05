@@ -97,7 +97,7 @@ void ScheduleController::handleLockSchedule() {
 
 // 添加辅助函数，用于验证项目是否都设置了持续时间和场地
 bool ScheduleController::validateEventsForScheduling() {
-    for (const auto& pair : settings_.getAllCompetitionEventsConst()) {
+    for (const auto& pair : settings_.events.getAllConst()) {
         const CompetitionEvent& event = pair.second.get();
         if (!event.getIsCancelled()) {
             if (event.getDurationMinutes() <= 0) {

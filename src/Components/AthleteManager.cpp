@@ -42,7 +42,7 @@ bool AthleteManager::remove(int athleteId) {
 
     // 从所有其报名的项目中移除该运动员的参与记录
     for (const int eventId : athlete_ref.getRegisteredEventIds()) {
-        if (auto event = settings.getCompetitionEvent(eventId); event.has_value()) {
+        if (auto event = settings.events.get(eventId); event.has_value()) {
             event.value().get().removeParticipant(athleteId);
         }
     }
@@ -172,7 +172,7 @@ bool AthleteManager::contains(const std::string& name) const {
 // 报名相关
 bool AthleteManager::registerForEvent(int athleteId, int eventId) {
     auto athleteOpt = get(athleteId);
-    auto eventOpt = settings.getCompetitionEvent(eventId);
+    auto eventOpt = settings.events.get(eventId);
 
     if (!athleteOpt) {
         std::cerr << "错误：报名失败，运动员ID " << athleteId << " 未找到。" << std::endl;
@@ -229,7 +229,7 @@ bool AthleteManager::unregisterFromEvent(int athleteId, int eventId) {
         return false;
     }
     
-    auto eventOpt = settings.getCompetitionEvent(eventId);
+    auto eventOpt = settings.events.get(eventId);
     if (eventOpt.has_value()) {
         eventOpt.value().get().removeParticipant(athleteId);
     }

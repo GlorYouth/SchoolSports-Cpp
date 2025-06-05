@@ -161,12 +161,12 @@ void SystemSettingsController::handleAddEvent() {
     int durationMinutes = UIManager::getIntInput("请输入项目持续时间（分钟）: ", 1, 1440);  // 最多24小时
     
     // 使用新的方法添加项目
-    settings_.addCompetitionEvent(name, eventType, gender, scoreRuleId);
+    settings_.events.add(name, eventType, gender, scoreRuleId);
 }
 
 void SystemSettingsController::handleViewAllEvents() {
     std::vector<utils::RefConst<CompetitionEvent>> events;
-     for (const auto& val : settings_.getAllCompetitionEventsConst() | std::views::values) {
+     for (const auto& val : settings_.events.getAllConst() | std::views::values) {
         events.push_back(std::cref(val));
     }
     UIManager::displayEvents(events, settings_); // 可能需要 settings 来获取计分规则描述

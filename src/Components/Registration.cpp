@@ -22,7 +22,7 @@ static int timeStringToMinutes(const std::string& timeStr) {
 
 bool Registration::registerAthleteForEvent(const int athleteId, const int eventId) const { // 移除了 const
     const auto athleteOpt = settings.athletes.get(athleteId);
-    const auto eventOpt = settings.getCompetitionEvent(eventId);
+    const auto eventOpt = settings.events.get(eventId);
 
     if (!athleteOpt.has_value()) {
         std::cerr << "报名失败: 运动员ID " << athleteId << " 不存在。" << std::endl;
@@ -50,7 +50,7 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
     if (newStartMin >= 0 && newEndMin > newStartMin) {
         for (int regEventId : athlete_ref.getRegisteredEventIds()) {
             if (regEventId == eventId) continue; // 跳过自己
-            auto regEventOpt = settings.getCompetitionEventConst(regEventId);
+            auto regEventOpt = settings.events.getConst(regEventId);
             if (!regEventOpt) continue;
             const CompetitionEvent& regEvent = regEventOpt.value().get();
             int regStartMin = timeStringToMinutes(regEvent.getStartTime());
@@ -112,7 +112,7 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
 
 bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eventId) const { // 移除了 const
     const auto athleteOpt = settings.athletes.get(athleteId);
-    const auto eventOpt = settings.getCompetitionEvent(eventId);
+    const auto eventOpt = settings.events.get(eventId);
 
     if (!athleteOpt.has_value()) {
         std::cerr << "取消报名失败: 运动员ID " << athleteId << " 不存在。" << std::endl;
@@ -171,7 +171,7 @@ int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 
     // 当前 SystemSettings::getAllCompetitionEvents() 返回 const&
     // 所以我们需要通过ID获取非const的event对象来修改
     std::vector<int> eventIdsToCheck;
-    for(const auto& pair : settings.getAllCompetitionEventsConst()){
+    for(const auto& pair : settings.events.getAllConst()){
         eventIdsToCheck.push_back(pair.first);
     }
 
@@ -185,7 +185,7 @@ int Registration::checkAndCancelEventsDueToLowParticipation() const { // 移除了 
 
     int eventToCancelCount = 0;
     for (const int eventId : eventIdsToCheck) {
-        if (auto eventOpt = settings.getCompetitionEvent(eventId); eventOpt.has_value()) {
+        if (auto eventOpt = settings.events.get(eventId); eventOpt.has_value()) {
             if (CompetitionEvent& event_ref = eventOpt.value().get(); !event_ref.getIsCancelled()) { // 只检查未被取消的项目
                 if (event_ref.getParticipantCount() < minRequiredParticipants) {
                     event_ref.setCancelled(true); // 修改获取到的非 const 对象
