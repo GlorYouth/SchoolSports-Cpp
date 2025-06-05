@@ -150,17 +150,17 @@ int main() {
         WorkflowStage currentStage = settings.getCurrentWorkflowStage();
         
         // 输入提示和范围可以根据当前菜单动态调整，但为简化，使用一个通用范围
-        int maxChoice = 10; // 默认值
+        int maxChoice = 11; // 默认值，更新以包括选项11
         
         // 根据当前阶段设置最大选择范围
         switch(currentStage) {
-            case WorkflowStage::SETUP_EVENTS: maxChoice = 10; break; // 确保可以选择1-4和9-10选项
-            case WorkflowStage::REGISTRATION_OPEN: maxChoice = 10; break; // 包括通用选项9和10
-            case WorkflowStage::COMPETITION_RUNNING: maxChoice = 10; break; // 包括通用选项9和10
+            case WorkflowStage::SETUP_EVENTS: maxChoice = 11; break; // 确保可以选择1-4和9-11选项
+            case WorkflowStage::REGISTRATION_OPEN: maxChoice = 11; break; // 包括通用选项9-11
+            case WorkflowStage::COMPETITION_RUNNING: maxChoice = 11; break; // 包括通用选项9-11
         }
         
         choice = UIManager::getIntInput("请输入您的选项: ", 0, maxChoice);
-                                     // 假设通用选项是9, 10, 0，阶段选项从1开始
+                                     // 假设通用选项是9, 10, 11, 0，阶段选项从1开始
 
         bool choiceHandled = false;
 
@@ -173,6 +173,11 @@ int main() {
             UIManager::pressEnterToContinue();
             choiceHandled = true;
         } else if (choice == 10) {
+            // 数据备份和恢复
+            dataManagementCtrl.manage();
+            choiceHandled = true;
+        } else if (choice == 11) {
+            // 自动测试
             // autoTester.runAllTests(); // 例如调用 AutoTest 实例的方法
             UIManager::showMessage("自动测试执行完毕。(占位符)"); // 替换为实际的自动测试调用
             UIManager::pressEnterToContinue();

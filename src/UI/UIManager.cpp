@@ -230,7 +230,8 @@ void UIManager::displayCommonMenuOptions(const SystemSettings& settings) {
 
     // 通用选项
     std::cout << "9.  分阶段导入示例数据" << std::endl;
-    std::cout << "10. 自动测试 (辅助功能)" << std::endl;
+    std::cout << "10. 数据备份和恢复" << std::endl;
+    std::cout << "11. 自动测试 (辅助功能)" << std::endl;
     std::cout << "0.  退出系统" << std::endl;
     std::cout << "======================================" << std::endl;
 }

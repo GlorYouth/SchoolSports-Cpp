@@ -19,6 +19,7 @@ add_executable(SchoolSports-Cpp main.cpp
         include/Components/Schedule.h
         include/Components/Result.h
         include/Components/DataManager.h
+        include/Components/DataFileManager.h
         include/Components/Constants.h
         src/Components/Athlete.cpp
         src/Components/CompetitionEvent.cpp
@@ -29,6 +30,7 @@ add_executable(SchoolSports-Cpp main.cpp
         src/Components/Schedule.cpp
         src/Components/Result.cpp
         src/Components/DataManager.cpp
+        src/Components/DataFileManager.cpp
         src/Components/AutoTest.cpp
         include/Components/AutoTest.h
         src/UI/UIManager.cpp
