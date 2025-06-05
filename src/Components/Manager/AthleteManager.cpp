@@ -5,7 +5,7 @@
 AthleteManager::AthleteManager(SystemSettings& settings) : settings(settings) {}
 
 // 内部访问方法
-std::map<int, Athlete>& AthleteManager::getAthletesMap() {
+std::map<int, Athlete>& AthleteManager::getAthletesMap() const{
     return settings._athletesMap;
 }
 
@@ -224,13 +224,12 @@ bool AthleteManager::registerForEvent(int athleteId, int eventId) {
 }
 
 bool AthleteManager::unregisterFromEvent(int athleteId, int eventId) {
-    auto athlete = get(athleteId);
+    const auto athlete = get(athleteId);
     if (!athlete.has_value()) {
         return false;
     }
-    
-    auto eventOpt = settings.events.get(eventId);
-    if (eventOpt.has_value()) {
+
+    if (const auto eventOpt = settings.events.get(eventId); eventOpt.has_value()) {
         eventOpt.value().get().removeParticipant(athleteId);
     }
     
@@ -238,5 +237,5 @@ bool AthleteManager::unregisterFromEvent(int athleteId, int eventId) {
 }
 
 int AthleteManager::getMaxEventsAllowed() const {
-    return settings.athletes.getMaxEventsAllowed();
+    return settings._athleteMaxEventsAllowed;
 } 

@@ -8,9 +8,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "../../../include/Components/Core/Result.h"
-#include "../../../include/Components/Core/Athlete.h"
-#include "../../../include/Components/Core/CompetitionEvent.h"
 #include "../../../include/Components/Core/ScoreRule.h"
 // Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
 // #include "../../include/Components/Workflow.h" // 通常不需要重复包含
@@ -31,11 +28,11 @@ SystemSettings::SystemSettings() :
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
 
-void SystemSettings::resetAllIdCounter() const {
-    units.resetIdCounter();
-    athletes.resetIdCounter();
-    events.resetIdCounter();
-    rules.resetIdCounter();
+void SystemSettings::resetAllIdCounter() {
+    UnitManager::resetIdCounter();
+    AthleteManager::resetIdCounter();
+    CompetitionEventManager::resetIdCounter();
+    ScoreRuleManager::resetIdCounter();
 }
 
 void SystemSettings::clearAllData(){

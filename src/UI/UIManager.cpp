@@ -104,7 +104,7 @@ void UIManager::showOperationResult(bool success, const std::string& operation, 
 
 // 获取浮点数输入
 double UIManager::getDoubleInput(const std::string& prompt) {
-    double input;
+    double input = 0;
     std::string inputStr;
     bool isValid;
 

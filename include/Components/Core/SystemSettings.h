@@ -68,7 +68,7 @@ public:
     SystemArgsManager args;
 
     SystemSettings();
-    void resetAllIdCounter() const;
+    static void resetAllIdCounter() ;
     void clearAllData();
 
     // --- 系统参数设置 ---

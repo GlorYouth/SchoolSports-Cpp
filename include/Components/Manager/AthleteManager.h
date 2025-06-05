@@ -56,7 +56,7 @@ public:
 private:
     SystemSettings& settings;
     // 内部方法，直接操作运动员数据结构
-    std::map<int, Athlete>& getAthletesMap();
+    std::map<int, Athlete>& getAthletesMap() const;
     const std::map<int, Athlete>& getAthletesMapConst() const;
 };
 
