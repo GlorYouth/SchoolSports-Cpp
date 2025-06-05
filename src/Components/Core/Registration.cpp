@@ -2,11 +2,11 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../../include/Components/Registration.h"
-#include "../../include/Components/SystemSettings.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/UI/UIManager.h"
+#include "../../../include/Components/Core/Registration.h"
+#include "../../../include/Components/Core/SystemSettings.h"
+#include "../../../include/Components/Core/Athlete.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/UI/UIManager.h"
 #include <iostream> // 用于输出信息
 #include <ranges>
 

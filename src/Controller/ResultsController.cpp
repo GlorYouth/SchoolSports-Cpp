@@ -4,10 +4,10 @@
 
 #include "../../include/Controller/ResultsController.h"
 #include "../../include/UI/UIManager.h"
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/ScoreRule.h"
-#include "../../include/Components/Result.h"
+#include "../../include/Components/Core/CompetitionEvent.h"
+#include "../../include/Components/Core/Athlete.h"
+#include "../../include/Components/Core/ScoreRule.h"
+#include "../../include/Components/Core/Result.h"
 #include <vector>
 #include <string>
 #include <algorithm> // For std::find, std::sort
@@ -95,7 +95,7 @@ void ResultsController::handleRecordEventResults() {
         return;
     }
 
-    settings_.clearResultsForEvent(eventId); // 清除旧成绩并调整单位分数
+    settings_.results.clearForEvent(eventId); // 清除旧成绩并调整单位分数
     
     UIManager::showMessage("应用计分规则: " + applicableRule->getDescription());
 
@@ -162,11 +162,11 @@ void ResultsController::handleRecordEventResults() {
         awardedAthleteIdsThisSession.push_back(athleteId_input);
 
         // 更新单位总分 (SystemSettings 应该提供一个方法来做这件事，以确保一致性)
-        settings_.addScoreToUnit(rankedAthlete.getUnitId(), points);
+        settings_.results.addScoreToUnit(rankedAthlete.getUnitId(), points);
     }
 
     newEventResults.finalizeResults(); // 内部可能排序或做其他处理
-    settings_.addOrUpdateEventResults(newEventResults);
+    settings_.results.addOrUpdate(newEventResults);
     competitionEvent.setScoreRuleId(applicableRule->getId()); // 关联计分规则到项目
 
     UIManager::showSuccessMessage("项目 \"" + competitionEvent.getName() + "\" 的成绩已录入/更新完毕。");
@@ -193,7 +193,7 @@ void ResultsController::handleViewEventResults() {
     }
     const CompetitionEvent& competitionEvent = eventOpt.value().get();
 
-    auto eventResultsOpt = settings_.getEventResultsConst(eventId);
+    auto eventResultsOpt = settings_.results.getConst(eventId);
     const EventResults* resultsPtr = eventResultsOpt ? &(eventResultsOpt.value().get()) : nullptr;
 
     // UIManager 显示成绩详情

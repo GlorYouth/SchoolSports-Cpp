@@ -4,8 +4,8 @@
 
 #include "../../include/Controller/QueryController.h"
 #include "../../include/UI/UIManager.h"
-#include "../../include/Components/Unit.h"
-#include "../../include/Components/CompetitionEvent.h"
+#include "../../include/Components/Core/Unit.h"
+#include "../../include/Components/Core/CompetitionEvent.h"
 #include <vector>
 #include <functional>
 

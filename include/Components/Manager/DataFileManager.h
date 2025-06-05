@@ -10,7 +10,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
-#include "SystemSettings.h"
+#include "../Core/SystemSettings.h"
 
 /**
  * @brief 数据文件管理器，负责系统数据的文件读写操作

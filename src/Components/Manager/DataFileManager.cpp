@@ -2,7 +2,7 @@
 // Created by User on 2025/6/15.
 //
 
-#include "../../include/Components/DataFileManager.h"
+#include "../../../include/Components/Manager/DataFileManager.h"
 #include <fstream>
 #include <iostream>
 #include <ctime>
@@ -11,13 +11,13 @@
 #include <filesystem> // 添加C++17文件系统库
 #include <algorithm>  // 用于排序
 
-#include "../../include/Components/Unit.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/Components/ScoreRule.h"
-#include "../../include/Components/Result.h"
-#include "../../include/Components/Constants.h"
-#include "../../include/utils.h"
+#include "../../../include/Components/Core/Unit.h"
+#include "../../../include/Components/Core/Athlete.h"
+#include "../../../include/Components/Core/CompetitionEvent.h"
+#include "../../../include/Components/Core/ScoreRule.h"
+#include "../../../include/Components/Core/Result.h"
+#include "../../../include/Components/Core/Constants.h"
+#include "../../../include/utils.h"
 
 // 定义命名空间别名，简化代码
 namespace fs = std::filesystem;
@@ -157,9 +157,9 @@ void DataFileManager::saveMetadata(std::ofstream& outFile, const SystemSettings&
     outFile << "[METADATA]" << std::endl;
     outFile << "VERSION=1.0" << std::endl;
     outFile << "DATE=" << time(nullptr) << std::endl; // 使用UNIX时间戳
-    outFile << "WORKFLOW_STAGE=" << static_cast<int>(settings.getCurrentWorkflowStage()) << std::endl;
+    outFile << "WORKFLOW_STAGE=" << static_cast<int>(settings.workflow.getCurrentStage()) << std::endl;
     outFile << "ATHLETE_MAX_EVENTS=" << settings.athletes.getMaxEventsAllowed() << std::endl;
-    outFile << "SCHEDULE_LOCKED=" << (settings.isScheduleLocked() ? "1" : "0") << std::endl;
+    outFile << "SCHEDULE_LOCKED=" << (settings.schedule.isLocked() ? "1" : "0") << std::endl;
 }
 
 // 保存单位段
@@ -260,7 +260,7 @@ void DataFileManager::saveResults(std::ofstream& outFile, const SystemSettings& 
     int resultCount = 0;
     for (const auto& pair : settings.events.getAllConst()) {
         int eventId = pair.first;
-        auto eventResultsOpt = settings.getEventResultsConst(eventId);
+        auto eventResultsOpt = settings.results.getConst(eventId);
         if (eventResultsOpt) {
             const EventResults& results = eventResultsOpt.value().get();
             resultCount += results.getResultsList().size();
@@ -271,7 +271,7 @@ void DataFileManager::saveResults(std::ofstream& outFile, const SystemSettings& 
     // 写入成绩详细
     for (const auto& pair : settings.events.getAllConst()) {
         int eventId = pair.first;
-        auto eventResultsOpt = settings.getEventResultsConst(eventId);
+        auto eventResultsOpt = settings.results.getConst(eventId);
         if (eventResultsOpt) {
             const EventResults& results = eventResultsOpt.value().get();
             // 写出该项目所有成绩
@@ -289,8 +289,8 @@ void DataFileManager::saveResults(std::ofstream& outFile, const SystemSettings& 
 // 保存场馆信息段
 void DataFileManager::saveVenues(std::ofstream& outFile, const SystemSettings& settings) const {
     outFile << std::endl << "[VENUES]" << std::endl;
-    outFile << "COUNT=" << settings.getAllVenues().size() << std::endl;
-    for (const auto& venue : settings.getAllVenues()) {
+    outFile << "COUNT=" << settings.venues.getAll().size() << std::endl;
+    for (const auto& venue : settings.venues.getAll()) {
         outFile << venue << std::endl;
     }
 }
@@ -330,8 +330,8 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
     settings.units.clear();
     settings.athletes.clear();
     settings.events.clear();
-    settings.clearAllEventResults();
-    settings.resetAllUnitScores();
+    settings.results.clear();
+    settings.results.resetAllUnitScores();
     
     // 重置ID计数器
     settings.resetAllIdCounter();
@@ -370,7 +370,7 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
         } else if (line.starts_with("[V]")) {
             // 处理场地信息
             std::string venueName = line.substr(3);
-            settings.addVenue(venueName);
+            settings.venues.add(venueName);
         }
     }
     
@@ -405,12 +405,12 @@ void DataFileManager::processMetadata(const std::string& line, SystemSettings& s
                 std::cerr << "警告: 文件版本(" << value << ")可能与当前系统不兼容。" << std::endl;
             }
         } else if (key == "WORKFLOW_STAGE") {
-            settings.setWorkflowStage(static_cast<WorkflowStage>(std::stoi(value)));
+            settings.workflow.setStage(static_cast<WorkflowStage>(std::stoi(value)));
         } else if (key == "ATHLETE_MAX_EVENTS") {
             settings.setAthleteMaxEventsAllowed(std::stoi(value));
         } else if (key == "SCHEDULE_LOCKED") {
             if (value == "1") {
-                settings.lockSchedule();
+                settings.schedule.lock();
             }
         }
     }
@@ -440,7 +440,7 @@ void DataFileManager::processUnit(const std::string& line, SystemSettings& setti
     std::getline(ss, token, '|');
     double totalScore = std::stod(token);
     if (totalScore > 0) {
-        settings.addScoreToUnit(id, totalScore); // 添加总分（如果有）
+        settings.results.addScoreToUnit(id, totalScore); // 添加总分（如果有）
     }
 }
 
@@ -571,7 +571,7 @@ void DataFileManager::processEvent(const std::string& line, SystemSettings& sett
         }
         if (!venue.empty()) {
             // 添加场馆（如果不存在）
-            settings.addVenue(venue);
+            settings.venues.add(venue);
             event.setVenue(venue);
         }
         event.setDurationMinutes(durationMinutes);
@@ -659,7 +659,7 @@ void DataFileManager::processResult(const std::string& line, SystemSettings& set
     Result result(eventId, athleteId, rank, scoreRecord, points);
     
     // 获取或创建项目成绩集合
-    auto eventResultsOpt = settings.getEventResults(eventId);
+    auto eventResultsOpt = settings.results.get(eventId);
     EventResults* eventResults = nullptr;
     
     if (eventResultsOpt) {
@@ -668,8 +668,8 @@ void DataFileManager::processResult(const std::string& line, SystemSettings& set
     } else {
         // 创建新的成绩集合
         EventResults newResults(eventId);
-        settings.addOrUpdateEventResults(newResults);
-        eventResultsOpt = settings.getEventResults(eventId);
+        settings.results.addOrUpdate(newResults);
+        eventResultsOpt = settings.results.get(eventId);
         if (eventResultsOpt) {
             eventResults = &(eventResultsOpt.value().get());
         }
@@ -683,7 +683,7 @@ void DataFileManager::processResult(const std::string& line, SystemSettings& set
         auto athleteOpt = settings.athletes.getConst(athleteId);
         if (athleteOpt) {
             int unitId = athleteOpt.value().get().getUnitId();
-            settings.addScoreToUnit(unitId, points);
+            settings.results.addScoreToUnit(unitId, points);
         }
     }
 } 

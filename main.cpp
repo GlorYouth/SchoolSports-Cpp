@@ -1,12 +1,12 @@
-#include "include/Components/SystemSettings.h"
-#include "include/Components/Registration.h"
-#include "include/Components/Schedule.h"
-#include "include/Components/DataManager.h"
-#include "include/Components/Result.h"
-#include "include/Components/AutoTest.h"
-#include "include/Components/Unit.h" // For viewUnitStandingsOverall
-#include "include/Components/CompetitionEvent.h"
-#include "include/Components/Workflow.h" // 确保 Workflow.h 被包含
+#include "include/Components/Core/SystemSettings.h"
+#include "include/Components/Core/Registration.h"
+#include "include/Components/Core/Schedule.h"
+#include "include/Components/Manager/DataManager.h"
+#include "include/Components/Core/Result.h"
+#include "include/Components/Core/AutoTest.h"
+#include "include/Components/Core/Unit.h" // For viewUnitStandingsOverall
+#include "include/Components/Core/CompetitionEvent.h"
+#include "include/Components/Core/Workflow.h"
 
 #include "include/UI/UIManager.h"
 #include "include/Controller/SystemSettingsController.h"
@@ -94,7 +94,7 @@ void endRegistrationProcess(Registration& registration, Schedule& schedule, Syst
         UIManager::showMessage(schedule.getScheduleContentAsString());
         
         // 进入下一阶段
-        settings.setWorkflowStage(WorkflowStage::COMPETITION_RUNNING);
+        settings.workflow.enterCompetitionStage();
         UIManager::showSuccessMessage("报名已结束。工作流程已进入比赛管理阶段。");
     } else {
         // 显示错误信息已经在生成秩序册函数中处理
@@ -147,7 +147,7 @@ int main() {
     int choice;
     do {
         UIManager::displayMainMenu(settings); // 显示基于当前阶段的菜单
-        WorkflowStage currentStage = settings.getCurrentWorkflowStage();
+        WorkflowStage currentStage = settings.workflow.getCurrentStage();
         
         // 输入提示和范围可以根据当前菜单动态调整，但为简化，使用一个通用范围
         int maxChoice = 11; // 默认值，更新以包括选项11

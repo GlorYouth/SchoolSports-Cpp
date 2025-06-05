@@ -10,7 +10,7 @@
 #include <vector>
 #include <map> // 用于存储成绩，可能是<名次, 运动员ID> 或更复杂的结构
 #include <optional>
-#include "../../include/utils.h"
+#include "../../utils.h"
 
 // 前向声明
 class Athlete;

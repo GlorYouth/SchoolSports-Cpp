@@ -3,12 +3,12 @@
 //
 
 #include "../../include/UI/UIManager.h"
-#include "../../include/Components/Unit.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/Components/ScoreRule.h"
-#include "../../include/Components/Result.h"
-#include "../../include/Components/SystemSettings.h"
+#include "../../include/Components/Core/Unit.h"
+#include "../../include/Components/Core/Athlete.h"
+#include "../../include/Components/Core/CompetitionEvent.h"
+#include "../../include/Components/Core/ScoreRule.h"
+#include "../../include/Components/Core/Result.h"
+#include "../../include/Components/Core/SystemSettings.h"
 
 // --- 基本输入输出工具 ---
 void UIManager::clearInputBuffer() {
@@ -158,7 +158,7 @@ void UIManager::displayMainMenu(const SystemSettings& settings) {
     // 清屏操作，根据需要添加，例如 system("cls") on Windows or system("clear") on Linux/macOS
     // std::system("cls"); // 或者使用更可移植的清屏方法
 
-    WorkflowStage currentStage = settings.getCurrentWorkflowStage();
+    WorkflowStage currentStage = settings.workflow.getCurrentStage();
 
     std::cout << "\n========== 学校运动会管理系统 ==========" << std::endl;
     std::cout << "当前阶段: ";
@@ -218,12 +218,12 @@ void UIManager::displayCommonMenuOptions(const SystemSettings& settings) {
     std::cout << "--------------------------------------" << std::endl;
     
     // 显示警告和状态信息
-    WorkflowStage currentStage = settings.getCurrentWorkflowStage();
-    if (currentStage == WorkflowStage::SETUP_EVENTS && settings.isScheduleLocked()) {
+    WorkflowStage currentStage = settings.workflow.getCurrentStage();
+    if (currentStage == WorkflowStage::SETUP_EVENTS && settings.schedule.isLocked()) {
         showWarningMessage("赛程已锁定，部分项目设置可能受限。如需修改，请先在赛程管理中解锁");
     }
     
-    if (currentStage == WorkflowStage::REGISTRATION_OPEN && !settings.isScheduleLocked()) {
+    if (currentStage == WorkflowStage::REGISTRATION_OPEN && !settings.schedule.isLocked()) {
         // 理论上此状态下赛程必锁定，若非，则是个逻辑问题
         showWarningMessage("运动员报名阶段但赛程未锁定，请检查系统状态！");
     }
@@ -248,8 +248,8 @@ void UIManager::displaySystemSettingsMenu(const SystemSettings& settings, Workfl
     if (currentStage == WorkflowStage::SETUP_EVENTS) {
         std::cout << "4. 添加参赛单位" << std::endl;
         std::cout << "5. 添加比赛项目" << std::endl;
-        std::cout << "6. 场地管理" << (settings.isScheduleLocked() ? " (已锁定，仅可查看)" : "") << std::endl;
-        std::cout << "7. 上午/下午时间段设置" << (settings.isScheduleLocked() ? " (已锁定，仅可查看)" : "") << std::endl;
+        std::cout << "6. 场地管理" << (settings.schedule.isLocked() ? " (已锁定，仅可查看)" : "") << std::endl;
+        std::cout << "7. 上午/下午时间段设置" << (settings.schedule.isLocked() ? " (已锁定，仅可查看)" : "") << std::endl;
     }
     
     // 阶段2（运动员报名）特有的选项
@@ -281,7 +281,7 @@ void UIManager::displayRegistrationMenu() {
 
 void UIManager::displayScheduleMenu(const SystemSettings& settings) {
     std::cout << "\n--- 赛程管理 ---" << std::endl;
-    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定 (禁止修改项目时间/场地)" : "未锁定 (可编辑项目时间/场地)") << std::endl;
+    std::cout << "当前赛程状态：" << (settings.schedule.isLocked() ? "已锁定 (禁止修改项目时间/场地)" : "未锁定 (可编辑项目时间/场地)") << std::endl;
     std::cout << "1. 自动编排赛程" << std::endl;
     std::cout << "2. 查看秩序册" << std::endl;
     std::cout << "3. 验证赛程 (占位符)" << std::endl;
@@ -324,8 +324,8 @@ void UIManager::displayVenueManagementMenu() {
 
 // 新增：上午/下午时间段设置菜单
 void UIManager::displaySessionSettingsMenu(const SystemSettings& settings) {
-    auto [morningStart, morningEnd] = settings.getMorningSession();
-    auto [afternoonStart, afternoonEnd] = settings.getAfternoonSession();
+    auto [morningStart, morningEnd] = settings.sessions.getMorningSession();
+    auto [afternoonStart, afternoonEnd] = settings.sessions.getAfternoonSession();
     std::cout << "\n--- 上午/下午时间段设置 ---" << std::endl;
     std::cout << "当前上午时间段: " << morningStart << " - " << morningEnd << std::endl;
     std::cout << "当前下午时间段: " << afternoonStart << " - " << afternoonEnd << std::endl;
@@ -411,7 +411,7 @@ void UIManager::displayAthletes(const std::vector<utils::RefConst<Athlete>>& ath
 
 void UIManager::displayEvents(const std::vector<utils::RefConst<CompetitionEvent>>& events, const SystemSettings& settings) {
     std::cout << "\n--- 所有比赛项目 ---" << std::endl;
-    std::cout << "当前赛程状态：" << (settings.isScheduleLocked() ? "已锁定，禁止修改项目时间/场地" : "未锁定，可编辑项目时间/场地") << std::endl;
+    std::cout << "当前赛程状态：" << (settings.schedule.isLocked() ? "已锁定，禁止修改项目时间/场地" : "未锁定，可编辑项目时间/场地") << std::endl;
     if (events.empty()) {
         showMessage("暂无比赛项目。");
         return;

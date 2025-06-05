@@ -6,10 +6,10 @@
 #include <optional>
 #include <vector>
 #include <iostream>
-#include "../utils.h"
-#include "Unit.h"
+#include "../../utils.h"
+#include "../Core/Unit.h"
 
-// å‰å‘å£°æ˜
+// Ç°ÏòÉùÃ÷
 class SystemSettings;
 
 class UnitManager {
@@ -19,39 +19,39 @@ public:
 
     explicit UnitManager(SystemSettings& settings);
     
-    // åŸºæœ¬æ“ä½œ
+    // »ù±¾²Ù×÷
     bool add(const std::string& unitName);
     bool remove(int unitId);
     void clear();
     static void resetIdCounter();
     
-    // è·å–æ–¹æ³•
+    // »ñÈ¡·½·¨
     std::optional<utils::Ref<Unit>> get(int unitId);
     std::optional<utils::RefConst<Unit>> getConst(int unitId) const;
     const std::map<int, Unit>& getAll() const;
     
-    // è¿­ä»£å™¨æ”¯æŒ
+    // µü´úÆ÷Ö§³Ö
     iterator begin();
     iterator end();
     const_iterator begin() const;
     const_iterator end() const;
     
-    // æŸ¥æ‰¾æ–¹æ³•
+    // ²éÕÒ·½·¨
     std::optional<utils::Ref<Unit>> findByName(const std::string& name);
     
-    // ç»Ÿè®¡æ–¹æ³•
+    // Í³¼Æ·½·¨
     size_t count() const;
     bool empty() const;
     bool contains(int unitId) const;
     bool contains(const std::string& unitName) const;
     
-    // å¾—åˆ†ç®¡ç†
+    // µÃ·Ö¹ÜÀí
     void resetAllScores();
     void addScore(int unitId, double score);
 
 private:
     SystemSettings& settings;
-    // å†…éƒ¨æ–¹æ³•ï¼Œç›´æ¥æ“ä½œå•ä½æ•°æ®ç»“æ„
+    // ÄÚ²¿·½·¨£¬Ö±½Ó²Ù×÷µ¥Î»Êı¾İ½á¹¹
     std::map<int, Unit>& getUnitsMap();
     const std::map<int, Unit>& getUnitsMapConst() const;
 };

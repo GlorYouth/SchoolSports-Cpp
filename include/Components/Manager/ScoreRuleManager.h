@@ -6,10 +6,10 @@
 #include <optional>
 #include <vector>
 #include <iostream>
-#include "../utils.h"
-#include "ScoreRule.h"
+#include "../../utils.h"
+#include "../Core/ScoreRule.h"
 
-// å‰å‘å£°æ˜
+// Ç°ÏòÉùÃ÷
 class SystemSettings;
 
 class ScoreRuleManager {
@@ -19,34 +19,34 @@ public:
 
     explicit ScoreRuleManager(SystemSettings& settings);
     
-    // åŸºæœ¬æ“ä½œ
+    // »ù±¾²Ù×÷
     bool add(const std::string& desc, int minP, int maxP, int ranks, const std::map<int, double>& scores);
     bool addCustom(ScoreRule* rule);
     void clear();
     static void resetIdCounter();
     
-    // è·å–æ–¹æ³•
+    // »ñÈ¡·½·¨
     std::optional<utils::Ref<ScoreRule>> get(int ruleId);
     std::optional<utils::RefConst<ScoreRule>> getConst(int ruleId) const;
     const std::map<int, ScoreRule>& getAll() const;
     
-    // è¿­ä»£å™¨æ”¯æŒ
+    // µü´úÆ÷Ö§³Ö
     iterator begin();
     iterator end();
     const_iterator begin() const;
     const_iterator end() const;
     
-    // æŸ¥æ‰¾æ–¹æ³•
+    // ²éÕÒ·½·¨
     std::optional<utils::Ref<ScoreRule>> findAppropriate(int participantCount);
     
-    // ç»Ÿè®¡æ–¹æ³•
+    // Í³¼Æ·½·¨
     size_t count() const;
     bool empty() const;
     bool contains(int ruleId) const;
 
 private:
     SystemSettings& settings;
-    // å†…éƒ¨æ–¹æ³•ï¼Œç›´æ¥æ“ä½œè®¡åˆ†è§„åˆ™æ•°æ®ç»“æ„
+    // ÄÚ²¿·½·¨£¬Ö±½Ó²Ù×÷¼Æ·Ö¹æÔòÊı¾İ½á¹¹
     std::map<int, ScoreRule>& getRulesMap();
     const std::map<int, ScoreRule>& getRulesMapConst() const;
 };

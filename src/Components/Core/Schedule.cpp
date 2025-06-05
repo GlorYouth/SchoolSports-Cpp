@@ -2,7 +2,7 @@
 // Created by GlorYouth on 2025/6/2.
 //
 
-#include "../../include/Components/Schedule.h"
+#include "../../../include/Components/Core/Schedule.h"
 #include <iostream> // 用于打印等
 #include <ranges>
 #include <sstream>
@@ -33,7 +33,7 @@ bool Schedule::generateSchedule() {
     });
     
     // 2. 获取所有场地
-    const auto& venues = settings.getAllVenues();
+    const auto& venues = settings.venues.getAll();
     if (venues.empty()) {
         std::cout << "错误：场地表为空，请先添加场地。" << std::endl;
         return false;
@@ -43,8 +43,8 @@ bool Schedule::generateSchedule() {
     std::vector<std::string> venueList(venues.begin(), venues.end());
     
     // 3. 获取上午/下午时间段
-    auto [morningStart, morningEnd] = settings.getMorningSession();
-    auto [afternoonStart, afternoonEnd] = settings.getAfternoonSession();
+    auto [morningStart, morningEnd] = settings.sessions.getMorningSession();
+    auto [afternoonStart, afternoonEnd] = settings.sessions.getAfternoonSession();
     
     // 辅助函数：时间字符串转分钟
     auto timeToMin = [](const std::string& t) -> int {

@@ -4,11 +4,11 @@
 
 #include "../../include/Controller/SystemSettingsController.h"
 #include "../../include/UI/UIManager.h"
-#include "../../include/Components/Unit.h"
-#include "../../include/Components/Athlete.h"
-#include "../../include/Components/CompetitionEvent.h"
-#include "../../include/Components/ScoreRule.h"
-#include "../../include/Components/Schedule.h"
+#include "../../include/Components/Core/Unit.h"
+#include "../../include/Components/Core/Athlete.h"
+#include "../../include/Components/Core/CompetitionEvent.h"
+#include "../../include/Components/Core/ScoreRule.h"
+#include "../../include/Components/Core/Schedule.h"
 #include <algorithm> // for std::sort, std::find (如果需要)
 #include <ranges>    // for std::views::values (C++20)
 #include <limits>
@@ -20,7 +20,7 @@ void SystemSettingsController::manage() {
     int choice;
     do {
         // 获取当前工作流阶段
-        WorkflowStage currentStage = settings_.getCurrentWorkflowStage();
+        WorkflowStage currentStage = settings_.workflow.getCurrentStage();
         
         // 根据当前阶段显示菜单
         UIManager::displaySystemSettingsMenu(settings_, currentStage);
@@ -53,7 +53,7 @@ void SystemSettingsController::manage() {
                         case 4: handleAddUnit(); break;
                         case 5: handleAddEvent(); break;
                         case 6: 
-                            if (!settings_.isScheduleLocked()) {
+                            if (!settings_.schedule.isLocked()) {
                                 handleVenueManagement();
                             } else {
                                 UIManager::showErrorMessage("赛程已锁定，场地管理仅可查看。");
@@ -61,7 +61,7 @@ void SystemSettingsController::manage() {
                             }
                             break;
                         case 7: 
-                            if (!settings_.isScheduleLocked()) {
+                            if (!settings_.schedule.isLocked()) {
                                 handleSessionSettings();
                             } else {
                                 UIManager::showErrorMessage("赛程已锁定，时间段设置仅可查看。");
@@ -124,7 +124,7 @@ void SystemSettingsController::handleViewAllUnits() {
 }
 
 void SystemSettingsController::handleAddEvent() {
-    if (settings_.isScheduleLocked()) {
+    if (settings_.schedule.isLocked()) {
         UIManager::showErrorMessage("赛程已锁定，无法添加新项目。");
         return;
     }
@@ -399,7 +399,7 @@ void SystemSettingsController::handleVenueManagement() {
         switch (choice) {
             case 1: {
                 std::string venueName = UIManager::getStringInput("请输入新场地名称: ");
-                if (settings_.addVenue(venueName)) {
+                if (settings_.venues.add(venueName)) {
                     UIManager::showSuccessMessage("场地添加成功。");
                 } else {
                     UIManager::showErrorMessage("场地已存在，添加失败。");
@@ -408,7 +408,7 @@ void SystemSettingsController::handleVenueManagement() {
             }
             case 2: {
                 std::string venueName = UIManager::getStringInput("请输入要删除的场地名称: ");
-                if (settings_.removeVenue(venueName)) {
+                if (settings_.venues.remove(venueName)) {
                     UIManager::showSuccessMessage("场地删除成功。");
                 } else {
                     UIManager::showErrorMessage("未找到该场地，删除失败。");
@@ -416,7 +416,7 @@ void SystemSettingsController::handleVenueManagement() {
                 break;
             }
             case 3: {
-                UIManager::displayVenues(settings_.getAllVenues());
+                UIManager::displayVenues(settings_.venues.getAll());
                 break;
             }
             case 0:
@@ -433,7 +433,7 @@ void SystemSettingsController::handleVenueManagement() {
 }
 
 void SystemSettingsController::handleSessionSettings() {
-    if (settings_.isScheduleLocked()) {
+    if (settings_.schedule.isLocked()) {
         UIManager::showErrorMessage("赛程已锁定，无法修改上下午时间段设置。");
         return;
     }
@@ -445,14 +445,14 @@ void SystemSettingsController::handleSessionSettings() {
             case 1: {
                 std::string start = UIManager::getStringInput("请输入上午开始时间(格式08:00): ");
                 std::string end = UIManager::getStringInput("请输入上午结束时间(格式12:00): ");
-                settings_.setMorningSession(start, end);
+                settings_.sessions.setMorningSession(start, end);
                 UIManager::showSuccessMessage("上午时间段设置成功。");
                 break;
             }
             case 2: {
                 std::string start = UIManager::getStringInput("请输入下午开始时间(格式14:00): ");
                 std::string end = UIManager::getStringInput("请输入下午结束时间(格式18:00): ");
-                settings_.setAfternoonSession(start, end);
+                settings_.sessions.setAfternoonSession(start, end);
                 UIManager::showSuccessMessage("下午时间段设置成功。");
                 break;
             }
@@ -471,8 +471,8 @@ void SystemSettingsController::handleSessionSettings() {
 
 // 添加显示会话信息的辅助方法
 void SystemSettingsController::displaySessionInfo() {
-    auto [morningStart, morningEnd] = settings_.getMorningSession();
-    auto [afternoonStart, afternoonEnd] = settings_.getAfternoonSession();
+    auto [morningStart, morningEnd] = settings_.sessions.getMorningSession();
+    auto [afternoonStart, afternoonEnd] = settings_.sessions.getAfternoonSession();
     
     UIManager::showMessage("\n当前时间段设置：");
     UIManager::showMessage("上午时间段: " + morningStart + " - " + morningEnd);
@@ -481,5 +481,5 @@ void SystemSettingsController::displaySessionInfo() {
 
 // 添加查看所有场地的辅助方法
 void SystemSettingsController::handleViewAllVenues() {
-    UIManager::displayVenues(settings_.getAllVenues());
+    UIManager::displayVenues(settings_.venues.getAll());
 }

@@ -6,11 +6,11 @@
 #include <optional>
 #include <vector>
 #include <iostream>
-#include "../utils.h"
-#include "CompetitionEvent.h"
-#include "Unit.h"
+#include "../../utils.h"
+#include "../Core/CompetitionEvent.h"
+#include "../Core/Unit.h"
 
-// å‰å‘å£°æ˜
+// Ç°ÏòÉùÃ÷
 class SystemSettings;
 
 class CompetitionEventManager {
@@ -20,30 +20,30 @@ public:
 
     explicit CompetitionEventManager(SystemSettings& settings);
     
-    // åŸºæœ¬æ“ä½œ
+    // »ù±¾²Ù×÷
     int add(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
     bool remove(int eventId);
     void clear();
     static void resetIdCounter();
     
-    // è·å–æ–¹æ³•
+    // »ñÈ¡·½·¨
     std::optional<utils::Ref<CompetitionEvent>> get(int eventId);
     std::optional<utils::RefConst<CompetitionEvent>> getConst(int eventId) const;
     std::map<int, utils::RefConst<CompetitionEvent>> getAllConst() const;
     
-    // è¿­ä»£å™¨æ”¯æŒ
+    // µü´úÆ÷Ö§³Ö
     iterator begin();
     iterator end();
     const_iterator begin() const;
     const_iterator end() const;
     
-    // æŸ¥æ‰¾æ–¹æ³•
+    // ²éÕÒ·½·¨
     std::optional<utils::Ref<CompetitionEvent>> findByName(const std::string& name);
     std::vector<utils::RefConst<CompetitionEvent>> findByType(EventType type) const;
     std::vector<utils::RefConst<CompetitionEvent>> findByGenderRequirement(Gender gender) const;
     std::vector<utils::RefConst<CompetitionEvent>> findActive() const;
     
-    // ç»Ÿè®¡æ–¹æ³•
+    // Í³¼Æ·½·¨
     size_t count() const;
     bool empty() const;
     bool contains(int eventId) const;
@@ -51,7 +51,7 @@ public:
 
 private:
     SystemSettings& settings;
-    // å†…éƒ¨æ–¹æ³•ï¼Œç›´æ¥æ“ä½œèµ›äº‹æ•°æ®ç»“æ„
+    // ÄÚ²¿·½·¨£¬Ö±½Ó²Ù×÷ÈüÊÂÊı¾İ½á¹¹
     std::map<int, CompetitionEvent>& getEventsMap();
     const std::map<int, CompetitionEvent>& getEventsMapConst() const;
 };

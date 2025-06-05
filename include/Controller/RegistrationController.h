@@ -5,8 +5,8 @@
 #ifndef REGISTRATIONCONTROLLER_H
 #define REGISTRATIONCONTROLLER_H
 
-#include "../Components/Registration.h"
-#include "../Components/SystemSettings.h"
+#include "../Components/Core/Registration.h"
+#include "../Components/Core/SystemSettings.h"
 
 class RegistrationController {
 public:
