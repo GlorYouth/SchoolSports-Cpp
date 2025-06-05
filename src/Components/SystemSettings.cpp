@@ -22,88 +22,9 @@ SystemSettings::SystemSettings() : units(*this), athletes(*this), athleteMaxEven
 
 void SystemSettings::resetAllIdCounter() {
     units.resetIdCounter();
-    resetAthleteIdCounter();
+    athletes.resetIdCounter();
     resetCompetitionEventIdCounter();
     resetScoreRuleIdCounter();
-}
-
-
-// --- 运动员管理 ---
-bool SystemSettings::addAthlete(const std::string& name, Gender gender, int unitId) {
-    const auto optional_unit = units.get(unitId);
-    if (!optional_unit.has_value()) {
-        std::cerr << "错误: 添加运动员失败，单位ID " << unitId << " 不存在。" << std::endl;
-        return false; // 单位不存在
-    }
-    Athlete newAthlete(name, gender, unitId);
-    athletesMap.insert({newAthlete.getId(), newAthlete});
-    optional_unit.value().get().addAthleteId(newAthlete.getId()); // 将运动员ID关联到单位
-    return true;
-}
-
-
-std::optional<utils::Ref<Athlete>> SystemSettings::getAthlete(const int athleteId) {
-    if (const auto it = athletesMap.find(athleteId); it != athletesMap.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-std::optional<utils::RefConst<Athlete>> SystemSettings::getAthleteConst(const int athleteId) const {
-    if (const auto it = athletesMap.find(athleteId); it != athletesMap.end()) {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-
-const std::map<int, Athlete>& SystemSettings::getAllAthletes() const {
-    return athletesMap;
-}
-
-bool SystemSettings::removeAthlete(const int athleteId) {
-    const auto athleteIt = athletesMap.find(athleteId);
-    if (athleteIt == athletesMap.end()) {
-        return false; // 运动员不存在
-    }
-    const Athlete& athlete_ref = athleteIt->second;
-
-    // 从所属单位中移除运动员ID
-    if (const auto unit = units.get(athlete_ref.getUnitId())) {
-        unit.value().get().removeAthleteId(athleteId);
-    }
-
-    // 从所有其报名的项目中移除该运动员的参与记录
-    for (const int eventId : athlete_ref.getRegisteredEventIds()) {
-        if (auto event = getCompetitionEvent(eventId); event.has_value()) {
-            event.value().get().removeParticipant(athleteId);
-        }
-    }
-
-    // 从成绩记录中移除该运动员的成绩 (如果需要)
-    // 这是一个更复杂的操作，可能需要遍历所有EventResults
-    // 为简化，此处不直接处理成绩的移除，成绩查询时若运动员不存在则忽略
-
-    return athletesMap.erase(athleteId) > 0;
-}
-
-// 新增：重置运动员ID计数器
-void SystemSettings::resetAthleteIdCounter() {
-    Athlete::resetNextId(1);
-}
-
-// 修改：清除所有运动员数据
-void SystemSettings::clearAthletes() {
-    // 移除运动员会处理其在单位和项目中的关联
-    std::vector<int> athleteIds;
-    for(const auto& pair : athletesMap) {
-        athleteIds.push_back(pair.first);
-    }
-    for(int id : athleteIds) {
-        removeAthlete(id);
-    }
-    athletesMap.clear(); // 最后确保 map 清空
-    // resetAthleteIdCounter(); // 重置ID计数器
 }
 
 int SystemSettings::addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
@@ -143,7 +64,7 @@ bool SystemSettings::removeCompetitionEvent(const int eventId) {
 
     // 从所有已报名该项目的运动员的报名列表中移除该项目
     for (const int athleteId : event_ref.getParticipantAthleteIds()) {
-        if (auto athlete = getAthlete(athleteId); athlete.has_value()) {
+        if (auto athlete = athletes.get(athleteId); athlete.has_value()) {
             athlete.value().get().unregisterFromEvent(eventId);
         }
     }
@@ -297,7 +218,7 @@ void SystemSettings::clearResultsForEvent(const int eventId) {
     if (const auto resultsIt = eventResultsMap.find(eventId); resultsIt != eventResultsMap.end()) {
         const EventResults& results_ref = resultsIt->second;
         for (const auto& result : results_ref.getResultsList()) {
-            if (auto athleteOpt = getAthleteConst(result.getAthleteId())) {
+            if (auto athleteOpt = athletes.getConst(result.getAthleteId())) {
                 if (auto unitOpt = units.get(athleteOpt.value().get().getUnitId())) {
                     // 从单位分数中减去此成绩的分数
                     // 假设 Unit::addScore 可以接受负值来扣分
@@ -306,16 +227,7 @@ void SystemSettings::clearResultsForEvent(const int eventId) {
             }
         }
         eventResultsMap.erase(resultsIt); // 移除项目成绩记录
-        // std::cout << "调试: 已清除项目ID " << eventId << " 的成绩及其对单位总分的影响。" << std::endl;
-    } else {
-        // std::cout << "调试: 项目ID " << eventId << " 没有成绩记录可清除。" << std::endl;
     }
-
-    // 可选：如果项目本身还存在，可能需要重置其某些状态，例如关联的计分规则ID
-    // 不过通常清除成绩不意味着项目本身逻辑的重置，除非业务需求如此
-    // if (const auto eventOpt = getCompetitionEvent(eventId)) {
-    //     eventOpt.value().get().setScoreRuleId(-1); // 假设-1表示未关联或需要重新计算
-    // }
 }
 
 // 新增：清除所有项目的成绩记录
@@ -334,60 +246,6 @@ void SystemSettings::addScoreToUnit(int unitId, double score) {
 }
 
 // --- 交互操作 (例如报名等) ---
-// 新增：为运动员报名项目，并更新项目和运动员的关联
-bool SystemSettings::registerAthleteForEvent(int athleteId, int eventId) {
-    auto athleteOpt = getAthlete(athleteId);
-    auto eventOpt = getCompetitionEvent(eventId);
-
-    if (!athleteOpt) {
-        std::cerr << "错误：报名失败，运动员ID " << athleteId << " 未找到。" << std::endl;
-        return false;
-    }
-    if (!eventOpt) {
-        std::cerr << "错误：报名失败，项目ID " << eventId << " 未找到。" << std::endl;
-        return false;
-    }
-
-    Athlete& athlete = athleteOpt.value().get();
-    CompetitionEvent& event = eventOpt.value().get();
-
-    // 检查性别是否符合
-    if (!event.canAthleteRegister(athlete.getGender())) {
-        std::cerr << "错误：运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 的性别不符合项目 " << event.getName() << " (ID: " << eventId << ") 的要求。" << std::endl;
-        return false;
-    }
-
-    // 检查运动员报名项目数量是否超限
-    if (athlete.getRegisteredEventsCount() >= athleteMaxEventsAllowed) {
-        std::cerr << "错误：运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 已达到最大报名项目数 (" << athleteMaxEventsAllowed << ")。" << std::endl;
-        return false;
-    }
-
-    // 尝试将运动员注册到项目中
-    if (!athlete.registerForEvent(eventId, athleteMaxEventsAllowed)) {
-        // registerForEvent 内部可能已打印错误，或有其他逻辑 (如重复报名)
-        // 此处可以根据需要添加额外日志或直接返回其结果
-        std::cerr << "运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 报名项目 " << event.getName() << " (ID: " << eventId << ") 失败（运动员侧）。" << std::endl;
-        return false;
-    }
-
-    // 尝试将项目添加到运动员的参与列表
-    if (!event.addParticipant(athleteId)) {
-        // 如果 addParticipant 失败，需要回滚运动员的报名操作
-        athlete.unregisterFromEvent(eventId);
-        std::cerr << "运动员 " << athlete.getName() << " (ID: " << athleteId
-                  << ") 报名项目 " << event.getName() << " (ID: " << eventId << ") 失败（项目侧）。" << std::endl;
-        return false;
-    }
-
-    std::cout << "信息：运动员 " << athlete.getName() << " (ID: " << athleteId
-              << ") 成功报名项目 " << event.getName() << " (ID: " << eventId << ")。" << std::endl;
-    return true;
-}
-
 // 初始化默认设置 (修改后)
 void SystemSettings::initializeDefaultSettings() {
     std::cout << "正在初始化系统默认核心设置..." << std::endl;
@@ -438,15 +296,6 @@ void SystemSettings::initializeDefaultSettings() {
 
     std::cout << "系统默认核心设置（计分规则、参数）初始化完成。" << std::endl;
     std::cout << "提示：示例单位、运动员、比赛项目需通过 '导入示例数据' 选项加载。" << std::endl;
-}
-
-std::vector<utils::RefConst<Athlete>> SystemSettings::getAllAthlesConst() const {
-    std::vector<utils::RefConst<Athlete>> refs;
-    refs.reserve(athletesMap.size()); // athletes_ 是 std::map<int, Athlete> m_athletes;
-    for (const auto& val : athletesMap | std::views::values) {
-        refs.push_back(std::cref(val)); // 从 pair 中取出 Athlete 对象
-    }
-    return refs;
 }
 
 // --- 赛程锁定与工作流管理实现 ---

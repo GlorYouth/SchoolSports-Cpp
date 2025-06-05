@@ -211,7 +211,7 @@ void Schedule::printSchedule() const {
             std::cout << "  参赛人员: ";
             if (event_ref.getParticipantCount() > 0) {
                 for(size_t i = 0; i < event_ref.getParticipantAthleteIds().size(); ++i) {
-                    auto ath = settings.getAthlete(event_ref.getParticipantAthleteIds()[i]);
+                    auto ath = settings.athletes.get(event_ref.getParticipantAthleteIds()[i]);
                     if (ath.has_value()) std::cout << ath.value().get().getName() << (i == event_ref.getParticipantAthleteIds().size() -1 ? "" : ", ");
                 }
             } else {
@@ -242,7 +242,7 @@ std::string Schedule::getScheduleContentAsString() const {
             if (event_ref.getParticipantCount() > 0) {
                 const auto& participantIds = event_ref.getParticipantAthleteIds();
                 for (size_t i = 0; i < participantIds.size(); ++i) {
-                    auto athOpt = settings.getAthleteConst(participantIds[i]); // 使用 getAthleteConst
+                    auto athOpt = settings.athletes.getConst(participantIds[i]); // 使用 getAthleteConst
                     if (athOpt) { // 检查 optional 是否有值
                         oss << athOpt.value().get().getName() << (i == participantIds.size() - 1 ? "" : ", ");
                     }

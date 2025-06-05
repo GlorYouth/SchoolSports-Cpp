@@ -256,7 +256,7 @@ void UIManager::displaySystemSettingsMenu(const SystemSettings& settings, Workfl
     if (currentStage == WorkflowStage::REGISTRATION_OPEN) {
         std::cout << "4. 添加运动员" << std::endl;
         std::cout << "5. 查看所有运动员" << std::endl;
-        std::cout << "6. 设置运动员最大参赛项目数 (当前: " << settings.getAthleteMaxEventsAllowed() << ")" << std::endl;
+        std::cout << "6. 设置运动员最大参赛项目数 (当前: " << settings.athletes.getMaxEventsAllowed() << ")" << std::endl;
         std::cout << "7. 场地管理 (仅可查看)" << std::endl;
         std::cout << "8. 上午/下午时间段设置 (仅可查看)" << std::endl;
     }
@@ -512,7 +512,7 @@ void UIManager::displayEventResultsDetails(const CompetitionEvent& event,
               << "所获分数" << std::endl;
     std::cout << "------|--------------------|------------|-----------------|----------" << std::endl;
     for (const auto& result : resultsToDisplay) {
-        auto athleteOpt = settings.getAthleteConst(result.getAthleteId());
+        auto athleteOpt = settings.athletes.getConst(result.getAthleteId());
         std::string athleteName = athleteOpt ? athleteOpt.value().get().getName() : "未知运动员";
 
         std::cout << std::left << std::setw(6) << result.getRank() << "| "

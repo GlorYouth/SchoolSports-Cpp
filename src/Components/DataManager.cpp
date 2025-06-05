@@ -86,7 +86,7 @@ bool DataManager::loadSampleStage1Data() {
 
     // 清除所有单位和场馆数据
     settings.units.clear();
-    settings.resetUnitIdCounter();
+    settings.athletes.resetIdCounter();
     
     // 清除所有场馆数据
     std::set<std::string> oldVenues = settings.getAllVenues();
@@ -175,139 +175,139 @@ bool DataManager::loadSampleStage2Data() {
     std::cout << "开始加载阶段2示例数据（运动员及报名信息）..." << std::endl;
     
     // 清除所有运动员数据
-    settings.clearAthletes();
+    settings.athletes.clear();
     
     // 添加每个学院的男女运动员
     // 计算机学院
-    settings.addAthlete("王大明", Gender::MALE, 1);    // 1
-    settings.addAthlete("李小红", Gender::FEMALE, 1);  // 2
-    settings.addAthlete("赵强", Gender::MALE, 1);      // 3
-    settings.addAthlete("钱芳", Gender::FEMALE, 1);    // 4
+    settings.athletes.add("王大明", Gender::MALE, 1);    // 1
+    settings.athletes.add("李小红", Gender::FEMALE, 1);  // 2
+    settings.athletes.add("赵强", Gender::MALE, 1);      // 3
+    settings.athletes.add("钱芳", Gender::FEMALE, 1);    // 4
     
     // 法律学院
-    settings.addAthlete("孙强", Gender::MALE, 2);      // 5
-    settings.addAthlete("周静", Gender::FEMALE, 2);    // 6
-    settings.addAthlete("吴刚", Gender::MALE, 2);      // 7
-    settings.addAthlete("郑敏", Gender::FEMALE, 2);    // 8
+    settings.athletes.add("孙强", Gender::MALE, 2);      // 5
+    settings.athletes.add("周静", Gender::FEMALE, 2);    // 6
+    settings.athletes.add("吴刚", Gender::MALE, 2);      // 7
+    settings.athletes.add("郑敏", Gender::FEMALE, 2);    // 8
     
     // 医学学院
-    settings.addAthlete("王军", Gender::MALE, 3);      // 9
-    settings.addAthlete("陈芬", Gender::FEMALE, 3);    // 10
-    settings.addAthlete("郑强", Gender::MALE, 3);      // 11
-    settings.addAthlete("林丽", Gender::FEMALE, 3);    // 12
+    settings.athletes.add("王军", Gender::MALE, 3);      // 9
+    settings.athletes.add("陈芬", Gender::FEMALE, 3);    // 10
+    settings.athletes.add("郑强", Gender::MALE, 3);      // 11
+    settings.athletes.add("林丽", Gender::FEMALE, 3);    // 12
     
     // 文学学院
-    settings.addAthlete("钱伟", Gender::MALE, 4);      // 13
-    settings.addAthlete("孙芳", Gender::FEMALE, 4);    // 14
+    settings.athletes.add("钱伟", Gender::MALE, 4);      // 13
+    settings.athletes.add("孙芳", Gender::FEMALE, 4);    // 14
     
     // 经济学院
-    settings.addAthlete("李强", Gender::MALE, 5);      // 15
-    settings.addAthlete("张明", Gender::FEMALE, 5);    // 16
+    settings.athletes.add("李强", Gender::MALE, 5);      // 15
+    settings.athletes.add("张明", Gender::FEMALE, 5);    // 16
     
     // 物学学院
-    settings.addAthlete("王刚", Gender::MALE, 6);      // 17
-    settings.addAthlete("刘红", Gender::FEMALE, 6);    // 18
+    settings.athletes.add("王刚", Gender::MALE, 6);      // 17
+    settings.athletes.add("刘红", Gender::FEMALE, 6);    // 18
     
     // 外语学院
-    settings.addAthlete("高峰", Gender::MALE, 7);      // 19
-    settings.addAthlete("杨丽", Gender::FEMALE, 7);    // 20
+    settings.athletes.add("高峰", Gender::MALE, 7);      // 19
+    settings.athletes.add("杨丽", Gender::FEMALE, 7);    // 20
     
     // 艺术学院
-    settings.addAthlete("张野", Gender::MALE, 8);      // 21
-    settings.addAthlete("黄玲", Gender::FEMALE, 8);    // 22
+    settings.athletes.add("张野", Gender::MALE, 8);      // 21
+    settings.athletes.add("黄玲", Gender::FEMALE, 8);    // 22
     
     // 为运动员报名项目
     // 男子100米 - ID 1
-    settings.registerAthleteForEvent(1, 1);  // 王大明
-    settings.registerAthleteForEvent(5, 1);  // 孙强
-    settings.registerAthleteForEvent(9, 1);  // 王军
-    settings.registerAthleteForEvent(13, 1); // 钱伟
-    settings.registerAthleteForEvent(15, 1); // 李强
-    settings.registerAthleteForEvent(17, 1); // 王刚
-    settings.registerAthleteForEvent(19, 1); // 高峰
+    settings.athletes.registerForEvent(1, 1);  // 王大明
+    settings.athletes.registerForEvent(5, 1);  // 孙强
+    settings.athletes.registerForEvent(9, 1);  // 王军
+    settings.athletes.registerForEvent(13, 1); // 钱伟
+    settings.athletes.registerForEvent(15, 1); // 李强
+    settings.athletes.registerForEvent(17, 1); // 王刚
+    settings.athletes.registerForEvent(19, 1); // 高峰
     
     // 男子200米 - ID 2
-    settings.registerAthleteForEvent(3, 2);  // 赵强
-    settings.registerAthleteForEvent(7, 2);  // 吴刚
-    settings.registerAthleteForEvent(11, 2); // 郑强
-    settings.registerAthleteForEvent(15, 2); // 李强
-    settings.registerAthleteForEvent(21, 2); // 张野
+    settings.athletes.registerForEvent(3, 2);  // 赵强
+    settings.athletes.registerForEvent(7, 2);  // 吴刚
+    settings.athletes.registerForEvent(11, 2); // 郑强
+    settings.athletes.registerForEvent(15, 2); // 李强
+    settings.athletes.registerForEvent(21, 2); // 张野
     
     // 男子400米 - ID 3
-    settings.registerAthleteForEvent(1, 3);  // 王大明
-    settings.registerAthleteForEvent(9, 3);  // 王军
-    settings.registerAthleteForEvent(17, 3); // 王刚
-    settings.registerAthleteForEvent(19, 3); // 高峰
+    settings.athletes.registerForEvent(1, 3);  // 王大明
+    settings.athletes.registerForEvent(9, 3);  // 王军
+    settings.athletes.registerForEvent(17, 3); // 王刚
+    settings.athletes.registerForEvent(19, 3); // 高峰
     
     // 男子跳远 - ID 4
-    settings.registerAthleteForEvent(3, 4);  // 赵强
-    settings.registerAthleteForEvent(7, 4);  // 吴刚
-    settings.registerAthleteForEvent(11, 4); // 郑强
-    settings.registerAthleteForEvent(13, 4); // 钱伟
-    settings.registerAthleteForEvent(21, 4); // 张野
+    settings.athletes.registerForEvent(3, 4);  // 赵强
+    settings.athletes.registerForEvent(7, 4);  // 吴刚
+    settings.athletes.registerForEvent(11, 4); // 郑强
+    settings.athletes.registerForEvent(13, 4); // 钱伟
+    settings.athletes.registerForEvent(21, 4); // 张野
     
     // 男子三级跳远 - ID 5
-    settings.registerAthleteForEvent(5, 5);  // 孙强
-    settings.registerAthleteForEvent(9, 5);  // 王军
-    settings.registerAthleteForEvent(19, 5); // 高峰
+    settings.athletes.registerForEvent(5, 5);  // 孙强
+    settings.athletes.registerForEvent(9, 5);  // 王军
+    settings.athletes.registerForEvent(19, 5); // 高峰
     // 只有三人，会被取消
     
     // 男子铅球 - ID 6
-    settings.registerAthleteForEvent(1, 6);  // 王大明
-    settings.registerAthleteForEvent(11, 6); // 郑强
-    settings.registerAthleteForEvent(15, 6); // 李强
-    settings.registerAthleteForEvent(17, 6); // 王刚
+    settings.athletes.registerForEvent(1, 6);  // 王大明
+    settings.athletes.registerForEvent(11, 6); // 郑强
+    settings.athletes.registerForEvent(15, 6); // 李强
+    settings.athletes.registerForEvent(17, 6); // 王刚
     
     // 女子100米 - ID 7
-    settings.registerAthleteForEvent(2, 7);  // 李小红
-    settings.registerAthleteForEvent(6, 7);  // 周静
-    settings.registerAthleteForEvent(10, 7); // 陈芬
-    settings.registerAthleteForEvent(14, 7); // 孙芳
-    settings.registerAthleteForEvent(16, 7); // 张明
-    settings.registerAthleteForEvent(18, 7); // 刘红
+    settings.athletes.registerForEvent(2, 7);  // 李小红
+    settings.athletes.registerForEvent(6, 7);  // 周静
+    settings.athletes.registerForEvent(10, 7); // 陈芬
+    settings.athletes.registerForEvent(14, 7); // 孙芳
+    settings.athletes.registerForEvent(16, 7); // 张明
+    settings.athletes.registerForEvent(18, 7); // 刘红
     
     // 女子200米 - ID 8
-    settings.registerAthleteForEvent(4, 8);  // 钱芳
-    settings.registerAthleteForEvent(8, 8);  // 郑敏
-    settings.registerAthleteForEvent(12, 8); // 林丽
-    settings.registerAthleteForEvent(20, 8); // 杨丽
+    settings.athletes.registerForEvent(4, 8);  // 钱芳
+    settings.athletes.registerForEvent(8, 8);  // 郑敏
+    settings.athletes.registerForEvent(12, 8); // 林丽
+    settings.athletes.registerForEvent(20, 8); // 杨丽
     
     // 女子跳远 - ID 9
-    settings.registerAthleteForEvent(2, 9);  // 李小红
-    settings.registerAthleteForEvent(6, 9);  // 周静
-    settings.registerAthleteForEvent(12, 9); // 林丽
-    settings.registerAthleteForEvent(16, 9); // 张明
-    settings.registerAthleteForEvent(22, 9); // 黄玲
+    settings.athletes.registerForEvent(2, 9);  // 李小红
+    settings.athletes.registerForEvent(6, 9);  // 周静
+    settings.athletes.registerForEvent(12, 9); // 林丽
+    settings.athletes.registerForEvent(16, 9); // 张明
+    settings.athletes.registerForEvent(22, 9); // 黄玲
     
     // 女子铅球 - ID 10
-    settings.registerAthleteForEvent(4, 10);  // 钱芳
-    settings.registerAthleteForEvent(8, 10);  // 郑敏
-    settings.registerAthleteForEvent(10, 10); // 陈芬
-    settings.registerAthleteForEvent(18, 10); // 刘红
-    settings.registerAthleteForEvent(20, 10); // 杨丽
-    settings.registerAthleteForEvent(22, 10); // 黄玲
+    settings.athletes.registerForEvent(4, 10);  // 钱芳
+    settings.athletes.registerForEvent(8, 10);  // 郑敏
+    settings.athletes.registerForEvent(10, 10); // 陈芬
+    settings.athletes.registerForEvent(18, 10); // 刘红
+    settings.athletes.registerForEvent(20, 10); // 杨丽
+    settings.athletes.registerForEvent(22, 10); // 黄玲
     
     // 混合接力4x100米 - ID 11
     // 每个学院各一男一女共8队
-    settings.registerAthleteForEvent(1, 11);  // 王大明
-    settings.registerAthleteForEvent(2, 11);  // 李小红
-    settings.registerAthleteForEvent(5, 11);  // 孙强
-    settings.registerAthleteForEvent(6, 11);  // 周静
-    settings.registerAthleteForEvent(9, 11);  // 王军
-    settings.registerAthleteForEvent(10, 11); // 陈芬
-    settings.registerAthleteForEvent(13, 11); // 钱伟
-    settings.registerAthleteForEvent(14, 11); // 孙芳
-    settings.registerAthleteForEvent(15, 11); // 李强
-    settings.registerAthleteForEvent(16, 11); // 张明
-    settings.registerAthleteForEvent(17, 11); // 王刚
-    settings.registerAthleteForEvent(18, 11); // 刘红
-    settings.registerAthleteForEvent(19, 11); // 高峰
-    settings.registerAthleteForEvent(20, 11); // 杨丽
-    settings.registerAthleteForEvent(21, 11); // 张野
-    settings.registerAthleteForEvent(22, 11); // 黄玲
+    settings.athletes.registerForEvent(1, 11);  // 王大明
+    settings.athletes.registerForEvent(2, 11);  // 李小红
+    settings.athletes.registerForEvent(5, 11);  // 孙强
+    settings.athletes.registerForEvent(6, 11);  // 周静
+    settings.athletes.registerForEvent(9, 11);  // 王军
+    settings.athletes.registerForEvent(10, 11); // 陈芬
+    settings.athletes.registerForEvent(13, 11); // 钱伟
+    settings.athletes.registerForEvent(14, 11); // 孙芳
+    settings.athletes.registerForEvent(15, 11); // 李强
+    settings.athletes.registerForEvent(16, 11); // 张明
+    settings.athletes.registerForEvent(17, 11); // 王刚
+    settings.athletes.registerForEvent(18, 11); // 刘红
+    settings.athletes.registerForEvent(19, 11); // 高峰
+    settings.athletes.registerForEvent(20, 11); // 杨丽
+    settings.athletes.registerForEvent(21, 11); // 张野
+    settings.athletes.registerForEvent(22, 11); // 黄玲
     
     std::cout << "阶段2示例数据导入成功！" << std::endl;
-    std::cout << "当前运动员数量: " << settings.getAllAthletes().size() << std::endl;
+    std::cout << "当前运动员数量: " << settings.athletes.getAll().size() << std::endl;
     
     // 设置阶段2数据已导入
     stage2DataImported = true;
@@ -407,7 +407,7 @@ bool DataManager::loadSampleStage3Data() {
                 results.addResult(result);
                 
                 // 查询运动员所属单位，为单位添加积分
-                auto athleteOpt = settings.getAthleteConst(athleteId);
+                auto athleteOpt = settings.athletes.getConst(athleteId);
                 if (athleteOpt.has_value()) {
                     int unitId = athleteOpt.value().get().getUnitId();
                     settings.addScoreToUnit(unitId, points);

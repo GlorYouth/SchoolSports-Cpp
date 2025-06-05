@@ -107,7 +107,7 @@ void ResultsController::handleRecordEventResults() {
     UIManager::showMessage("以下是参与此项目的运动员:");
     bool participantsExist = false;
     for (int athleteId_participant : competitionEvent.getParticipantAthleteIds()) {
-        auto ath = settings_.getAthleteConst(athleteId_participant);
+        auto ath = settings_.athletes.getConst(athleteId_participant);
         if (ath) {
             UIManager::showMessage("  ID: " + std::to_string(ath.value().get().getId()) +
                                    ", 姓名: " + ath.value().get().getName() +
@@ -129,7 +129,7 @@ void ResultsController::handleRecordEventResults() {
             break;
         }
 
-        auto athleteOpt = settings_.getAthlete(athleteId_input);
+        auto athleteOpt = settings_.athletes.get(athleteId_input);
         if (!athleteOpt) {
             UIManager::showErrorMessage("运动员ID " + std::to_string(athleteId_input) + " 不存在。此名次作废。");
             i--; continue;

@@ -158,7 +158,7 @@ void DataFileManager::saveMetadata(std::ofstream& outFile, const SystemSettings&
     outFile << "VERSION=1.0" << std::endl;
     outFile << "DATE=" << time(nullptr) << std::endl; // 使用UNIX时间戳
     outFile << "WORKFLOW_STAGE=" << static_cast<int>(settings.getCurrentWorkflowStage()) << std::endl;
-    outFile << "ATHLETE_MAX_EVENTS=" << settings.getAthleteMaxEventsAllowed() << std::endl;
+    outFile << "ATHLETE_MAX_EVENTS=" << settings.athletes.getMaxEventsAllowed() << std::endl;
     outFile << "SCHEDULE_LOCKED=" << (settings.isScheduleLocked() ? "1" : "0") << std::endl;
 }
 
@@ -231,8 +231,8 @@ void DataFileManager::saveEvents(std::ofstream& outFile, const SystemSettings& s
 // 保存运动员段
 void DataFileManager::saveAthletes(std::ofstream& outFile, const SystemSettings& settings) const {
     outFile << std::endl << "[ATHLETES]" << std::endl;
-    outFile << "COUNT=" << settings.getAllAthletes().size() << std::endl;
-    for (const auto& pair : settings.getAllAthletes()) {
+    outFile << "COUNT=" << settings.athletes.getAll().size() << std::endl;
+    for (const auto& pair : settings.athletes.getAll()) {
         const Athlete& athlete = pair.second;
         outFile << athlete.getId() << "|"
                 << athlete.getName() << "|"
@@ -328,7 +328,7 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
     
     // 清空当前系统数据
     settings.units.clear();
-    settings.clearAthletes();
+    settings.athletes.clear();
     settings.clearCompetitionEvents();
     settings.clearAllEventResults();
     settings.resetAllUnitScores();
@@ -611,7 +611,7 @@ void DataFileManager::processAthlete(const std::string& line, SystemSettings& se
     int unitId = std::stoi(token);
     
     // 添加运动员
-    int newId = settings.addAthlete(name, gender, unitId);
+    int newId = settings.athletes.add(name, gender, unitId);
     if (newId != id) {
         std::cerr << "警告: 运动员ID不匹配。期望: " << id << ", 实际: " << newId << std::endl;
     }
@@ -625,7 +625,7 @@ void DataFileManager::processAthlete(const std::string& line, SystemSettings& se
         while (std::getline(eventsStream, eventToken, ',')) {
             int eventId = std::stoi(eventToken);
             // 添加运动员参加项目
-            settings.registerAthleteForEvent(newId, eventId);
+            settings.athletes.registerForEvent(newId, eventId);
         }
     }
 }
@@ -680,7 +680,7 @@ void DataFileManager::processResult(const std::string& line, SystemSettings& set
         eventResults->addResult(result);
         
         // 为单位添加分数
-        auto athleteOpt = settings.getAthleteConst(athleteId);
+        auto athleteOpt = settings.athletes.getConst(athleteId);
         if (athleteOpt) {
             int unitId = athleteOpt.value().get().getUnitId();
             settings.addScoreToUnit(unitId, points);

@@ -21,7 +21,7 @@ static int timeStringToMinutes(const std::string& timeStr) {
 }
 
 bool Registration::registerAthleteForEvent(const int athleteId, const int eventId) const { // 移除了 const
-    const auto athleteOpt = settings.getAthlete(athleteId);
+    const auto athleteOpt = settings.athletes.get(athleteId);
     const auto eventOpt = settings.getCompetitionEvent(eventId);
 
     if (!athleteOpt.has_value()) {
@@ -83,14 +83,14 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
     }
 
     // 2. 尝试在运动员处注册项目 (Athlete::registerForEvent 会检查数量和重复)
-    if (!athlete_ref.registerForEvent(eventId, settings.getAthleteMaxEventsAllowed())) {
+    if (!athlete_ref.registerForEvent(eventId, settings.athletes.getMaxEventsAllowed())) {
         // Athlete::registerForEvent 内部已经处理了重复报名和超限额的情况
         // 此处可以根据具体失败原因给出更明确的提示，但 Athlete 类目前不返回具体原因
         if (athlete_ref.isRegisteredForEvent(eventId)) {
              std::cerr << "报名失败: 运动员 " << athlete_ref.getName() << " 已报名项目 \"" << event_ref.getName() << "\"。" << std::endl;
-        } else if (athlete_ref.getRegisteredEventsCount() >= settings.getAthleteMaxEventsAllowed()) {
+        } else if (athlete_ref.getRegisteredEventsCount() >= settings.athletes.getMaxEventsAllowed()) {
              std::cerr << "报名失败: 运动员 " << athlete_ref.getName() << " 已达到最大报名项目数 ("
-                      << settings.getAthleteMaxEventsAllowed() << ")." << std::endl;
+                      << settings.athletes.getMaxEventsAllowed() << ")." << std::endl;
         } else {
             std::cerr << "报名失败: 运动员 " << athlete_ref.getName() << " 无法报名项目 \"" << event_ref.getName() << "\" (未知原因)。" << std::endl;
         }
@@ -111,7 +111,7 @@ bool Registration::registerAthleteForEvent(const int athleteId, const int eventI
 }
 
 bool Registration::unregisterAthleteFromEvent(const int athleteId, const int eventId) const { // 移除了 const
-    const auto athleteOpt = settings.getAthlete(athleteId);
+    const auto athleteOpt = settings.athletes.get(athleteId);
     const auto eventOpt = settings.getCompetitionEvent(eventId);
 
     if (!athleteOpt.has_value()) {

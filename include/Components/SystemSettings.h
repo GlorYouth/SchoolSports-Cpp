@@ -25,7 +25,7 @@ class SystemSettings {
 private:
     std::map<int, Unit> _unitsMap;                   // 参赛单位列表 <UnitId, Unit>
     std::map<int, CompetitionEvent> competitionEvents; // 比赛项目列表 <EventId, CompetitionEvent>
-    std::map<int, Athlete> athletesMap;                // 运动员列表 <AthleteId, Athlete>
+    std::map<int, Athlete> _athletesMap;                // 运动员列表 <AthleteId, Athlete>
     std::map<int, ScoreRule> scoreRules;            // 计分规则列表 <RuleId, ScoreRule>
     std::map<int, EventResults> eventResultsMap;    // 比赛结果列表 <EventId, EventResults>
 
@@ -45,15 +45,6 @@ public:
 
     SystemSettings();
     void resetAllIdCounter();
-
-    // --- 运动员管理 ---
-    bool addAthlete(const std::string& name, Gender gender, int unitId);
-    std::optional<utils::Ref<Athlete>> getAthlete(int athleteId);
-    [[nodiscard]] std::optional<utils::RefConst<Athlete>> getAthleteConst(int athleteId) const;
-    [[nodiscard]] const std::map<int, Athlete>& getAllAthletes() const;
-    bool removeAthlete(int athleteId);
-    void clearAthletes();
-    static void resetAthleteIdCounter();
 
     // --- 项目管理 ---
     int addCompetitionEvent(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId);
@@ -85,13 +76,11 @@ public:
     void clearResultsForEvent(int eventId);
     void resetAllUnitScores();
     void addScoreToUnit(int unitId, double score);
-    bool registerAthleteForEvent(int athleteId, int eventId);
     [[nodiscard]] const std::map<int, EventResults>& getAllEventResults() const;
     void clearAllEventResults();
 
     // --- 交互操作 ---
     void initializeDefaultSettings();
-    [[nodiscard]] std::vector<utils::RefConst<Athlete>> getAllAthlesConst() const;
 
     // --- 赛程锁定相关 ---
     void lockSchedule();

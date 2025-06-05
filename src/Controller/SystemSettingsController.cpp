@@ -187,7 +187,7 @@ void SystemSettingsController::handleAddAthlete() {
     }
     int unitId = UIManager::getIntInput("请输入运动员所属单位ID: ");
 
-    if (settings_.addAthlete(name, gender, unitId)) {
+    if (settings_.athletes.add(name, gender, unitId)) {
         UIManager::showSuccessMessage("运动员 '" + name + "' 添加成功。");
     } else {
         UIManager::showErrorMessage("运动员添加失败 (单位ID可能无效或输入错误)。");
@@ -196,7 +196,7 @@ void SystemSettingsController::handleAddAthlete() {
 
 void SystemSettingsController::handleViewAllAthletes() {
     std::vector<utils::RefConst<Athlete>> athletes;
-    for (const auto& val : settings_.getAllAthletes() | std::views::values) {
+    for (const auto& val : settings_.athletes.getAll() | std::views::values) {
         athletes.push_back(std::cref(val));
     }
     UIManager::displayAthletes(athletes, settings_);

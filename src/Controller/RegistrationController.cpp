@@ -42,7 +42,7 @@ void RegistrationController::handleRegisterAthleteForEvent() {
         UIManager::showRegistrationLockedMessage();
         return;
     }
-    if (settings_.getAllAthletes().empty()) {
+    if (settings_.athletes.getAll().empty()) {
         UIManager::showErrorMessage("系统中没有运动员，请先添加运动员。");
         return;
     }
@@ -53,7 +53,7 @@ void RegistrationController::handleRegisterAthleteForEvent() {
 
     UIManager::showMessage("\n--- 运动员列表 ---");
     std::vector<utils::RefConst<Athlete>> athletes_refs;
-    for(const auto& val : settings_.getAllAthletes() | std::views::values) athletes_refs.push_back(std::cref(val));
+    for(const auto& val : settings_.athletes.getAll() | std::views::values) athletes_refs.push_back(std::cref(val));
     UIManager::displayAthletes(athletes_refs, settings_);
     const int athleteId = UIManager::getIntInput("请输入要报名的运动员ID: ");
 
@@ -65,7 +65,7 @@ void RegistrationController::handleRegisterAthleteForEvent() {
     }
     // 检查冲突项目
     std::set<int> conflictEventIds;
-    auto athleteOpt = settings_.getAthleteConst(athleteId);
+    auto athleteOpt = settings_.athletes.getConst(athleteId);
     if (athleteOpt) {
         const Athlete& athlete = athleteOpt.value().get();
         // 辅助函数：将"HH:MM"字符串转为分钟数
@@ -130,18 +130,18 @@ void RegistrationController::handleUnregisterAthleteFromEvent() {
         // 注意：此处不直接返回，允许退赛操作继续，但提示管理员关注后续状态。
     }
 
-    if (settings_.getAllAthletes().empty()) {
+    if (settings_.athletes.getAll().empty()) {
         UIManager::showErrorMessage("系统中没有运动员。");
         return;
     }
      UIManager::showMessage("\n--- 运动员列表 ---");
     std::vector<utils::RefConst<Athlete>> athletes_refs;
-    for(const auto& val : settings_.getAllAthletes() | std::views::values) athletes_refs.push_back(std::cref(val));
+    for(const auto& val : settings_.athletes.getAll() | std::views::values) athletes_refs.push_back(std::cref(val));
     UIManager::displayAthletes(athletes_refs, settings_);
     const int athleteId = UIManager::getIntInput("请输入要取消报名的运动员ID: ");
 
     // 优化：可以只列出该运动员已报名的项目
-    auto athleteOpt = settings_.getAthleteConst(athleteId);
+    auto athleteOpt = settings_.athletes.getConst(athleteId);
     if (!athleteOpt) {
         UIManager::showErrorMessage("未找到ID为 " + std::to_string(athleteId) + " 的运动员。");
         return;
@@ -184,11 +184,11 @@ void RegistrationController::handleUnregisterAthleteFromEvent() {
 
 void RegistrationController::handleViewAthleteRegistrations() {
     UIManager::showMessage("\n--- 所有运动员及其报名情况 ---");
-    if (settings_.getAllAthletes().empty()) {
+    if (settings_.athletes.getAll().empty()) {
         UIManager::showMessage("暂无运动员。");
         return;
     }
-    const auto athletes_refs = settings_.getAllAthlesConst();
+    const auto athletes_refs = settings_.athletes.getAllConst();
     UIManager::displayAthletes(athletes_refs, settings_); // UIManager::displayAthletes 已包含报名信息
 }
 

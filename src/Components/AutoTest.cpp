@@ -38,8 +38,8 @@
 //
 // // 获取第一个运动员的ID（辅助函数）
 // int getFirstAthleteId(const SystemSettings& settings) {
-//     if (settings.getAllAthletes().empty()) return -1;
-//     return settings.getAllAthletes().begin()->first;
+//     if (settings.athletes.getAll().empty()) return -1;
+//     return settings.athletes.getAll().begin()->first;
 // }
 //
 // // 获取第一个男子项目ID（辅助函数）
@@ -110,7 +110,7 @@
 // // 测试运动员管理
 // void testAthleteManagement(SystemSettings& settings) {
 //     std::cout << "\n--- 开始测试运动员管理 ---" << std::endl;
-//     const int initialAthleteCount = settings.getAllAthletes().size();
+//     const int initialAthleteCount = settings.athletes.getAll().size();
 //     const int unitId = getFirstUnitId(settings);
 //
 //     if (unitId == -1) {
@@ -119,20 +119,20 @@
 //     }
 //
 //     // 1. 测试添加新运动员到有效单位
-//     bool success = settings.addAthlete("测试男运动员", Gender::MALE, unitId);
-//     printTestResult("添加新男运动员到有效单位", success && settings.getAllAthletes().size() == initialAthleteCount + 1);
+//     bool success = settings.athletes.add("测试男运动员", Gender::MALE, unitId);
+//     printTestResult("添加新男运动员到有效单位", success && settings.athletes.getAll().size() == initialAthleteCount + 1);
 //     int maleAthleteId = -1;
-//     for(const auto& pair : settings.getAllAthletes()){
+//     for(const auto& pair : settings.athletes.getAll()){
 //         if(pair.second.getName() == "测试男运动员"){
 //             maleAthleteId = pair.first;
 //             break;
 //         }
 //     }
 //
-//     success = settings.addAthlete("测试女运动员", Gender::FEMALE, unitId);
-//     printTestResult("添加新女运动员到有效单位", success && settings.getAllAthletes().size() == initialAthleteCount + 2);
+//     success = settings.athletes.add("测试女运动员", Gender::FEMALE, unitId);
+//     printTestResult("添加新女运动员到有效单位", success && settings.athletes.getAll().size() == initialAthleteCount + 2);
 //      int femaleAthleteId = -1;
-//     for(const auto& pair : settings.getAllAthletes()){
+//     for(const auto& pair : settings.athletes.getAll()){
 //         if(pair.second.getName() == "测试女运动员"){
 //             femaleAthleteId = pair.first;
 //             break;
@@ -141,26 +141,26 @@
 //
 //
 //     // 2. 测试添加到不存在的单位 (应失败)
-//     success = !settings.addAthlete("无效单位运动员", Gender::MALE, 99999);
-//     printTestResult("添加运动员到无效单位ID 99999", success && settings.getAllAthletes().size() == initialAthleteCount + 2);
+//     success = !settings.athletes.add("无效单位运动员", Gender::MALE, 99999);
+//     printTestResult("添加运动员到无效单位ID 99999", success && settings.athletes.getAll().size() == initialAthleteCount + 2);
 //
 //     // 3. 获取存在的运动员
 //     if (maleAthleteId != -1) {
-//         auto athleteOpt = settings.getAthlete(maleAthleteId);
+//         auto athleteOpt = settings.athletes.get(maleAthleteId);
 //         printTestResult("获取存在的男运动员", athleteOpt.has_value() && athleteOpt.value().get().getName() == "测试男运动员");
 //     }
 //
 //     // 4. 测试删除运动员
 //     if (maleAthleteId != -1) {
-//         success = settings.removeAthlete(maleAthleteId);
-//         printTestResult("删除男运动员", success && settings.getAllAthletes().size() == initialAthleteCount + 1);
-//         const auto athleteOpt = settings.getAthlete(maleAthleteId);
+//         success = settings.athletes.remove(maleAthleteId);
+//         printTestResult("删除男运动员", success && settings.athletes.getAll().size() == initialAthleteCount + 1);
+//         const auto athleteOpt = settings.athletes.get(maleAthleteId);
 //         printTestResult("确认男运动员已被删除", !athleteOpt.has_value());
 //     }
 //      if (femaleAthleteId != -1) {
-//         success = settings.removeAthlete(femaleAthleteId);
-//         printTestResult("删除女运动员", success && settings.getAllAthletes().size() == initialAthleteCount);
-//         const auto athleteOpt = settings.getAthlete(femaleAthleteId);
+//         success = settings.athletes.remove(femaleAthleteId);
+//         printTestResult("删除女运动员", success && settings.athletes.getAll().size() == initialAthleteCount);
+//         const auto athleteOpt = settings.athletes.get(femaleAthleteId);
 //         printTestResult("确认女运动员已被删除", !athleteOpt.has_value());
 //     }
 //
@@ -210,14 +210,14 @@
 //     assert(testUnitId != -1 && "测试单位创建失败");
 //
 //
-//     settings.addAthlete("报名选手男", Gender::MALE, testUnitId);
+//     settings.athletes.add("报名选手男", Gender::MALE, testUnitId);
 //     int maleAthleteId = -1;
-//     for(const auto& a : settings.getAllAthletes()){ if(a.second.getName() == "报名选手男") maleAthleteId = a.first; }
+//     for(const auto& a : settings.athletes.getAll()){ if(a.second.getName() == "报名选手男") maleAthleteId = a.first; }
 //     assert(maleAthleteId != -1 && "测试男选手创建失败");
 //
-//     settings.addAthlete("报名选手女", Gender::FEMALE, testUnitId);
+//     settings.athletes.add("报名选手女", Gender::FEMALE, testUnitId);
 //     int femaleAthleteId = -1;
-//     for(const auto& a : settings.getAllAthletes()){ if(a.second.getName() == "报名选手女") femaleAthleteId = a.first; }
+//     for(const auto& a : settings.athletes.getAll()){ if(a.second.getName() == "报名选手女") femaleAthleteId = a.first; }
 //     assert(femaleAthleteId != -1 && "测试女选手创建失败");
 //
 //     settings.addCompetitionEvent("报名测试男项目", EventType::TRACK, Gender::MALE);
@@ -240,7 +240,7 @@
 //     bool success = registration.registerAthleteForEvent(maleAthleteId, maleEventId);
 //     printTestResult("男选手报名男子项目", success);
 //     if(success){
-//         const auto ath = settings.getAthlete(maleAthleteId);
+//         const auto ath = settings.athletes.get(maleAthleteId);
 //         const auto evt = settings.getCompetitionEvent(maleEventId);
 //         printTestResult("男选手报名后项目数检查", ath.value().get().getRegisteredEventsCount() == 1);
 //         printTestResult("男子项目报名人数检查", evt.value().get().getParticipantCount() == 1);
@@ -286,7 +286,7 @@
 //     success = registration.unregisterAthleteFromEvent(maleAthleteId, maleEventId);
 //     printTestResult("男选手取消报名男子项目", success);
 //     if(success){
-//         auto ath = settings.getAthlete(maleAthleteId);
+//         auto ath = settings.athletes.get(maleAthleteId);
 //         auto evt = settings.getCompetitionEvent(maleEventId); // maleEventId 此时应无参赛者
 //         printTestResult("男选手取消报名后项目数检查", ath.value().get().getRegisteredEventsCount() == 2); // 之前报了3项，取消1项剩2项
 //         printTestResult("男子项目取消报名后人数检查", evt.value().get().getParticipantCount() == 0);
@@ -298,9 +298,9 @@
 //     int lowPartEventId = -1;
 //     for(const auto& [eventId, competition] : settings.getAllCompetitionEventsConst()){ if(competition.getName() == "人数不足测试项目") lowPartEventId = eventId; }
 //
-//     settings.addAthlete("临时选手", Gender::MALE, testUnitId);
+//     settings.athletes.add("临时选手", Gender::MALE, testUnitId);
 //     int tempAthleteId = -1;
-//     for(const auto& a : settings.getAllAthletes()){ if(a.second.getName() == "临时选手") tempAthleteId = a.first; }
+//     for(const auto& a : settings.athletes.getAll()){ if(a.second.getName() == "临时选手") tempAthleteId = a.first; }
 //
 //     registration.registerAthleteForEvent(tempAthleteId, lowPartEventId); // 1人报名
 //     auto lowEvent = settings.getCompetitionEvent(lowPartEventId);
@@ -313,9 +313,9 @@
 //
 //
 //     // 清理测试数据
-//     settings.removeAthlete(maleAthleteId);
-//     settings.removeAthlete(femaleAthleteId);
-//     settings.removeAthlete(tempAthleteId);
+//     settings.athletes.remove(maleAthleteId);
+//     settings.athletes.remove(femaleAthleteId);
+//     settings.athletes.remove(tempAthleteId);
 //     settings.removeCompetitionEvent(maleEventId);
 //     settings.removeCompetitionEvent(femaleEventId);
 //     settings.removeCompetitionEvent(unspecEventId);
@@ -339,8 +339,8 @@
 //
 //     std::vector<int> athleteIds;
 //     for (int i = 0; i < 7; ++i) { // 创建7个运动员
-//         settings.addAthlete("选手" + std::to_string(i + 1), Gender::MALE, unitId);
-//         for(const auto& a : settings.getAllAthletes()){
+//         settings.athletes.add("选手" + std::to_string(i + 1), Gender::MALE, unitId);
+//         for(const auto& a : settings.athletes.getAll()){
 //             if(a.second.getName() == "选手" + std::to_string(i+1)){
 //                  athleteIds.push_back(a.first);
 //                  break;
@@ -391,7 +391,7 @@
 //     if(unitOpt.has_value()){
 //         unitOpt.value().get().resetScore(); // 先重置
 //         for(const auto& res : results.getResultsList()){
-//             auto ath = settings.getAthlete(res.getAthleteId());
+//             auto ath = settings.athletes.get(res.getAthleteId());
 //             if(ath.has_value() && ath.value().get().getUnitId() == unitId){
 //                 unitOpt.value().get().addScore(res.getPointsAwarded());
 //             }
@@ -414,7 +414,7 @@
 //
 //
 //     // 清理
-//     for(int athId : athleteIds) settings.removeAthlete(athId);
+//     for(int athId : athleteIds) settings.athletes.remove(athId);
 //     settings.removeCompetitionEvent(eventId);
 //     settings.removeUnit(unitId);
 //
@@ -439,14 +439,14 @@
 //     }
 //
 //     // 2. 添加运动员
-//     settings.addAthlete("张三", Gender::MALE, unitIds[0]);
-//     settings.addAthlete("李四", Gender::FEMALE, unitIds[1]);
-//     settings.addAthlete("王五", Gender::MALE, unitIds[2]);
-//     settings.addAthlete("赵六", Gender::FEMALE, unitIds[0]);
-//     settings.addAthlete("孙七", Gender::MALE, unitIds[1]);
-//     settings.addAthlete("周八", Gender::FEMALE, unitIds[2]);
+//     settings.athletes.add("张三", Gender::MALE, unitIds[0]);
+//     settings.athletes.add("李四", Gender::FEMALE, unitIds[1]);
+//     settings.athletes.add("王五", Gender::MALE, unitIds[2]);
+//     settings.athletes.add("赵六", Gender::FEMALE, unitIds[0]);
+//     settings.athletes.add("孙七", Gender::MALE, unitIds[1]);
+//     settings.athletes.add("周八", Gender::FEMALE, unitIds[2]);
 //     std::vector<int> athleteIds;
-//     for (const auto& pair : settings.getAllAthletes()) {
+//     for (const auto& pair : settings.athletes.getAll()) {
 //         athleteIds.push_back(pair.first);
 //     }
 //
@@ -461,13 +461,13 @@
 //     }
 //
 //     // 4. 报名关系
-//     settings.registerAthleteForEvent(athleteIds[0], eventIds[0]); // 张三报男子100米
-//     settings.registerAthleteForEvent(athleteIds[1], eventIds[1]); // 李四报女子跳远
-//     settings.registerAthleteForEvent(athleteIds[2], eventIds[0]); // 王五报男子100米
-//     settings.registerAthleteForEvent(athleteIds[2], eventIds[2]); // 王五报男子铅球
-//     settings.registerAthleteForEvent(athleteIds[3], eventIds[3]); // 赵六报女子200米
-//     settings.registerAthleteForEvent(athleteIds[5], eventIds[1]); // 周八报女子跳远
-//     settings.registerAthleteForEvent(athleteIds[5], eventIds[3]); // 周八报女子200米
+//     settings.athletes.registerForEvent(athleteIds[0], eventIds[0]); // 张三报男子100米
+//     settings.athletes.registerForEvent(athleteIds[1], eventIds[1]); // 李四报女子跳远
+//     settings.athletes.registerForEvent(athleteIds[2], eventIds[0]); // 王五报男子100米
+//     settings.athletes.registerForEvent(athleteIds[2], eventIds[2]); // 王五报男子铅球
+//     settings.athletes.registerForEvent(athleteIds[3], eventIds[3]); // 赵六报女子200米
+//     settings.athletes.registerForEvent(athleteIds[5], eventIds[1]); // 周八报女子跳远
+//     settings.athletes.registerForEvent(athleteIds[5], eventIds[3]); // 周八报女子200米
 // }
 //
 // // ================== 默认计分规则测试 ==================
@@ -524,19 +524,19 @@
 //         // return 1; // 如果认为这是关键失败点，则提前退出
 //     }
 //     std::cout << "当前计分规则数量: " << settings.getAllScoreRules().size() << std::endl;
-//     std::cout << "运动员最大报名项目数: " << settings.getAthleteMaxEventsAllowed() << std::endl;
+//     std::cout << "运动员最大报名项目数: " << settings.athletes.getMaxEventsAllowed() << std::endl;
 //     std::cout << "项目最少举行人数: " << settings.getMinParticipantsToHoldEvent() << std::endl;
 //     // 此时，单位、运动员、项目列表应该是空的，由后续步骤或 loadSampleData 填充
 //     std::cout << "初始化后单位数量: " << settings.units.getAll().size() << " (预期为0)" << std::endl;
-//     std::cout << "初始化后运动员数量: " << settings.getAllAthletes().size() << " (预期为0)" << std::endl;
+//     std::cout << "初始化后运动员数量: " << settings.athletes.getAll().size() << " (预期为0)" << std::endl;
 //     std::cout << "初始化后比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << " (预期为0)" << std::endl;
 //
 //     // --- 步骤 0.1: 导入标准SampleData ---
 //     std::cout << "\n--- 步骤 0.1: 导入标准SampleData --- " << std::endl;
 //     importSampleData(settings);
-//     printTestResult("导入标准SampleData", !settings.units.getAll().empty() && !settings.getAllAthletes().empty() && !settings.getAllCompetitionEventsConst().empty());
+//     printTestResult("导入标准SampleData", !settings.units.getAll().empty() && !settings.athletes.getAll().empty() && !settings.getAllCompetitionEventsConst().empty());
 //     std::cout << "SampleData导入后单位数量: " << settings.units.getAll().size() << std::endl;
-//     std::cout << "SampleData导入后运动员数量: " << settings.getAllAthletes().size() << std::endl;
+//     std::cout << "SampleData导入后运动员数量: " << settings.athletes.getAll().size() << std::endl;
 //     std::cout << "SampleData导入后比赛项目数量: " << settings.getAllCompetitionEventsConst().size() << std::endl;
 //
 //     // --- 步骤 0.2: 测试默认计分规则 ---
