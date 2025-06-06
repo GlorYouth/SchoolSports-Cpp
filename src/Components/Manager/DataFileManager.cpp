@@ -134,18 +134,18 @@ bool DataFileManager::saveDataToFile(const SystemSettings& settings, const std::
 
     std::cout << "开始保存数据到 " << actualFilePath << " ..." << std::endl;
 
-    // 写入各个数据段
-    saveMetadata(outFile, settings);
-    saveUnits(outFile, settings);
-    saveScoreRules(outFile, settings);
-    saveEvents(outFile, settings);
-    saveAthletes(outFile, settings);
-    saveResults(outFile, settings);
-    saveVenues(outFile, settings);
-
+    // 使用DataContainer的序列化方法
+    bool success = settings.getDataConst().serialize(outFile);
+    
     outFile.close();
-    std::cout << "数据备份成功完成，文件保存于：" << actualFilePath << std::endl;
-    return true;
+    
+    if (success) {
+        std::cout << "数据备份成功完成，文件保存于：" << actualFilePath << std::endl;
+    } else {
+        std::cerr << "数据备份失败" << std::endl;
+    }
+    
+    return success;
 }
 
 // 保存元数据段
@@ -322,16 +322,6 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
         return false;
     }
     
-    // 清空当前系统数据
-    settings.units.clear();
-    settings.athletes.clear();
-    settings.events.clear();
-    settings.results.clear();
-    settings.results.resetAllUnitScores();
-    
-    // 重置ID计数器
-    settings.resetAllIdCounter();
-    
     // 打开文件
     std::ifstream inFile(actualFilePath);
     if (!inFile.is_open()) {
@@ -339,53 +329,31 @@ bool DataFileManager::loadDataFromFile(SystemSettings& settings, const std::stri
         return false;
     }
     
-    std::string line;
-    bool success = true;
-    std::map<int, std::vector<int>> athleteEventMap; // 用于存储运动员-项目关系
+    // 创建当前数据的快照
+    auto snapshot = settings.getData().createSnapshot();
     
-    // 逐行读取文件
-    while (std::getline(inFile, line)) {
-        if (line.empty()) continue;
-        
-        // 根据行首标识处理不同类型的数据
-        if (line.starts_with("[M]")) {
-            processMetadata(line.substr(3), settings);
-        } else if (line.starts_with("[U]")) {
-            processUnit(line.substr(3), settings);
-        } else if (line.starts_with("[R]")) {
-            if (!processScoreRule(line.substr(3), settings)) {
-                success = false;
-                break;
-            }
-        } else if (line.starts_with("[E]")) {
-            processEvent(line.substr(3), settings, athleteEventMap);
-        } else if (line.starts_with("[A]")) {
-            processAthlete(line.substr(3), settings);
-        } else if (line.starts_with("[S]")) {
-            processResult(line.substr(3), settings);
-        } else if (line.starts_with("[V]")) {
-            // 处理场地信息
-            std::string venueName = line.substr(3);
-            settings.venues.add(venueName);
-        }
-    }
+    // 使用DataContainer的反序列化方法
+    bool success = settings.getData().deserialize(inFile);
     
     inFile.close();
     
-    // 如果导入成功，删除临时备份文件
-    if (success) {
-        try {
-            std::filesystem::remove(tempBackupPath);
-            std::cout << "成功导入数据，已删除临时备份文件。" << std::endl;
-        } catch (const std::filesystem::filesystem_error& e) {
-            std::cerr << "警告: 无法删除临时备份文件: " << e.what() << std::endl;
-            // 这里我们不返回false，因为数据导入本身是成功的
-        }
-    } else {
-        std::cerr << "导入数据失败，保留临时备份文件: " << tempBackupPath << std::endl;
+    // 如果导入失败，恢复快照
+    if (!success) {
+        std::cerr << "导入数据失败，正在恢复到备份状态..." << std::endl;
+        settings.getData().restoreFromSnapshot(snapshot);
+        return false;
     }
     
-    return success;
+    // 如果导入成功，删除临时备份文件
+    try {
+        std::filesystem::remove(tempBackupPath);
+        std::cout << "成功导入数据，已删除临时备份文件。" << std::endl;
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "警告: 无法删除临时备份文件: " << e.what() << std::endl;
+        // 这里我们不返回false，因为数据导入本身是成功的
+    }
+    
+    return true;
 }
 
 void DataFileManager::processMetadata(const std::string& line, SystemSettings& settings) {

@@ -5,11 +5,11 @@ VenueManager::VenueManager(SystemSettings& settings) : settings(settings) {}
 
 // 内部访问方法
 std::set<std::string>& VenueManager::getVenuesSet() {
-    return settings._venues;
+    return settings.getData().venues;
 }
 
 const std::set<std::string>& VenueManager::getVenuesSetConst() const {
-    return settings._venues;
+    return settings.getDataConst().venues;
 }
 
 // 基本操作

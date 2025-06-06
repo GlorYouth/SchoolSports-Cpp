@@ -6,61 +6,68 @@ CompetitionEventManager::CompetitionEventManager(SystemSettings& settings) : set
 
 // 内部访问方法
 std::map<int, CompetitionEvent>& CompetitionEventManager::getEventsMap() {
-    return settings._competitionEvents;
+    return settings.getData().eventsMap;
 }
 
 const std::map<int, CompetitionEvent>& CompetitionEventManager::getEventsMapConst() const {
-    return settings._competitionEvents;
+    return settings.getDataConst().eventsMap;
 }
 
 // 基本操作
 int CompetitionEventManager::add(const std::string& eventName, EventType type, Gender genderReq, int scoreRuleId) {
+    // 检查规则ID是否存在
+    if (scoreRuleId != -1 && !settings.rules.contains(scoreRuleId)) {
+        std::cerr << "错误：添加比赛项目失败，计分规则ID " << scoreRuleId << " 不存在。" << std::endl;
+        return -1; // 规则不存在
+    }
+    
+    // 检查项目名称是否已存在
+    for (const auto& [id, event] : getEventsMapConst()) {
+        if (event.getName() == eventName) {
+            std::cerr << "错误：项目名称 '" << eventName << "' 已存在。" << std::endl;
+            return -1; // 项目名已存在
+        }
+    }
+    
     CompetitionEvent newEvent(eventName, type, genderReq, scoreRuleId);
-    auto& eventsMap = getEventsMap();
-    int newEventId = newEvent.getId();
-    eventsMap.insert({newEventId, newEvent});
-    return newEventId;
+    int eventId = newEvent.getId();
+    getEventsMap().insert({eventId, newEvent});
+    return eventId;
 }
 
 bool CompetitionEventManager::remove(int eventId) {
     auto& eventsMap = getEventsMap();
-    const auto eventIt = eventsMap.find(eventId);
-    if (eventIt == eventsMap.end()) {
+    auto eventToRemove = eventsMap.find(eventId);
+    if (eventToRemove == eventsMap.end()) {
         return false; // 项目不存在
     }
     
-    // 在进行任何修改前，先复制所有必要信息
-    const std::string eventName = eventIt->second.getName();
-    std::vector<int> participantIds = eventIt->second.getParticipantAthleteIds(); // 复制参与者列表
+    // 检查并处理运动员报名
+    const auto& participantIds = eventToRemove->second.getParticipantAthleteIds();
+    std::vector<int> athletesToUpdate(participantIds.begin(), participantIds.end());
     
-    // 从所有已报名该项目的运动员的报名列表中移除该项目
-    for (const int athleteId : participantIds) {
-        if (auto athlete = settings.athletes.get(athleteId); athlete.has_value()) {
+    // 从所有已报名的运动员的报名列表中移除此项目
+    for (int athleteId : athletesToUpdate) {
+        if (auto athlete = settings.athletes.get(athleteId)) {
             athlete.value().get().unregisterFromEvent(eventId);
         }
     }
-
-    // 移除该项目的成绩记录
-    settings.results.clearForEvent(eventId);
-
-    bool removed = eventsMap.erase(eventId) > 0;
-    if (removed) {
-        std::cout << "成功移除项目: " << eventName << " (ID: " << eventId << ")" << std::endl;
-    }
-    return removed;
+    
+    // 移除项目
+    eventsMap.erase(eventId);
+    return true;
 }
 
 void CompetitionEventManager::clear() {
-    // 移除项目会处理其运动员关联和成绩
     auto& eventsMap = getEventsMap();
     std::vector<int> eventIds;
-    for(const auto& pair : eventsMap) {
+    for (const auto& pair : eventsMap) {
         eventIds.push_back(pair.first);
     }
-    for(int id : eventIds) {
+    for (int id : eventIds) {
         remove(id);
     }
-    eventsMap.clear(); // 最后确保 map 清空
+    eventsMap.clear();
 }
 
 void CompetitionEventManager::resetIdCounter() {
@@ -85,12 +92,11 @@ std::optional<utils::RefConst<CompetitionEvent>> CompetitionEventManager::getCon
 }
 
 std::map<int, utils::RefConst<CompetitionEvent>> CompetitionEventManager::getAllConst() const {
-    auto map = std::map<int, utils::RefConst<CompetitionEvent>>();
-    const auto& eventsMap = getEventsMapConst();
-    for (const auto& [id, event] : eventsMap){
-        map.insert({id, std::cref(event)});
+    std::map<int, utils::RefConst<CompetitionEvent>> result;
+    for (const auto& [id, event] : getEventsMapConst()) {
+        result.emplace(id, std::cref(event));
     }
-    return map;
+    return result;
 }
 
 // 迭代器支持
@@ -115,7 +121,7 @@ std::optional<utils::Ref<CompetitionEvent>> CompetitionEventManager::findByName(
     auto& eventsMap = getEventsMap();
     for (auto& [id, event] : eventsMap) {
         if (event.getName() == name) {
-            return get(id);
+            return std::ref(event);
         }
     }
     return std::nullopt;
@@ -123,40 +129,31 @@ std::optional<utils::Ref<CompetitionEvent>> CompetitionEventManager::findByName(
 
 std::vector<utils::RefConst<CompetitionEvent>> CompetitionEventManager::findByType(EventType type) const {
     std::vector<utils::RefConst<CompetitionEvent>> result;
-    const auto& eventsMap = getEventsMapConst();
-    
-    for (const auto& [id, event] : eventsMap) {
+    for (const auto& [id, event] : getEventsMapConst()) {
         if (event.getEventType() == type) {
             result.push_back(std::cref(event));
         }
     }
-    
     return result;
 }
 
 std::vector<utils::RefConst<CompetitionEvent>> CompetitionEventManager::findByGenderRequirement(Gender gender) const {
     std::vector<utils::RefConst<CompetitionEvent>> result;
-    const auto& eventsMap = getEventsMapConst();
-    
-    for (const auto& [id, event] : eventsMap) {
-        if (event.canAthleteRegister(gender)) {
+    for (const auto& [id, event] : getEventsMapConst()) {
+        if (event.getGenderRequirement() == gender) {
             result.push_back(std::cref(event));
         }
     }
-    
     return result;
 }
 
 std::vector<utils::RefConst<CompetitionEvent>> CompetitionEventManager::findActive() const {
     std::vector<utils::RefConst<CompetitionEvent>> result;
-    const auto& eventsMap = getEventsMapConst();
-    
-    for (const auto& [id, event] : eventsMap) {
+    for (const auto& [id, event] : getEventsMapConst()) {
         if (!event.getIsCancelled()) {
             result.push_back(std::cref(event));
         }
     }
-    
     return result;
 }
 
@@ -170,15 +167,19 @@ bool CompetitionEventManager::empty() const {
 }
 
 bool CompetitionEventManager::contains(int eventId) const {
-    return getConst(eventId).has_value();
+    return getEventsMapConst().find(eventId) != getEventsMapConst().end();
 }
 
 bool CompetitionEventManager::contains(const std::string& eventName) const {
-    const auto& eventsMap = getEventsMapConst();
-    for (const auto& [id, event] : eventsMap) {
+    for (const auto& [id, event] : getEventsMapConst()) {
         if (event.getName() == eventName) {
             return true;
         }
     }
     return false;
+}
+
+// 添加getAll方法实现
+const std::map<int, CompetitionEvent>& CompetitionEventManager::getAll() const {
+    return getEventsMapConst();
 } 

@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(SchoolSports-Cpp main.cpp
         include/Components/Core/CompetitionEvent.h
         include/Components/Core/Athlete.h
+        include/Components/Core/DataContainer.h
         include/Components/Core/Unit.h
         include/Components/Core/ScoreRule.h
         include/Components/Core/SystemSettings.h
@@ -35,6 +36,7 @@ add_executable(SchoolSports-Cpp main.cpp
         src/Components/Core/Athlete.cpp
         src/Components/Core/CompetitionEvent.cpp
         src/Components/Core/Unit.cpp
+        src/Components/Core/DataContainer.cpp
         src/Components/Core/ScoreRule.cpp
         src/Components/Core/SystemSettings.cpp
         src/Components/Core/Registration.cpp

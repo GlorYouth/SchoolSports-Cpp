@@ -7,11 +7,11 @@ ScoreRuleManager::ScoreRuleManager(SystemSettings& settings) : settings(settings
 
 // 内部访问方法
 std::map<int, ScoreRule>& ScoreRuleManager::getRulesMap() {
-    return settings._scoreRules;
+    return settings.getData().rulesMap;
 }
 
 const std::map<int, ScoreRule>& ScoreRuleManager::getRulesMapConst() const {
-    return settings._scoreRules;
+    return settings.getDataConst().rulesMap;
 }
 
 // 基本操作

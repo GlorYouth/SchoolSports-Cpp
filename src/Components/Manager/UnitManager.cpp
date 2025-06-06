@@ -6,11 +6,11 @@ UnitManager::UnitManager(SystemSettings& settings) : settings(settings) {}
 
 // 内部访问方法
 std::map<int, Unit>& UnitManager::getUnitsMap() {
-    return settings._unitsMap;
+    return settings.getData().unitsMap;
 }
 
 const std::map<int, Unit>& UnitManager::getUnitsMapConst() const {
-    return settings._unitsMap;
+    return settings.getDataConst().unitsMap;
 }
 
 // 基本操作

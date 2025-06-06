@@ -4,11 +4,11 @@
 WorkflowManager::WorkflowManager(SystemSettings& settings) : settings(settings) {}
 
 WorkflowStage WorkflowManager::getCurrentStage() const {
-    return settings._currentWorkflowStage;
+    return settings.getData().currentWorkflowStage;
 }
 
 bool WorkflowManager::setStage(WorkflowStage newStage) {
-    settings._currentWorkflowStage = newStage;
+    settings.getData().currentWorkflowStage = newStage;
     return true;
 }
 

@@ -6,11 +6,11 @@ EventResultsManager::EventResultsManager(SystemSettings& settings) : settings(se
 
 // 内部访问方法
 std::map<int, EventResults>& EventResultsManager::getResultsMap() {
-    return settings._eventResultsMap;
+    return settings.getData().resultsMap;
 }
 
 const std::map<int, EventResults>& EventResultsManager::getResultsMapConst() const {
-    return settings._eventResultsMap;
+    return settings.getDataConst().resultsMap;
 }
 
 // 基本操作

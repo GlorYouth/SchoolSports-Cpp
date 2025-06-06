@@ -8,24 +8,24 @@ void SessionManager::setMorningSession(const std::string& start, const std::stri
     if (!isValidTimeFormat(start) || !isValidTimeFormat(end)) {
         throw std::invalid_argument("无效的时间格式，请使用HH:MM格式");
     }
-    settings._morningSessionStart = start;
-    settings._morningSessionEnd = end;
+    settings.getData().morningSessionStart = start;
+    settings.getData().morningSessionEnd = end;
 }
 
 void SessionManager::setAfternoonSession(const std::string& start, const std::string& end) {
     if (!isValidTimeFormat(start) || !isValidTimeFormat(end)) {
         throw std::invalid_argument("无效的时间格式，请使用HH:MM格式");
     }
-    settings._afternoonSessionStart = start;
-    settings._afternoonSessionEnd = end;
+    settings.getData().afternoonSessionStart = start;
+    settings.getData().afternoonSessionEnd = end;
 }
 
 std::pair<std::string, std::string> SessionManager::getMorningSession() const {
-    return {settings._morningSessionStart, settings._morningSessionEnd};
+    return {settings.getDataConst().morningSessionStart, settings.getDataConst().morningSessionEnd};
 }
 
 std::pair<std::string, std::string> SessionManager::getAfternoonSession() const {
-    return {settings._afternoonSessionStart, settings._afternoonSessionEnd};
+    return {settings.getDataConst().afternoonSessionStart, settings.getDataConst().afternoonSessionEnd};
 }
 
 bool SessionManager::isValidTimeFormat(const std::string& time) {

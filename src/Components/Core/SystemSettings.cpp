@@ -1,4 +1,3 @@
-
 #include "../../../include/Components/Core/SystemSettings.h"
 #include <iostream> // 用于演示输出
 #include <ranges>
@@ -19,8 +18,7 @@ SystemSettings::SystemSettings() :
     sessions(*this),
     venues(*this),
     schedule(*this),
-    args(*this),
-    _athleteMaxEventsAllowed(3) {
+    args(*this) {
     // 构造函数中可以进行一些初始化
     // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
 }
@@ -33,26 +31,21 @@ void SystemSettings::resetAllIdCounter() {
 }
 
 void SystemSettings::clearAllData(){
-    units.clear();
-    athletes.clear();
-    events.clear();
-    results.clear();
-    rules.clear();
-    venues.clear();
-    results.resetAllUnitScores();
+    // 使用DataContainer的clear方法清空所有数据
+    data.clear();
 }
 
 // --- 系统参数设置 ---
 void SystemSettings::setAthleteMaxEventsAllowed(int maxEvents) {
     if (maxEvents > 0) {
-        _athleteMaxEventsAllowed = maxEvents;
+        data.athleteMaxEventsAllowed = maxEvents;
     } else {
         std::cerr << "错误: 运动员最大参赛项目数必须大于0。" << std::endl;
     }
 }
 
 int SystemSettings::getAthleteMaxEventsAllowed() const {
-    return _athleteMaxEventsAllowed;
+    return data.athleteMaxEventsAllowed;
 }
 
 // --- 交互操作 (例如报名等) ---

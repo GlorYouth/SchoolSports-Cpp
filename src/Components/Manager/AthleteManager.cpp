@@ -8,11 +8,11 @@ AthleteManager::AthleteManager(SystemSettings& settings) : settings(settings) {}
 
 // 内部访问方法
 std::map<int, Athlete>& AthleteManager::getAthletesMap() const{
-    return settings._athletesMap;
+    return settings.getData().athletesMap;
 }
 
 const std::map<int, Athlete>& AthleteManager::getAthletesMapConst() const {
-    return settings._athletesMap;
+    return settings.getDataConst().athletesMap;
 }
 
 // 基本操作
@@ -200,6 +200,7 @@ bool AthleteManager::registerForEvent(int athleteId, int eventId) {
 }
 
 bool AthleteManager::unregisterFromEvent(int athleteId, int eventId) {
+    // 使用事务模式处理跨对象操作
     RegistrationTransaction transaction(settings);
     if (!transaction.begin()) {
         std::cerr << "错误：无法开始取消报名事务。" << std::endl;
@@ -218,61 +219,58 @@ bool AthleteManager::unregisterFromEvent(int athleteId, int eventId) {
 }
 
 int AthleteManager::getMaxEventsAllowed() const {
-    return settings._athleteMaxEventsAllowed;
+    return settings.getAthleteMaxEventsAllowed();
 }
 
-// 新增：验证运动员报名数据一致性
 bool AthleteManager::validateRegistrationConsistency() const {
-    bool consistencyOk = true;
+    // 这是一个全面的验证，确保系统状态的一致性
+    // 检查每个运动员的报名记录与每个比赛项目的参与者记录是否一致
     
-    // 检查所有运动员的报名项目
+    bool isConsistent = true;
+    
+    // 1. 检查运动员视角
     for (const auto& [athleteId, athlete] : getAthletesMapConst()) {
-        for (int eventId : athlete.getRegisteredEventIds()) {
+        for (const int eventId : athlete.getRegisteredEventIds()) {
             auto eventOpt = settings.events.getConst(eventId);
-            if (!eventOpt) {
-                std::cerr << "数据一致性错误: 运动员 " << athlete.getName() 
-                          << " 报名了不存在的项目ID " << eventId << std::endl;
-                consistencyOk = false;
+            if (!eventOpt.has_value()) {
+                std::cerr << "错误: 运动员 " << athlete.getName() << " (ID: " << athleteId 
+                       << ") 报名了不存在的项目 ID: " << eventId << std::endl;
+                isConsistent = false;
                 continue;
             }
             
-            const CompetitionEvent& event = eventOpt.value().get();
+            const auto& event = eventOpt.value().get();
             const auto& participants = event.getParticipantAthleteIds();
             if (std::find(participants.begin(), participants.end(), athleteId) == participants.end()) {
-                std::cerr << "数据一致性错误: 运动员 " << athlete.getName() 
-                          << " 报名了项目 " << event.getName() 
-                          << " 但该项目的参赛者列表中没有此运动员" << std::endl;
-                consistencyOk = false;
+                std::cerr << "错误: 运动员 " << athlete.getName() << " (ID: " << athleteId 
+                       << ") 报名了项目 '" << event.getName() 
+                       << "' 但未在项目参与者列表中找到" << std::endl;
+                isConsistent = false;
             }
         }
     }
     
-    // 检查所有比赛项目的参赛运动员
-    for (const auto& [eventId, event] : settings.events.getAllConst()) {
-        for (int athleteId : event.get().getParticipantAthleteIds()) {
+    // 2. 检查比赛项目视角
+    for (const auto& [eventId, event] : settings.events.getAll()) {
+        for (const int athleteId : event.getParticipantAthleteIds()) {
             auto athleteOpt = getConst(athleteId);
-            if (!athleteOpt) {
-                std::cerr << "数据一致性错误: 项目 " << event.get().getName() 
-                          << " 包含不存在的运动员ID " << athleteId << std::endl;
-                consistencyOk = false;
+            if (!athleteOpt.has_value()) {
+                std::cerr << "错误: 项目 '" << event.getName() << "' (ID: " << eventId 
+                       << ") 包含不存在的参与者 ID: " << athleteId << std::endl;
+                isConsistent = false;
                 continue;
             }
             
-            const Athlete& athlete = athleteOpt.value().get();
-            if (!athlete.isRegisteredForEvent(eventId)) {
-                std::cerr << "数据一致性错误: 项目 " << event.get().getName() 
-                          << " 包含运动员 " << athlete.getName() 
-                          << " 但该运动员的报名列表中没有此项目" << std::endl;
-                consistencyOk = false;
+            const auto& athlete = athleteOpt.value().get();
+            const auto& registeredEvents = athlete.getRegisteredEventIds();
+            if (std::find(registeredEvents.begin(), registeredEvents.end(), eventId) == registeredEvents.end()) {
+                std::cerr << "错误: 项目 '" << event.getName() << "' (ID: " << eventId 
+                       << ") 包含参与者 " << athlete.getName() 
+                       << " 但该运动员未报名此项目" << std::endl;
+                isConsistent = false;
             }
         }
     }
     
-    if (consistencyOk) {
-        std::cout << "验证通过: 运动员报名数据一致性检查成功。" << std::endl;
-    } else {
-        std::cerr << "验证失败: 发现运动员报名数据一致性问题，请考虑修复。" << std::endl;
-    }
-    
-    return consistencyOk;
+    return isConsistent;
 } 

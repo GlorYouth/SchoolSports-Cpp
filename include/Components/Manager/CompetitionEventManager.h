@@ -11,8 +11,10 @@
 
 // 前向声明
 class SystemSettings;
+class AthleteManager;  // 添加这行以便声明为friend类
 
 class CompetitionEventManager {
+    friend class AthleteManager;  // 允许AthleteManager访问私有成员
 public:
     using iterator = std::map<int, CompetitionEvent>::iterator;
     using const_iterator = std::map<int, CompetitionEvent>::const_iterator;
@@ -29,6 +31,7 @@ public:
     std::optional<utils::Ref<CompetitionEvent>> get(int eventId);
     [[nodiscard]] std::optional<utils::RefConst<CompetitionEvent>> getConst(int eventId) const;
     [[nodiscard]] std::map<int, utils::RefConst<CompetitionEvent>> getAllConst() const;
+    [[nodiscard]] const std::map<int, CompetitionEvent>& getAll() const;
     
     // 迭代器支持
     iterator begin();

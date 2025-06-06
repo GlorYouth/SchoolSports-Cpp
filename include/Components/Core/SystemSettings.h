@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 
+#include "DataContainer.h"
 #include "Unit.h"
 #include "CompetitionEvent.h"
 #include "Athlete.h"
@@ -43,11 +44,8 @@ class SystemSettings {
     friend class RegistrationTransaction; // 允许RegistrationTransaction访问私有成员
 
 private:
-    std::map<int, Unit> _unitsMap;                   // 参赛单位列表 <UnitId, Unit>
-    std::map<int, CompetitionEvent> _competitionEvents; // 比赛项目列表 <EventId, CompetitionEvent>
-    std::map<int, Athlete> _athletesMap;                // 运动员列表 <AthleteId, Athlete>
-    std::map<int, ScoreRule> _scoreRules;            // 计分规则列表 <RuleId, ScoreRule>
-    std::map<int, EventResults> _eventResultsMap;    // 比赛结果列表 <EventId, EventResults>
+    // 使用DataContainer替代原来的多个map
+    DataContainer data;
 
     int _athleteMaxEventsAllowed;                    // 运动员允许参加的最多项目数
     bool _scheduleLocked = false;                    ///< 赛程是否已锁定
@@ -72,17 +70,19 @@ public:
     SystemArgsManager args;
 
     SystemSettings();
-    static void resetAllIdCounter() ;
+    static void resetAllIdCounter();
     void clearAllData();
 
     // --- 系统参数设置 ---
     void setAthleteMaxEventsAllowed(int maxEvents);
     [[nodiscard]] int getAthleteMaxEventsAllowed() const;
 
-
     // --- 交互操作 ---
     void initializeDefaultSettings();
-
+    
+    // --- 获取数据容器 ---
+    DataContainer& getData() { return data; }
+    const DataContainer& getDataConst() const { return data; }
 };
 
 #endif // SYSTEMSETTINGS_H
