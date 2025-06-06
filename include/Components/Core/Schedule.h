@@ -32,7 +32,6 @@ struct ScheduleEntry {
  */
 class Schedule {
 private:
-    std::vector<ScheduleEntry> scheduleEntries; ///< 存储所有赛程条目的列表。
     DataContainer& data; ///< 对数据容器的引用，用于获取项目、时间等信息。
 
 public:

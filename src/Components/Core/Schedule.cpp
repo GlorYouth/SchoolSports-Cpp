@@ -82,7 +82,7 @@ Schedule::Schedule(DataContainer& dataContainer) : data(dataContainer) {}
 bool Schedule::generateSchedule() {
     auto startTime = std::chrono::high_resolution_clock::now(); // 计时开始
     std::cout << "开始生成比赛安排表..." << std::endl;
-    scheduleEntries.clear();
+    data.scheduleEntries.clear();
     
     // 1. 收集所有未取消项目的信息
     struct EventInfo {
@@ -249,44 +249,65 @@ bool Schedule::generateSchedule() {
             return a.start < b.start;
         });
         
-        // 尝试找出所有可能的时间段
-        std::vector<TimeSlot> candidates;
-        
-        // 尝试第一个插槽前的空间
-        if (slots.empty() || slots[0].start - sessionStart >= duration) {
-            candidates.push_back({sessionStart, sessionStart + duration});
-        }
-        
-        // 尝试插槽之间的缝隙
-        for (size_t i = 0; i < slots.size(); i++) {
-            int nextStart = (i < slots.size() - 1) ? slots[i + 1].start : sessionEnd;
-            int gapStart = slots[i].end;
-            if (nextStart - gapStart >= duration) {
-                candidates.push_back({gapStart, gapStart + duration});
+        // 如果时间段为空，说明整个时段都可用
+        if (slots.empty()) {
+            if (duration <= (sessionEnd - sessionStart)) {
+                // 检查运动员时间冲突
+                TimeSlot newSlot = {sessionStart, sessionStart + duration};
+                if (!hasAthleteConflict(day, newSlot, athleteIds)) {
+                    return newSlot;
+                }
+            }
+        } else {
+            // 找到第一个间隔
+            if (slots.front().start > sessionStart && 
+                duration <= (slots.front().start - sessionStart)) {
+                // 在最开始的时间段插入
+                TimeSlot newSlot = {sessionStart, sessionStart + duration};
+                if (!hasAthleteConflict(day, newSlot, athleteIds)) {
+                    return newSlot;
+                }
+            }
+            
+            // 找到现有时间段之间的间隔
+            for (size_t i = 0; i < slots.size() - 1; ++i) {
+                int gapStart = slots[i].end;
+                int gapEnd = slots[i+1].start;
+                
+                if (duration <= (gapEnd - gapStart)) {
+                    // 在这个间隔插入
+                    TimeSlot newSlot = {gapStart, gapStart + duration};
+                    if (!hasAthleteConflict(day, newSlot, athleteIds)) {
+                        return newSlot;
+                    }
+                }
+            }
+            
+            // 找到最后一个间隔
+            if (slots.back().end < sessionEnd && 
+                duration <= (sessionEnd - slots.back().end)) {
+                // 在最后时间插入
+                TimeSlot newSlot = {slots.back().end, slots.back().end + duration};
+                if (!hasAthleteConflict(day, newSlot, athleteIds)) {
+                    return newSlot;
+                }
             }
         }
         
-        // 尝试最后一个插槽后的空间
-        if (!slots.empty() && sessionEnd - slots.back().end >= duration) {
-            candidates.push_back({slots.back().end, slots.back().end + duration});
-        }
-        
-        // 检查所有候选插槽是否符合运动员冲突
-        for (const auto& candidate : candidates) {
-            if (!hasAthleteConflict(day, candidate, athleteIds)) {
-                return candidate;
-            }
-        }
-        
-        // 没有找到合适的插槽
+        // 如果找不到合适的间隔
         return std::nullopt;
     };
     
-    int maxDay = 5; // 最多举行多少天（可根据需要调整）
-    int successfullyScheduledCount = 0;
+    // 安排项目到合适的时间和场地
+    int maxDay = 5; // 最多安排5天的比赛
     int totalEvents = eventQueue.size();
+    int successfullyScheduledCount = 0;
     
-    // 开始赛程规划
+    // 预处理场地和项目的适配矩阵
+    // std::unordered_map<int, std::vector<std::string>> eventToSuitableVenues;
+    // 遍历项目和场地，填充适配矩阵
+    
+    // 遍历所有项目，逐一安排
     while (!eventQueue.empty()) {
         EventInfo eventInfo = eventQueue.top();
         eventQueue.pop();
@@ -368,7 +389,7 @@ bool Schedule::generateSchedule() {
                         entry.venue = venue;
                         entry.startTime = startTimeStr;
                         entry.endTime = endTimeStr;
-                        scheduleEntries.push_back(entry);
+                        data.scheduleEntries.push_back(entry);
                         
                         std::cout << "项目[" << event.getName() << "] (优先级:" << eventInfo.priority 
                                   << ") 安排在 第" << day << "天 场地[" << venue 
@@ -406,23 +427,20 @@ bool Schedule::generateSchedule() {
                   << (score.totalDuration / 60) << "小时" << (score.totalDuration % 60) << "分钟" << std::endl;
     }
     
-    // 将生成的赛程保存到DataContainer中
-    data.scheduleEntries = scheduleEntries;
-    
     return successfullyScheduledCount == totalEvents;
 }
 
 const std::vector<ScheduleEntry>& Schedule::getScheduleEntries() const {
-    return scheduleEntries;
+    return data.scheduleEntries;
 }
 
 void Schedule::printSchedule() const {
     std::cout << "\n---------- 赛程表 ----------" << std::endl;
-    if (scheduleEntries.empty()) {
+    if (data.scheduleEntries.empty()) {
         std::cout << "赛程表为空或未生成。" << std::endl;
         return;
     }
-    for (const auto& entry : scheduleEntries) {
+    for (const auto& entry : data.scheduleEntries) {
         if (auto eventIt = data.eventsMap.find(entry.eventId); eventIt != data.eventsMap.end()) {
             const auto& event_ref = eventIt->second;
             std::cout << "项目: " << event_ref.getName() << " (ID: " << entry.eventId << ")"
@@ -450,11 +468,11 @@ void Schedule::printSchedule() const {
 std::string Schedule::getScheduleContentAsString() const {
     std::ostringstream oss;
     oss << "\n---------- 秩序册 ----------\n"; // 使用纯文本风格输出
-    if (scheduleEntries.empty()) {
+    if (data.scheduleEntries.empty()) {
         oss << "赛程表为空或未生成。\n"; // 使用纯文本风格输出
         return oss.str();
     }
-    for (const auto& entry : scheduleEntries) {
+    for (const auto& entry : data.scheduleEntries) {
         auto eventIt = data.eventsMap.find(entry.eventId);
         if (eventIt != data.eventsMap.end()) { // 检查 map 中是否存在此键
             const CompetitionEvent& event_ref = eventIt->second;
