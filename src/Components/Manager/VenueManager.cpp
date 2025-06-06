@@ -5,11 +5,11 @@ VenueManager::VenueManager(SystemSettings& settings) : settings(settings) {}
 
 // 内部访问方法
 std::set<std::string>& VenueManager::getVenuesSet() {
-    return settings.getData().venues;
+    return settings._venues;
 }
 
 const std::set<std::string>& VenueManager::getVenuesSetConst() const {
-    return settings.getDataConst().venues;
+    return settings._venues;
 }
 
 // 基本操作
@@ -18,16 +18,28 @@ bool VenueManager::add(const std::string& venueName) {
         return false;
     }
     // 添加场地，若已存在则返回false
-    return getVenuesSet().insert(venueName).second;
+    auto result = getVenuesSet().insert(venueName).second;
+    if (result) {
+        // 同步到DataContainer
+        settings.getData().venues = settings._venues;
+    }
+    return result;
 }
 
 bool VenueManager::remove(const std::string& venueName) {
     // 移除场地，若不存在则返回false
-    return getVenuesSet().erase(venueName) > 0;
+    auto result = getVenuesSet().erase(venueName) > 0;
+    if (result) {
+        // 同步到DataContainer
+        settings.getData().venues = settings._venues;
+    }
+    return result;
 }
 
 void VenueManager::clear() {
     getVenuesSet().clear();
+    // 同步到DataContainer
+    settings.getData().venues.clear();
 }
 
 // 获取方法
@@ -67,11 +79,10 @@ bool VenueManager::contains(const std::string& venueName) const {
 
 // 批量导入场地
 void VenueManager::addDefaultVenues() {
-    add("主体育场");
-    add("室内体育馆");
-    add("游泳馆");
-    add("田径场");
-    add("篮球场");
-    add("排球场");
-    add("网球场");
+    add("跑道区1");
+    add("跑道区2");
+    add("跳远区1");
+    add("跳远区2");
+    add("投掷区1");
+    add("投掷区2");
 } 

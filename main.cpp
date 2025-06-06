@@ -127,11 +127,11 @@ bool generateFinalSchedule(Schedule& schedule) {
 
 int main() {
     SystemSettings settings;
-    settings.initializeDefaultSettings(); // 确保此方法设置初始工作流程阶段为 SETUP_EVENTS
+    settings.initializeDefaultSettings(); // 确保有运行设置初始化，工作流阶段为 SETUP_EVENTS
 
     Registration registration(settings);
-    Schedule schedule(settings); 
-    DataManager dataManager(settings); 
+    Schedule schedule(settings.getData()); 
+    DataManager dataManager(settings);
 
     SystemSettingsController systemSettingsCtrl(settings);
     RegistrationController registrationCtrl(registration, settings);

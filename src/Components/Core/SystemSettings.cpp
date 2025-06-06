@@ -8,7 +8,8 @@
 // Workflow.h 应该通过 SystemSettings.h 包含进来，如果直接使用 WorkflowStage 枚举则需要确保
 // #include "../../include/Components/Workflow.h" // 通常不需要重复包含
 
-SystemSettings::SystemSettings() : 
+SystemSettings::SystemSettings() :
+    _athleteMaxEventsAllowed(3),
     units(*this),
     athletes(*this),
     events(*this),
@@ -18,9 +19,18 @@ SystemSettings::SystemSettings() :
     sessions(*this),
     venues(*this),
     schedule(*this),
-    args(*this) {
-    // 构造函数中可以进行一些初始化
-    // initializeDefaultSettings(); // 可以在构造时直接初始化，或者由外部调用
+    args(*this),
+    scheduleManager(data)
+{
+    // 将私有成员的值同步到DataContainer
+    data.athleteMaxEventsAllowed = _athleteMaxEventsAllowed;
+    data.scheduleLocked = _scheduleLocked;
+    data.venues = _venues;
+    data.morningSessionStart = _morningSessionStart;
+    data.morningSessionEnd = _morningSessionEnd;
+    data.afternoonSessionStart = _afternoonSessionStart;
+    data.afternoonSessionEnd = _afternoonSessionEnd;
+    data.currentWorkflowStage = _currentWorkflowStage;
 }
 
 void SystemSettings::resetAllIdCounter() {
@@ -30,14 +40,38 @@ void SystemSettings::resetAllIdCounter() {
     ScoreRuleManager::resetIdCounter();
 }
 
-void SystemSettings::clearAllData(){
-    // 使用DataContainer的clear方法清空所有数据
+void SystemSettings::clearAllData() {
+    // 清空数据容器
     data.clear();
+    
+    // 重置私有成员变量
+    _athleteMaxEventsAllowed = 3;
+    _scheduleLocked = false;
+    _venues.clear();
+    _morningSessionStart = "08:00";
+    _morningSessionEnd = "12:00";
+    _afternoonSessionStart = "14:00";
+    _afternoonSessionEnd = "18:00";
+    _currentWorkflowStage = WorkflowStage::SETUP_EVENTS;
+    
+    // 同步到DataContainer
+    data.athleteMaxEventsAllowed = _athleteMaxEventsAllowed;
+    data.scheduleLocked = _scheduleLocked;
+    data.venues = _venues;
+    data.morningSessionStart = _morningSessionStart;
+    data.morningSessionEnd = _morningSessionEnd;
+    data.afternoonSessionStart = _afternoonSessionStart;
+    data.afternoonSessionEnd = _afternoonSessionEnd;
+    data.currentWorkflowStage = _currentWorkflowStage;
+    
+    // 重置ID计数器
+    resetAllIdCounter();
 }
 
 // --- 系统参数设置 ---
 void SystemSettings::setAthleteMaxEventsAllowed(int maxEvents) {
     if (maxEvents > 0) {
+        _athleteMaxEventsAllowed = maxEvents;
         data.athleteMaxEventsAllowed = maxEvents;
     } else {
         std::cerr << "错误: 运动员最大参赛项目数必须大于0。" << std::endl;
@@ -45,7 +79,7 @@ void SystemSettings::setAthleteMaxEventsAllowed(int maxEvents) {
 }
 
 int SystemSettings::getAthleteMaxEventsAllowed() const {
-    return data.athleteMaxEventsAllowed;
+    return _athleteMaxEventsAllowed;
 }
 
 // --- 交互操作 (例如报名等) ---

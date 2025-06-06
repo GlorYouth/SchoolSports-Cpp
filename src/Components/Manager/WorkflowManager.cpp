@@ -4,10 +4,12 @@
 WorkflowManager::WorkflowManager(SystemSettings& settings) : settings(settings) {}
 
 WorkflowStage WorkflowManager::getCurrentStage() const {
-    return settings.getData().currentWorkflowStage;
+    return settings._currentWorkflowStage;
 }
 
 bool WorkflowManager::setStage(WorkflowStage newStage) {
+    settings._currentWorkflowStage = newStage;
+    // 同步到DataContainer
     settings.getData().currentWorkflowStage = newStage;
     return true;
 }

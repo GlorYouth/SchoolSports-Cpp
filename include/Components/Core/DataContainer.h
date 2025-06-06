@@ -14,6 +14,9 @@
 #include "Result.h"
 #include "Workflow.h"
 
+// Forward declaration
+struct ScheduleEntry;
+
 /**
  * @brief 统一管理所有系统底层数据的容器类
  * 
@@ -30,6 +33,7 @@ public:
     std::map<int, ScoreRule> rulesMap;              // 计分规则
     std::map<int, EventResults> resultsMap;         // 比赛结果
     std::set<std::string> venues;                   // 比赛场地
+    std::vector<ScheduleEntry> scheduleEntries;     // 赛程安排
     
     // 系统配置和状态
     WorkflowStage currentWorkflowStage;             // 当前工作流阶段

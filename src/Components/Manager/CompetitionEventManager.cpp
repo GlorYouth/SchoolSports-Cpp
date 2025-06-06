@@ -52,7 +52,7 @@ bool CompetitionEventManager::remove(int eventId) {
             athlete.value().get().unregisterFromEvent(eventId);
         }
     }
-    
+
     // ÒÆ³ıÏîÄ¿
     eventsMap.erase(eventId);
     return true;

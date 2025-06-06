@@ -1,4 +1,5 @@
 #include "../../../include/Components/Core/DataContainer.h"
+#include "../../../include/Components/Core/Schedule.h"
 #include <iostream>
 #include <sstream>
 #include <ctime>
@@ -21,6 +22,7 @@ void DataContainer::clear() {
     rulesMap.clear();
     resultsMap.clear();
     venues.clear();
+    scheduleEntries.clear();
     
     // 恢复默认系统设置
     currentWorkflowStage = WorkflowStage::SETUP_EVENTS;
@@ -145,6 +147,16 @@ bool DataContainer::serialize(std::ostream& outStream) const {
         for (const auto& venue : venues) {
             outStream << venue << std::endl;
         }
+        
+        // 写入赛程安排段
+        outStream << std::endl << "[SCHEDULE]" << std::endl;
+        outStream << "COUNT=" << scheduleEntries.size() << std::endl;
+        for (const auto& entry : scheduleEntries) {
+            outStream << entry.eventId << "|"
+                     << entry.startTime << "|"
+                     << entry.endTime << "|"
+                     << entry.venue << std::endl;
+        }
 
         return true;
     } catch (const std::exception& e) {
@@ -173,7 +185,8 @@ bool DataContainer::deserialize(std::istream& inStream) {
             EVENTS,
             ATHLETES,
             RESULTS,
-            VENUES
+            VENUES,
+            SCHEDULE
         };
         
         Section currentSection = Section::NONE;
@@ -203,6 +216,9 @@ bool DataContainer::deserialize(std::istream& inStream) {
                 continue;
             } else if (line == "[VENUES]") {
                 currentSection = Section::VENUES;
+                continue;
+            } else if (line == "[SCHEDULE]") {
+                currentSection = Section::SCHEDULE;
                 continue;
             }
             
@@ -493,6 +509,35 @@ bool DataContainer::deserialize(std::istream& inStream) {
                     {
                         // 场地只有一个字段
                         venues.insert(line);
+                    }
+                    break;
+                
+                case Section::SCHEDULE:
+                    {
+                        // 解析赛程安排: 项目ID|开始时间|结束时间|场地
+                        std::stringstream ss(line);
+                        std::string token;
+                        
+                        ScheduleEntry entry;
+                        
+                        // 项目ID
+                        std::getline(ss, token, '|');
+                        entry.eventId = std::stoi(token);
+                        
+                        // 开始时间
+                        std::getline(ss, token, '|');
+                        entry.startTime = token;
+                        
+                        // 结束时间
+                        std::getline(ss, token, '|');
+                        entry.endTime = token;
+                        
+                        // 场地
+                        std::getline(ss, token, '|');
+                        entry.venue = token;
+                        
+                        // 添加到赛程列表
+                        scheduleEntries.push_back(entry);
                     }
                     break;
                     

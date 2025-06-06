@@ -25,6 +25,7 @@
 #include "../Manager/VenueManager.h"
 #include "../Manager/ScheduleLockManager.h"
 #include "../Manager/SystemArgsManager.h"
+#include "../Manager/ScheduleManager.h"
 
 // 前向声明
 class RegistrationTransaction;
@@ -41,6 +42,7 @@ class SystemSettings {
     friend class VenueManager; // 允许VenueManager访问私有成员
     friend class ScheduleLockManager; // 允许ScheduleLockManager访问私有成员
     friend class SystemArgsManager; // 允许SystemArgsManager访问私有成员
+    friend class ScheduleManager; // 允许ScheduleManager访问私有成员
     friend class RegistrationTransaction; // 允许RegistrationTransaction访问私有成员
 
 private:
@@ -68,6 +70,7 @@ public:
     VenueManager venues;
     ScheduleLockManager schedule;
     SystemArgsManager args;
+    ScheduleManager scheduleManager;
 
     SystemSettings();
     static void resetAllIdCounter();
