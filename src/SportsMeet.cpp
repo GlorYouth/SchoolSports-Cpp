@@ -14,17 +14,23 @@
 #include <map>
 #include <sstream>
 
-SportsMeet::SportsMeet() : schedule(*this), maxEventsPerAthlete(2) {
+SportsMeet::SportsMeet() : schedule(*this), maxEventsPerAthlete(3), minParticipantsForCancel(4) {
     // 初始化排程参数
     venues = {"主田径场", "跳远沙坑", "铅球区"};
     competitionDays = 2;
     dailyStartTime = 9 * 60; // 09:00
     dailyEndTime = 17 * 60;   // 17:00
 
-    // Default scoring rules can be initialized here if needed
-    // Example:
-    // scoringRules.push_back(ScoringRule({5, 3, 2, 1})); // For 4-7 participants
-    // scoringRules.push_back(ScoringRule({7, 5, 3, 2, 1})); // For 8+ participants
+    // 初始化默认计分规则
+    // 规则1: 参赛人数 >= 7, 取前5名
+    scoringRules.emplace_back(7, std::vector<int>{7, 5, 3, 2, 1});
+    // 规则2: 参赛人数 4-6人, 取前3名
+    scoringRules.emplace_back(4, std::vector<int>{5, 3, 2});
+    
+    // 将规则按最少参与人数降序排序，便于查找
+    std::sort(scoringRules.begin(), scoringRules.end(), [](const ScoringRule& a, const ScoringRule& b) {
+        return a.minParticipants > b.minParticipants;
+    });
 }
 
 SportsMeet::~SportsMeet() = default;
@@ -270,6 +276,30 @@ void SportsMeet::showEventDetails(const std::string& eventName, const std::strin
             }
         }
     }
+
+    // 新增：显示比赛结果
+    auto it = eventResults.find(event->name);
+    if (it != eventResults.end() && !it->second.empty()) {
+        std::cout << "\n  比赛结果:\n";
+        std::cout << "    " << std::left << std::setw(8) << "名次"
+                  << std::setw(15) << "姓名"
+                  << std::setw(15) << "单位"
+                  << std::setw(12) << "成绩"
+                  << std::setw(10) << "得分" << std::endl;
+        std::cout << "    ------------------------------------------------------\n";
+        for (const auto& result : it->second) {
+            if (result.rank > 0) { // 只显示获得名次的
+                const Athlete* athlete = findAthlete(result.athleteId);
+                if(athlete) {
+                    std::cout << "    " << std::left << std::setw(8) << result.rank
+                              << std::setw(15) << athlete->name
+                              << std::setw(15) << athlete->unit->name
+                              << std::setw(12) << result.performance
+                              << std::setw(10) << result.points << std::endl;
+                }
+            }
+        }
+    }
 }
 
 void SportsMeet::showUnitResults(const std::string& unitName) const {
@@ -278,9 +308,41 @@ void SportsMeet::showUnitResults(const std::string& unitName) const {
         std::cout << "未找到单位: " << unitName << std::endl;
         return;
     }
+
     std::cout << "\n--- " << unitName << " 成绩汇总 ---\n";
-    // Implementation requires iterating through events and results, which is complex.
-    // This is a simplified placeholder.
+    std::cout << "单位总分: " << unit->score << "\n\n";
+
+    bool foundResults = false;
+    for (const auto& pair : eventResults) {
+        const std::string& eventName = pair.first;
+        const std::vector<Result>& results = pair.second;
+        
+        std::vector<const Result*> unitEventResults;
+        for (const auto& result : results) {
+            const Athlete* athlete = findAthlete(result.athleteId);
+            if (athlete && athlete->unit->name == unitName && result.rank > 0) {
+                unitEventResults.push_back(&result);
+            }
+        }
+
+        if (!unitEventResults.empty()) {
+            foundResults = true;
+            const Event* event = findEvent(eventName, findAthlete(unitEventResults[0]->athleteId)->gender);
+            std::cout << "--- 项目: " << eventName << " (" << (event ? event->gender : "") << ") ---\n";
+             for (const auto* result : unitEventResults) {
+                const Athlete* athlete = findAthlete(result->athleteId);
+                std::cout << "  - " << std::left << std::setw(15) << athlete->name
+                          << "名次: " << std::setw(5) << result->rank
+                          << "成绩: " << std::setw(10) << result->performance
+                          << "得分: " << result->points << "\n";
+            }
+            std::cout << "\n";
+        }
+    }
+
+    if (!foundResults) {
+        std::cout << "该单位目前没有获得任何名次。\n";
+    }
 }
 
 void SportsMeet::showAthleteResults(const std::string& athleteId) const {
@@ -289,9 +351,30 @@ void SportsMeet::showAthleteResults(const std::string& athleteId) const {
         std::cout << "未找到运动员: " << athleteId << std::endl;
         return;
     }
+
     std::cout << "\n--- " << athlete->name << " (ID: " << athleteId << ") 成绩汇总 ---\n";
-    // Implementation requires iterating through events and results.
-    // This is a simplified placeholder.
+    std::cout << "个人总分: " << athlete->score << "\n\n";
+
+    bool foundResults = false;
+    for (const auto& pair : eventResults) {
+        const std::string& eventName = pair.first;
+        const std::vector<Result>& results = pair.second;
+
+        for (const auto& result : results) {
+            if (result.athleteId == athleteId && result.rank > 0) {
+                foundResults = true;
+                const Event* event = findEvent(eventName, athlete->gender);
+                 std::cout << "--- 项目: " << eventName << " (" << (event ? event->gender : "") << ") ---\n";
+                 std::cout << "  - 名次: " << result.rank
+                           << ", 成绩: " << result.performance
+                           << ", 得分: " << result.points << "\n\n";
+            }
+        }
+    }
+    
+    if (!foundResults) {
+        std::cout << "该运动员目前没有获得任何名次。\n";
+    }
 }
 
 void SportsMeet::cancelEvent(const std::string& eventName) {
