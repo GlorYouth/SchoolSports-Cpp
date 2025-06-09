@@ -223,54 +223,44 @@ void SportsMeet::manageScoringRules() {
     std::cout << "新计分规则添加成功！" << std::endl;
 }
 
-void SportsMeet::recordAndScoreEvent() {
-    std::cout << "\n--- 记录比赛成绩 ---" << std::endl;
-    
-    // 1. 选择项目
-    std::string eventName;
-    int genderChoice;
-    std::cout << "请输入要记录成绩的项目名称: ";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::getline(std::cin, eventName);
-    std::cout << "请选择性别组别 (1: 男, 2: 女): ";
-    std::cin >> genderChoice;
-    
-    Event* event = findEvent(eventName, (genderChoice == 1) ? GenderCategory::MALE : GenderCategory::FEMALE);
+void SportsMeet::recordAndScoreEvent(Event* event) {
     if (!event) {
-        std::cout << "错误: 未找到该项目。" << std::endl;
+        // This case is handled by the caller, but a defensive check is good.
         return;
     }
+
+    std::cout << "\n--- 为项目 '" << event->getName() << "' 记录比赛成绩 ---" << std::endl;
+    
     if (event->hasResults()) {
         std::cout << "错误: 该项目已有成绩记录。" << std::endl;
         return;
     }
 
-    // 2. 检查参赛人数
-    auto participants = event->getParticipants();
-    if (participants.size() < minParticipantsForCancel) {
-        std::cout << "项目 '" << eventName << "' 因参赛人数不足 " << minParticipantsForCancel << " 人，已被自动取消。" << std::endl;
-        // 可选: 添加一个状态标记项目为已取消
+    // 检查参赛人数
+    const auto& participants = event->getParticipants();
+    if (participants.empty()) {
+        std::cout << "错误: 项目 '" << event->getName() << "' 没有参赛选手，无法记录成绩。" << std::endl;
+        return;
+    }
+    if (participants.size() < (size_t)minParticipantsForCancel) {
+        std::cout << "项目 '" << event->getName() << "' 因参赛人数不足 " << minParticipantsForCancel << " 人，已被自动取消。" << std::endl;
         return;
     }
     
     std::cout << "为项目 '" << event->getName() << "' 录入成绩，共有 " << participants.size() << " 名选手。" << std::endl;
 
-    // 3. 循环输入成绩
+    // 循环输入成绩
     std::vector<Result> results;
     for (Athlete* athlete : participants) {
-        std::string perfStr;
         double perfVal;
         std::cout << "  - 请输入选手 [" << athlete->getUnit()->getName() << "] " 
                   << athlete->getName() << " 的成绩 (数值，如11.2或2.02): ";
         std::cin >> perfVal;
-        std::cout << "    请输入成绩的显示文本 (如 11''2 或 2m02): ";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::getline(std::cin, perfStr);
-
-        results.emplace_back(athlete, perfStr, perfVal);
+        
+        results.emplace_back(athlete, perfVal);
     }
     
-    // 4. 排序
+    // 排序
     bool sortAscending = (event->getType() == EventType::TRACK); // 径赛成绩越小越好
     std::sort(results.begin(), results.end(), [sortAscending](const Result& a, const Result& b){
         if (sortAscending) {
@@ -280,24 +270,23 @@ void SportsMeet::recordAndScoreEvent() {
         }
     });
 
-    // 5. 选择计分规则
+    // 选择计分规则
     const ScoringRule* ruleToUse = nullptr;
     for (const auto& rule : scoringRules) {
-        if (participants.size() >= rule.minParticipants) {
+        if (participants.size() >= (size_t)rule.minParticipants) {
             ruleToUse = &rule;
-            break; // 因为已排序，找到的第一个就是最合适的
+            break; 
         }
     }
 
-    // 6. & 7. 分配名次和积分
+    // 分配名次和积分
     if (ruleToUse) {
         std::cout << "\n--- 比赛结果与计分 ---" << std::endl;
         int placesToAward = ruleToUse->scores.size();
-        for (int i = 0; i < results.size() && i < placesToAward; ++i) {
+        for (int i = 0; i < (int)results.size() && i < placesToAward; ++i) {
             results[i].rank = i + 1;
             results[i].pointsAwarded = ruleToUse->scores[i];
             
-            // 更新运动员和单位分数
             results[i].athlete->addScore(results[i].pointsAwarded);
             results[i].athlete->getUnit()->addScore(results[i].pointsAwarded);
 
@@ -310,7 +299,7 @@ void SportsMeet::recordAndScoreEvent() {
         std::cout << "没有适用于 " << participants.size() << " 人参赛的计分规则。" << std::endl;
     }
 
-    // 8. 存储成绩
+    // 存储成绩
     event->setResults(results);
     std::cout << "\n项目 '" << event->getName() << "' 的成绩已记录并保存。" << std::endl;
 }
@@ -408,25 +397,11 @@ void SportsMeet::showAllEvents() const {
         return;
     }
     
-    std::cout << "男子项目:" << std::endl;
-    bool male_found = false;
+    int counter = 1;
     for (const auto& event_ptr : events) {
-        if (event_ptr->getGender() == GenderCategory::MALE) {
-            std::cout << "  - " << event_ptr->getName() << std::endl;
-            male_found = true;
-        }
+        std::cout << counter++ << ". " << event_ptr->getName()
+                  << " (" << (event_ptr->getGender() == GenderCategory::MALE ? "男" : "女") << ")" << std::endl;
     }
-    if (!male_found) std::cout << "  暂无" << std::endl;
-
-    std::cout << "女子项目:" << std::endl;
-    bool female_found = false;
-    for (const auto& event_ptr : events) {
-        if (event_ptr->getGender() == GenderCategory::FEMALE) {
-            std::cout << "  - " << event_ptr->getName() << std::endl;
-            female_found = true;
-        }
-    }
-    if (!female_found) std::cout << "  暂无" << std::endl;
 }
 
 Unit* SportsMeet::findUnit(const std::string& unitName) {
@@ -819,32 +794,42 @@ void SportsMeet::restoreData(const std::string& filename) {
     }
 
     // 5. 重建项目
-    for (const auto& eventData : dataPackage.allEvents) {
-        this->addEvent(eventData.name, eventData.type, eventData.gender, eventData.duration, eventData.minParticipants, eventData.maxParticipants);
-        Event* currentEvent = findEvent(eventData.name, eventData.gender);
-        
-        // 关联参赛者
-        for (const auto& athleteId : eventData.participantIds) {
-            if (athleteMap.count(athleteId)) {
-                Athlete* pAthlete = athleteMap[athleteId];
-                currentEvent->addParticipant(pAthlete);
-                pAthlete->registerForEvent(currentEvent);
+    auto reconstruct_events = [&](const std::vector<EventData>& source, std::vector<std::unique_ptr<Event>>& dest) {
+        for (const auto& eventData : source) {
+            this->addEvent(eventData.name, eventData.type, eventData.gender, eventData.duration, eventData.minParticipants, eventData.maxParticipants);
+            Event* currentEvent = findEvent(eventData.name, eventData.gender);
+            
+            // 关联参赛者
+            for (const auto& athleteId : eventData.participantIds) {
+                if (athleteMap.count(athleteId)) {
+                    Athlete* pAthlete = athleteMap[athleteId];
+                    currentEvent->addParticipant(pAthlete);
+                    pAthlete->registerForEvent(currentEvent);
+                }
             }
-        }
 
-        // 重建成绩
-        std::vector<Result> newResults;
-        for (const auto& resultData : eventData.results) {
-             if (athleteMap.count(resultData.athleteId)) {
-                Athlete* pAthlete = athleteMap[resultData.athleteId];
-                Result newResult(pAthlete, resultData.performance, resultData.sortablePerformance);
-                newResult.rank = resultData.rank;
-                newResult.pointsAwarded = resultData.pointsAwarded;
-                newResults.push_back(newResult);
+            // 重建成绩
+            std::vector<Result> newResults;
+            for (const auto& resultData : eventData.results) {
+                 if (athleteMap.count(resultData.athleteId)) {
+                    Athlete* pAthlete = athleteMap[resultData.athleteId];
+                    // 修正: 先用新构造函数创建，再手动赋值
+                    Result newResult(pAthlete, resultData.sortablePerformance);
+                    newResult.rank = resultData.rank;
+                    newResult.pointsAwarded = resultData.pointsAwarded;
+                    newResult.performance = resultData.performance; // 恢复原始的显示字符串
+                    newResults.push_back(newResult);
+                }
             }
+            currentEvent->setResults(newResults);
         }
-        currentEvent->setResults(newResults);
-    }
+    };
+
+    reconstruct_events(dataPackage.allEvents, this->events);
     
     std::cout << "数据恢复成功。" << std::endl;
+}
+
+const std::vector<std::unique_ptr<Event>>& SportsMeet::getAllEvents() const {
+    return events;
 } 

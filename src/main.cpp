@@ -9,6 +9,9 @@
 #include <windows.h>
 #endif
 
+// 声明新的辅助函数
+Event* selectEvent(SportsMeet& sm);
+
 void showMainMenu() {
     std::cout << "\n=====================================\n";
     std::cout << "      学校运动会管理系统\n";
@@ -153,20 +156,10 @@ void handleEventManager(SportsMeet& sm) {
                 sm.addEvent(name, eventType, gender, duration, min_participants, max_participants);
                 break;
             }
-            case 2: {
-                std::string name;
-                int genderChoice;
-                std::cout << "请输入要修改的项目名称: ";
-                std::getline(std::cin, name);
-                std::cout << "请选择该项目的性别组别 (1: 男子, 2: 女子): ";
-                std::cin >> genderChoice;
-                
-                Event* event = sm.findEvent(name, (genderChoice == 1) ? GenderCategory::MALE : GenderCategory::FEMALE);
-
-                if (!event) {
-                    std::cout << "错误：未找到该项目。" << std::endl;
-                    break;
-                }
+            case 2: { // Modify Event
+                std::cout << "\n--- 请选择要修改的项目 ---" << std::endl;
+                Event* event = selectEvent(sm);
+                if (!event) break; // User cancelled or no events
 
                 int editChoice;
                 do {
@@ -207,16 +200,12 @@ void handleEventManager(SportsMeet& sm) {
                 } while (editChoice != 4);
                 break;
             }
-            case 3: {
-                std::string name;
-                int genderChoice;
-                std::cout << "请输入要删除的项目名称: ";
-                std::getline(std::cin, name);
-                std::cout << "请选择该项目的性别组别 (1: 男子, 2: 女子): ";
-                std::cin >> genderChoice;
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                
-                sm.deleteEvent(name, (genderChoice == 1) ? GenderCategory::MALE : GenderCategory::FEMALE);
+            case 3: { // Delete Event
+                std::cout << "\n--- 请选择要删除的项目 ---" << std::endl;
+                Event* event_to_delete = selectEvent(sm);
+                if (!event_to_delete) break;
+
+                sm.deleteEvent(event_to_delete->getName(), event_to_delete->getGender());
                 break;
             }
             case 4:
@@ -367,6 +356,36 @@ void loadSampleData(SportsMeet& sm) {
     std::cout << "示例数据加载完毕。\n" << std::endl;
 }
 
+// 实现新的辅助函数
+Event* selectEvent(SportsMeet& sm) {
+    sm.showAllEvents();
+    
+    // 获取所有事件的扁平列表以进行编号
+    std::vector<Event*> all_events;
+    for (const auto& event_ptr : sm.getAllEvents()) {
+        all_events.push_back(event_ptr.get());
+    }
+
+    if (all_events.empty()) {
+        std::cout << "当前没有可供选择的项目。" << std::endl;
+        return nullptr;
+    }
+    
+    std::cout << "\n请输入项目对应的编号进行选择 (输入 0 取消): ";
+    int selection;
+    std::cin >> selection;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    if (selection > 0 && selection <= all_events.size()) {
+        return all_events[selection - 1];
+    } else {
+        if (selection != 0) {
+            std::cout << "无效的编号。" << std::endl;
+        }
+        return nullptr;
+    }
+}
+
 int main() {
     // 设置控制台代码页为 UTF-8 (仅在 Windows 上)
 #ifdef _WIN32
@@ -410,9 +429,14 @@ int main() {
             case 3:
                 handleInfoQuery(sportsMeet);
                 break;
-            case 4:
-                sportsMeet.recordAndScoreEvent();
+            case 4: {
+                std::cout << "\n--- 请选择要记录成绩的项目 ---" << std::endl;
+                Event* event = selectEvent(sportsMeet);
+                if (event) {
+                    sportsMeet.recordAndScoreEvent(event);
+                }
                 break;
+            }
             case 5:
                 handleScheduleManagement(sportsMeet);
                 break;

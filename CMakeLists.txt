@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 添加 include 目录到头文件搜索路径
 include_directories(include)
 
-# 显式列出所有源文件
+# 添加源文件
 set(SOURCES
     src/main.cpp
     src/SportsMeet.cpp

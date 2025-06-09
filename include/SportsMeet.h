@@ -34,9 +34,10 @@ public:
     
     // --- 核心功能 ---
     void registerAthlete(); // 运动员报名登记
-    void recordAndScoreEvent(); // 记录比赛成绩并计分
+    void recordAndScoreEvent(Event* event); // Changed to take an Event pointer
     void showAllUnits() const; // For debugging/UI
     void showAllEvents() const; // For debugging/UI
+    const std::vector<std::unique_ptr<Event>>& getAllEvents() const;
     
     // --- 查询功能 ---
     Unit* findUnit(const std::string& unitName);
