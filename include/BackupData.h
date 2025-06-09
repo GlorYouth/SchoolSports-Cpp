@@ -1,56 +1,45 @@
 #ifndef BACKUPDATA_H
 #define BACKUPDATA_H
 
-#include "Event.h"       // For enums like EventType, GenderCategory
-#include "ScoringRule.h" // For ScoringRule
 #include <string>
 #include <vector>
+#include <map>
+#include "ScoringRule.h"
+#include "Result.h"
 
-// 注意：以下是用于数据备份的"扁平化"结构，不含指针
-
-struct ResultData {
-    std::string athleteId;
-    int rank;
-    std::string performance;
-    double sortablePerformance;
-    int pointsAwarded;
-};
-
-struct EventData {
-    std::string name;
-    EventType type;
-    GenderCategory gender;
-    int duration;
-    int minParticipants;
-    int maxParticipants;
-    std::vector<std::string> participantIds;
-    std::vector<ResultData> results;
-};
-
+// 用于序列化的运动员数据结构
 struct AthleteData {
-    std::string name;
     std::string id;
-    bool isMale;
-    std::string unitName; // 用单位名称代替指针
-    int individualScore;
-    // 参加的项目通过 EventData 中的 participantIds 反向关联
+    std::string name;
+    std::string gender;
+    double score;
+    std::vector<std::string> registeredEvents;
 };
 
+// 用于序列化的单位数据结构
 struct UnitData {
     std::string name;
-    int totalScore;
+    double score;
     std::vector<AthleteData> athletes;
 };
 
-/**
- * @brief 顶级备份类，包含整个运动会的所有可序列化数据
- */
+// 用于序列化的项目数据结构
+struct EventData {
+    std::string name;
+    std::string gender;
+    bool isTimeBased;
+    bool isCancelled;
+    std::vector<std::string> registeredAthletes;
+};
+
+// 用于序列化的总数据包
 struct BackupData {
     int maxEventsPerAthlete;
     int minParticipantsForCancel;
     std::vector<ScoringRule> allScoringRules;
     std::vector<UnitData> allUnits;
-    std::vector<EventData> allEvents; // 统一的事件列表
+    std::vector<EventData> allEvents;
+    std::map<std::string, std::vector<Result>> allEventResults;
 };
 
 #endif // BACKUPDATA_H 

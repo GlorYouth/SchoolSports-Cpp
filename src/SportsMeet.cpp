@@ -4,6 +4,7 @@
 #include "Event.h"
 #include "Result.h"
 #include "ScoringRule.h"
+#include "BackupData.h"
 #include "TimeUtils.h" // <--- 关键的修复
 #include <iostream>
 #include <algorithm>
@@ -644,3 +645,255 @@ void SportsMeet::showSchedule() const {
 // void generateSchedule();
 // void recordResults();
 // void queryResults();
+
+// --- 辅助函数，用于将数据写入二进制文件流 ---
+template<typename T>
+void write_binary(std::ofstream& ofs, const T& value) {
+    ofs.write(reinterpret_cast<const char*>(&value), sizeof(T));
+}
+void write_binary(std::ofstream& ofs, const std::string& str) {
+    size_t len = str.length();
+    write_binary(ofs, len);
+    ofs.write(str.c_str(), len);
+}
+template<typename T, typename Func>
+void write_vector(std::ofstream& ofs, const std::vector<T>& vec, Func write_element) {
+    size_t size = vec.size();
+    write_binary(ofs, size);
+    for (const auto& elem : vec) {
+        write_element(ofs, elem);
+    }
+}
+template<typename K, typename V, typename FuncV>
+void write_map(std::ofstream& ofs, const std::map<K, V>& m, FuncV write_value) {
+    size_t size = m.size();
+    write_binary(ofs, size);
+    for (const auto& pair : m) {
+        write_binary(ofs, pair.first);
+        write_value(ofs, pair.second);
+    }
+}
+
+// --- 各种数据结构的写入函数 ---
+void write_scoring_rule(std::ofstream& ofs, const ScoringRule& rule) {
+    write_binary(ofs, rule.minParticipants);
+    write_vector(ofs, rule.scores, [](std::ofstream& out, int score){ write_binary(out, score); });
+}
+void write_athlete_data(std::ofstream& ofs, const AthleteData& data) {
+    write_binary(ofs, data.id);
+    write_binary(ofs, data.name);
+    write_binary(ofs, data.gender);
+    write_binary(ofs, data.score);
+    write_vector(ofs, data.registeredEvents, [](std::ofstream& out, const std::string& s){ write_binary(out, s); });
+}
+void write_unit_data(std::ofstream& ofs, const UnitData& data) {
+    write_binary(ofs, data.name);
+    write_binary(ofs, data.score);
+    write_vector(ofs, data.athletes, write_athlete_data);
+}
+void write_event_data(std::ofstream& ofs, const EventData& data) {
+    write_binary(ofs, data.name);
+    write_binary(ofs, data.gender);
+    write_binary(ofs, data.isTimeBased);
+    write_binary(ofs, data.isCancelled);
+    write_vector(ofs, data.registeredAthletes, [](std::ofstream& out, const std::string& s){ write_binary(out, s); });
+}
+void write_result(std::ofstream& ofs, const Result& result) {
+    write_binary(ofs, result.athleteId);
+    write_binary(ofs, result.performance);
+    write_binary(ofs, result.rank);
+    write_binary(ofs, result.points);
+}
+
+
+// --- 辅助函数，用于从二进制文件流读取数据 ---
+template<typename T>
+void read_binary(std::ifstream& ifs, T& value) {
+    ifs.read(reinterpret_cast<char*>(&value), sizeof(T));
+}
+void read_binary(std::ifstream& ifs, std::string& str) {
+    size_t len;
+    read_binary(ifs, len);
+    str.resize(len);
+    if (len > 0) {
+        ifs.read(&str[0], len);
+    }
+}
+template<typename T, typename Func>
+void read_vector(std::ifstream& ifs, std::vector<T>& vec, Func read_element) {
+    size_t size;
+    read_binary(ifs, size);
+    vec.resize(size);
+    for (size_t i = 0; i < size; ++i) {
+        read_element(ifs, vec[i]);
+    }
+}
+template<typename K, typename V, typename FuncV>
+void read_map(std::ifstream& ifs, std::map<K, V>& m, FuncV read_value) {
+    size_t size;
+    read_binary(ifs, size);
+    for (size_t i = 0; i < size; ++i) {
+        K key;
+        V value;
+        read_binary(ifs, key);
+        read_value(ifs, value);
+        m[key] = value;
+    }
+}
+
+// --- 各种数据结构的读取函数 ---
+void read_scoring_rule(std::ifstream& ifs, ScoringRule& rule) {
+    read_binary(ifs, rule.minParticipants);
+    read_vector(ifs, rule.scores, [](std::ifstream& in, int& score){ read_binary(in, score); });
+}
+void read_athlete_data(std::ifstream& ifs, AthleteData& data) {
+    read_binary(ifs, data.id);
+    read_binary(ifs, data.name);
+    read_binary(ifs, data.gender);
+    read_binary(ifs, data.score);
+    read_vector(ifs, data.registeredEvents, [](std::ifstream& in, std::string& s){ read_binary(in, s); });
+}
+void read_unit_data(std::ifstream& ifs, UnitData& data) {
+    read_binary(ifs, data.name);
+    read_binary(ifs, data.score);
+    read_vector(ifs, data.athletes, read_athlete_data);
+}
+void read_event_data(std::ifstream& ifs, EventData& data) {
+    read_binary(ifs, data.name);
+    read_binary(ifs, data.gender);
+    read_binary(ifs, data.isTimeBased);
+    read_binary(ifs, data.isCancelled);
+    read_vector(ifs, data.registeredAthletes, [](std::ifstream& in, std::string& s){ read_binary(in, s); });
+}
+void read_result(std::ifstream& ifs, Result& result) {
+    read_binary(ifs, result.athleteId);
+    read_binary(ifs, result.performance);
+    read_binary(ifs, result.rank);
+    read_binary(ifs, result.points);
+}
+
+
+void SportsMeet::backupData(const std::string& filename) const {
+    std::cout << "正在备份数据到 " << filename << " ..." << std::endl;
+    BackupData dataPackage;
+
+    // 1. 填充系统设置
+    dataPackage.maxEventsPerAthlete = this->maxEventsPerAthlete;
+    dataPackage.minParticipantsForCancel = this->minParticipantsForCancel;
+    dataPackage.allScoringRules = this->scoringRules;
+
+    // 2. 填充单位和运动员数据
+    for (const auto& unit_ptr : this->units) {
+        UnitData unitData;
+        unitData.name = unit_ptr->name;
+        unitData.score = unit_ptr->score;
+        for (const auto& athlete_ptr : unit_ptr->athletes) {
+            AthleteData athleteData;
+            athleteData.id = athlete_ptr->id;
+            athleteData.name = athlete_ptr->name;
+            athleteData.gender = athlete_ptr->gender;
+            athleteData.score = athlete_ptr->score;
+            athleteData.registeredEvents = athlete_ptr->registeredEvents;
+            unitData.athletes.push_back(athleteData);
+        }
+        dataPackage.allUnits.push_back(unitData);
+    }
+    
+    // 3. 填充项目数据
+    for (const auto& event_ptr : this->events) {
+        EventData eventData;
+        eventData.name = event_ptr->name;
+        eventData.gender = event_ptr->gender;
+        eventData.isTimeBased = event_ptr->isTimeBased;
+        eventData.isCancelled = event_ptr->isCancelled;
+        eventData.registeredAthletes = event_ptr->registeredAthletes;
+        dataPackage.allEvents.push_back(eventData);
+    }
+
+    // 4. 填充成绩数据
+    dataPackage.allEventResults = this->eventResults;
+
+    // 5. 写入文件
+    std::ofstream ofs(filename, std::ios::binary);
+    if (!ofs) {
+        std::cerr << "错误: 无法打开文件进行写入: " << filename << std::endl;
+        return;
+    }
+
+    write_binary(ofs, dataPackage.maxEventsPerAthlete);
+    write_binary(ofs, dataPackage.minParticipantsForCancel);
+    write_vector(ofs, dataPackage.allScoringRules, write_scoring_rule);
+    write_vector(ofs, dataPackage.allUnits, write_unit_data);
+    write_vector(ofs, dataPackage.allEvents, write_event_data);
+    write_map(ofs, dataPackage.allEventResults, [](std::ofstream& out, const std::vector<Result>& results){
+        write_vector(out, results, write_result);
+    });
+    
+    ofs.close();
+    std::cout << "数据备份成功。" << std::endl;
+}
+
+
+void SportsMeet::restoreData(const std::string& filename) {
+    std::cout << "正在从 " << filename << " 恢复数据..." << std::endl;
+
+    std::ifstream ifs(filename, std::ios::binary);
+    if (!ifs) {
+        std::cerr << "错误: 无法打开文件进行读取: " << filename << std::endl;
+        return;
+    }
+
+    BackupData dataPackage;
+
+    // 1. 从文件读取数据
+    read_binary(ifs, dataPackage.maxEventsPerAthlete);
+    read_binary(ifs, dataPackage.minParticipantsForCancel);
+    read_vector(ifs, dataPackage.allScoringRules, read_scoring_rule);
+    read_vector(ifs, dataPackage.allUnits, read_unit_data);
+    read_vector(ifs, dataPackage.allEvents, read_event_data);
+    read_map(ifs, dataPackage.allEventResults, [](std::ifstream& in, std::vector<Result>& results){
+        read_vector(in, results, read_result);
+    });
+    
+    ifs.close();
+
+    // 2. 清空当前状态
+    this->units.clear();
+    this->events.clear();
+    this->scoringRules.clear();
+    this->eventResults.clear();
+    this->schedule.clear();
+
+    // 3. 恢复设置
+    this->maxEventsPerAthlete = dataPackage.maxEventsPerAthlete;
+    this->minParticipantsForCancel = dataPackage.minParticipantsForCancel;
+    this->scoringRules = dataPackage.allScoringRules;
+
+    // 4. 重建单位和运动员
+    for (const auto& unitData : dataPackage.allUnits) {
+        auto newUnit = std::make_unique<Unit>(unitData.name);
+        newUnit->score = unitData.score;
+        for (const auto& athleteData : unitData.athletes) {
+            newUnit->addAthlete(athleteData.id, athleteData.name, athleteData.gender);
+            Athlete* pAthlete = newUnit->findAthlete(athleteData.id);
+            if(pAthlete) {
+                pAthlete->score = athleteData.score;
+                pAthlete->registeredEvents = athleteData.registeredEvents;
+            }
+        }
+        this->units.push_back(std::move(newUnit));
+    }
+
+    // 5. 重建项目
+    for (const auto& eventData : dataPackage.allEvents) {
+        auto newEvent = std::make_unique<Event>(eventData.name, eventData.gender, eventData.isTimeBased);
+        newEvent->isCancelled = eventData.isCancelled;
+        newEvent->registeredAthletes = eventData.registeredAthletes;
+        this->events.push_back(std::move(newEvent));
+    }
+    
+    // 6. 恢复成绩
+    this->eventResults = dataPackage.allEventResults;
+
+    std::cout << "数据恢复成功。" << std::endl;
+}

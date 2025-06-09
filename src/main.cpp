@@ -27,6 +27,7 @@ void handleRegistrationManagement(SportsMeet& sm);
 void handleResultsManagement(SportsMeet& sm);
 void handleInfoQuery(SportsMeet& sm);
 void handleScheduleManagement(SportsMeet& sm);
+void handleBackupAndRestore(SportsMeet& sm);
 void loadSampleData(SportsMeet& sm);
 
 Event* selectEvent(SportsMeet& sm);
@@ -76,7 +77,7 @@ int main() {
                 handleScheduleManagement(sm);
                 break;
             case 7:
-                 std::cout << "该功能待实现。\n";
+                handleBackupAndRestore(sm);
                 break;
             case 8:
                 std::cout << "感谢使用，再见！\n";
@@ -97,7 +98,7 @@ void showMainMenu() {
     std::cout << "  4. 比赛成绩管理\n";
     std::cout << "  5. 信息查询\n";
     std::cout << "  6. 秩序册管理\n";
-    std::cout << "  7. 数据备份与恢复 (待实现)\n";
+    std::cout << "  7. 数据备份与恢复\n";
     std::cout << "  8. 退出系统\n";
     std::cout << "---------------------------------\n";
     std::cout << "请输入选项: ";
@@ -367,6 +368,41 @@ void handleScheduleManagement(SportsMeet& sm) {
                 break;
             case 2:
                 sm.showSchedule();
+                break;
+            case 3:
+                return;
+            default:
+                std::cout << "无效选项，请重试。\n";
+        }
+    }
+}
+
+void handleBackupAndRestore(SportsMeet& sm) {
+    const std::string filename = "sports_meet.dat";
+    while (true) {
+        std::cout << "\n--- 数据备份与恢复 ---\n";
+        std::cout << "  1. 备份当前数据\n";
+        std::cout << "  2. 从文件恢复数据\n";
+        std::cout << "  3. 返回主菜单\n";
+        std::cout << "-----------------------\n";
+        std::cout << "请输入选项: ";
+
+        int choice;
+        std::cin >> choice;
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "无效输入，请输入数字。\n";
+            continue;
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        switch (choice) {
+            case 1:
+                sm.backupData(filename);
+                break;
+            case 2:
+                sm.restoreData(filename);
                 break;
             case 3:
                 return;
