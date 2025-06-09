@@ -160,6 +160,26 @@ void SportsMeet::showAllEvents() const {
     }
 }
 
+void SportsMeet::showAllAthletes() const {
+    std::cout << "\n--- 所有运动员列表 ---\n";
+    bool foundAny = false;
+    for (const auto& unit : units) {
+        if (!unit->athletes.empty()) {
+            foundAny = true;
+            std::cout << "--- 单位: " << unit->name << " ---\n";
+            for (const auto& athlete : unit->athletes) {
+                std::cout << "  - ID: " << athlete->id
+                          << ", 姓名: " << athlete->name
+                          << ", 性别: " << athlete->gender << "\n";
+            }
+        }
+    }
+
+    if (!foundAny) {
+        std::cout << "系统中没有运动员信息。\n";
+    }
+}
+
 const std::vector<std::unique_ptr<Event>>& SportsMeet::getAllEvents() const {
     return events;
 }
@@ -315,8 +335,64 @@ void SportsMeet::recordAndScoreEvent(Event* event) {
 }
 
 void SportsMeet::processScoresForEvent(const std::string& eventName, const std::string& gender) {
-    // This is a placeholder for a more complex scoring logic
-    // ...
+    Event* event = findEvent(eventName, gender);
+    if (!event) {
+        std::cout << "错误：找不到项目 " << eventName << " (" << gender << ") 以进行计分。\n";
+        return;
+    }
+
+    auto it = eventResults.find(event->name);
+    if (it == eventResults.end() || it->second.empty()) {
+        std::cout << "项目 " << eventName << " 没有成绩记录可供处理。\n";
+        return;
+    }
+
+    std::vector<Result>& results = it->second;
+
+    // 排序
+    bool sortAscending = event->isTimeBased; // 计时项目，成绩越小越好
+    std::sort(results.begin(), results.end(), [sortAscending](const Result& a, const Result& b) {
+        if (sortAscending) {
+            return a.performance < b.performance;
+        } else {
+            return a.performance > b.performance;
+        }
+    });
+
+    // 查找合适的计分规则
+    const ScoringRule* ruleToUse = nullptr;
+    for (const auto& rule : scoringRules) {
+        if (results.size() >= (size_t)rule.minParticipants) {
+            ruleToUse = &rule;
+            break; 
+        }
+    }
+
+    // 分配名次和积分
+    if (ruleToUse) {
+        std::cout << "\n--- 项目 '" << eventName << "' 计分结果 ---\n";
+        int placesToAward = ruleToUse->scores.size();
+        for (int i = 0; i < (int)results.size() && i < placesToAward; ++i) {
+            results[i].rank = i + 1;
+            results[i].points = ruleToUse->scores[i];
+            
+            Athlete* athlete = findAthlete(results[i].athleteId);
+            if (athlete) {
+                athlete->score += results[i].points;
+                Unit* unit = findUnit(athlete->unit->name); // 通过名字找到运动员所在的单位
+                if(unit) {
+                    unit->score += results[i].points;
+                }
+
+                 std::cout << "第 " << results[i].rank << " 名: " 
+                      << athlete->name << " (" << unit->name << ")"
+                      << ", 成绩: " << results[i].performance 
+                      << ", 获得 " << results[i].points << " 分。\n";
+            }
+        }
+    } else {
+        std::cout << "没有适用于 " << results.size() << " 人参赛的计分规则。\n";
+    }
 }
 
 
@@ -324,101 +400,162 @@ void SportsMeet::processScoresForEvent(const std::string& eventName, const std::
 
 /**
  * @brief 生成秩序册
- * @details 使用一个简单的贪心算法来安排所有赛事。
- * 它会遍历所有项目，并为每个项目寻找第一个可用的时间槽和场地。
- * 这个实现是基础的，可能无法为非常复杂的约束找到最优解。
+ * @details 使用一个更复杂的算法来安排所有赛事。
+ * 它会优先安排参与者多的项目，并尝试在每日的上下午时间窗口中均衡地安排赛事。
  */
 void SportsMeet::generateSchedule() {
     schedule.clear(); // 清空现有秩序册
-    const int eventDuration = 60; // 假设所有项目持续60分钟
-    const int timeStep = 30;      // 以30分钟为步长寻找可用时间
+
+    std::vector<Event*> events_to_schedule;
+    for (auto& event_ptr : this->events) {
+        // 只安排有选手报名的、未被取消的项目
+        if (!event_ptr->isCancelled && !event_ptr->registeredAthletes.empty()) {
+            events_to_schedule.push_back(event_ptr.get());
+        }
+    }
+
+    if (events_to_schedule.empty()) {
+        std::cout << "没有需要安排的项目。" << std::endl;
+        return;
+    }
+
+    // 1. 按项目的参赛人数降序排序，优先安排复杂项目
+    std::sort(events_to_schedule.begin(), events_to_schedule.end(), [](const Event* a, const Event* b) {
+        return a->registeredAthletes.size() > b->registeredAthletes.size();
+    });
 
     std::cout << "\n正在生成秩序册...\n";
 
-    for (const auto& event : events) {
-        if (event->isCancelled || event->registeredAthletes.empty()) {
-            continue; // 跳过已取消或无人报名的项目
-        }
+    const int eventDuration = 60; // 假设所有项目持续60分钟
+    const int time_step = 15;     // 以15分钟为步长寻找可用时间
 
-        bool scheduled = false;
+    // 定义比赛时间窗口
+    const std::vector<std::pair<int, int>> time_windows = {
+        {9 * 60, 12 * 60},  // 上午: 09:00 - 12:00
+        {14 * 60, 17 * 60} // 下午: 14:00 - 17:00
+    };
+
+    for (Event* event : events_to_schedule) {
+        long best_score = -1;
+        int best_day = -1;
+        int best_start_time = -1;
+        // 根据项目类型（计时/计分）分配场地
+        std::string venue = event->isTimeBased ? "主田径场" : "副场地";
+
         for (int day = 1; day <= competitionDays; ++day) {
-            for (int time = dailyStartTime; time < dailyEndTime; time += timeStep) {
-                int endTime = time + eventDuration;
-                if (endTime > dailyEndTime) continue; // 超出当天比赛时间
-
-                for (const auto& venue : venues) {
-                    // 检查场地是否可用
-                    if (!schedule.isVenueAvailable(venue, day, time, endTime)) {
-                        continue;
-                    }
-
-                    // 检查所有运动员是否都可用
-                    bool allAthletesAvailable = true;
-                    for (const auto& athleteId : event->registeredAthletes) {
-                        Athlete* athlete = findAthlete(athleteId);
-                        if (!athlete || !schedule.isAthleteAvailable(athlete, day, time, endTime)) {
-                            allAthletesAvailable = false;
-                            break;
+            for (const auto& window : time_windows) {
+                for (int start_time = window.first; start_time <= window.second - eventDuration; start_time += time_step) {
+                    int end_time = start_time + eventDuration;
+                    
+                    // 检查场地和所有运动员是否都可用
+                    bool is_available = schedule.isVenueAvailable(venue, day, start_time, end_time);
+                    if (is_available) {
+                        for (const auto& athleteId : event->registeredAthletes) {
+                            Athlete* athlete = findAthlete(athleteId);
+                            if (!athlete || !schedule.isAthleteAvailable(athlete, day, start_time, end_time)) {
+                                is_available = false;
+                                break;
+                            }
                         }
                     }
 
-                    if (allAthletesAvailable) {
-                        schedule.addSession(day, time, endTime, venue, event.get());
-                        std::cout << "  - 已安排项目: " << event->name << " (" << event->gender << ") 在第 " << day << " 天, "
-                                  << std::setw(2) << std::setfill('0') << time / 60 << ":"
-                                  << std::setw(2) << std::setfill('0') << time % 60 << ", " << venue << "\n";
-                        scheduled = true;
-                        goto next_event; // 使用 goto 跳转到下一个项目的安排
+                    // 如果找到可用时间，则计算一个分数来评估这个时间点的好坏（倾向于靠前和均衡）
+                    if (is_available) {
+                        int morning_events = 0;
+                        int afternoon_events = 0;
+                        for (const auto& session : schedule.getFullSchedule()) {
+                            if (session.day == day) {
+                                if (session.startTime < 13 * 60) morning_events++;
+                                else afternoon_events++;
+                            }
+                        }
+                        if (start_time < 13 * 60) morning_events++;
+                        else afternoon_events++;
+                        
+                        long balance_penalty = std::abs(morning_events - afternoon_events);
+                        long current_score = (long)day * 100000 + balance_penalty * 1000 + start_time;
+
+                        if (best_score == -1 || current_score < best_score) {
+                            best_score = current_score;
+                            best_day = day;
+                            best_start_time = start_time;
+                        }
                     }
                 }
             }
         }
-
-    next_event:
-        if (!scheduled) {
-            std::cout << "  - 警告: 无法为项目 " << event->name << " (" << event->gender << ") 找到合适的时间安排。\n";
+        
+        // 将项目安排在找到的最佳时间
+        if (best_day != -1) {
+            schedule.addSession(best_day, best_start_time, best_start_time + eventDuration, venue, event);
+        } else {
+            std::cout << "警告：项目 " << event->name << " 无法在 " << competitionDays << " 天内找到合适的时间安排！" << std::endl;
         }
     }
-    std::cout << "秩序册生成完毕！\n";
+    std::cout << "秩序册生成完毕！" << std::endl;
 }
 
 /**
  * @brief 显示秩序册
- * @details 从 Schedule 对象获取数据并格式化输出。
+ * @details 从 Schedule 对象获取数据并格式化输出，包含每日详情和参赛者列表。
  */
 void SportsMeet::showSchedule() const {
-    const auto& sessions = schedule.getFullSchedule();
-    if (sessions.empty()) {
+    const auto& full_schedule = schedule.getFullSchedule();
+    if (full_schedule.empty()) {
         std::cout << "\n秩序册为空，请先生成秩序册。\n";
         return;
     }
 
-    std::cout << "\n--- 运动会秩序册 ---\n";
+    // 按天和时间排序
+    auto sorted_schedule = full_schedule;
+    std::sort(sorted_schedule.begin(), sorted_schedule.end(), [](const ScheduledSession& a, const ScheduledSession& b) {
+        if (a.day != b.day) return a.day < b.day;
+        return a.startTime < b.startTime;
+    });
 
-    // 按天分组
-    std::map<int, std::vector<const ScheduledSession*>> sessionsByDay;
-    for (const auto& session : sessions) {
-        sessionsByDay[session.day].push_back(&session);
-    }
-    
-    // 按天和时间排序并打印
-    for (auto const& [day, daySessions] : sessionsByDay) {
-        std::cout << "\n--- 第 " << day << " 天 ---\n";
+    std::cout << "\n======================== 运动会秩序册 ========================\n" << std::endl;
+
+    int current_day = -1;
+    for (const auto& session : sorted_schedule) {
+        if (session.day != current_day) {
+            current_day = session.day;
+            if (current_day > 1) {
+                 std::cout << "-------------------------------------------------------------------\n" << std::endl;
+            }
+            std::cout << "-------------------- 第 " << current_day << " 天 --------------------" << std::endl;
+            std::cout << std::left << std::setw(20) << "时间"
+                      << std::setw(30) << "项目名称"
+                      << std::setw(20) << "场地" << std::endl;
+            std::cout << "-------------------------------------------------------------------\n";
+        }
         
-        // C++17 a bit tricky to sort vector of pointers, create a copy to sort
-        auto sortedSessions = daySessions;
-        std::sort(sortedSessions.begin(), sortedSessions.end(), [](const ScheduledSession* a, const ScheduledSession* b){
-            return a->startTime < b->startTime;
-        });
+        std::stringstream time_ss;
+        time_ss << std::setw(2) << std::setfill('0') << session.startTime / 60 << ":" << std::setw(2) << std::setfill('0') << session.startTime % 60
+                << " - "
+                << std::setw(2) << std::setfill('0') << session.endTime / 60 << ":" << std::setw(2) << std::setfill('0') << session.endTime % 60;
 
-        for (const auto* session : sortedSessions) {
-            std::cout << std::setw(2) << std::setfill('0') << session->startTime / 60 << ":" << std::setw(2) << std::setfill('0') << session->startTime % 60
-                      << " - "
-                      << std::setw(2) << std::setfill('0') << session->endTime / 60 << ":" << std::setw(2) << std::setfill('0') << session->endTime % 60
-                      << " | " << std::setw(10) << std::left << session->venue
-                      << " | " << session->event->name << " (" << session->event->gender << ")\n";
+        std::cout << std::left << std::setw(20) << time_ss.str()
+                  << std::setw(30) << session.event->name + " (" + session.event->gender + ")"
+                  << std::setw(20) << session.venue << std::endl;
+
+        // 新增：显示该项目的所有参赛者
+        const auto& participants = session.event->registeredAthletes;
+        if (!participants.empty()) {
+            std::string time_col_indent(20, ' ');
+            std::string list_indent(24, ' '); 
+
+            std::cout << time_col_indent << "  └ 参赛者:" << std::endl;
+            
+            for (const auto& athleteId : participants) {
+                const Athlete* athlete = findAthlete(athleteId);
+                if (athlete) {
+                     std::cout << list_indent << "- " << athlete->name 
+                               << " (" << athlete->unit->name << ")" << std::endl;
+                }
+            }
         }
     }
+    std::cout << "\n==================================================================\n" << std::endl;
 }
 // ... 其他管理功能待实现 ...
 // void generateSchedule();

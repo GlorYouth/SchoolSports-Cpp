@@ -2,26 +2,16 @@
 #define RESULT_H
 
 #include <string>
-#include <sstream> // For std::stringstream
 
-// 前向声明 Athlete 类以避免循环依赖
-class Athlete;
-
-/**
- * @brief 定义单项比赛的个人成绩
- */
 struct Result {
     std::string athleteId;
-    double performance = 0.0;
+    double performance;
     int rank = 0;
-    int pointsAwarded = 0;
+    int points = 0;
 
-    // Default constructor
+    // Constructors
     Result() = default;
-
-    // Constructor for recording initial performance
-    Result(const std::string& id, double perf) 
-        : athleteId(id), performance(perf), rank(0), pointsAwarded(0) {}
+    Result(std::string id, double perf) : athleteId(id), performance(perf) {}
 };
 
 #endif // RESULT_H 

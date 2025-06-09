@@ -52,6 +52,7 @@ public:
     void recordAndScoreEvent(Event* event); // Changed to take an Event pointer
     void showAllUnits() const; // For debugging/UI
     void showAllEvents() const; // For debugging/UI
+    void showAllAthletes() const; // 新增：显示所有运动员
     const std::vector<std::unique_ptr<Event>>& getAllEvents() const;
     const std::vector<std::unique_ptr<Unit>>& getAllUnits() const;
     

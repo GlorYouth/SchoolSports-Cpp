@@ -4,11 +4,13 @@
 #include <vector>
 
 /**
- * @brief 定义单条计分规则
+ * @brief 定义了一个计分规则
+ * @details 例如：当参赛人数大于等于 minParticipants 时，
+ *          则按照 scores 数组中的分值对前N名进行计分。
  */
 struct ScoringRule {
-    int minParticipants;       // 适用此规则的最低参赛人数
-    std::vector<int> scores; // 按名次顺序排列的得分 (例如: 第1名, 第2名, ...)
+    int minParticipants;       // 规则适用的最少参赛人数
+    std::vector<int> scores; // 从第一名开始的计分列表
 
     /**
      * @brief 默认构造函数，修复vector::resize问题
@@ -20,8 +22,8 @@ struct ScoringRule {
      * @param min_participants 最低参赛人数
      * @param s 得分向量
      */
-    ScoringRule(int min_participants, const std::vector<int>& s)
-        : minParticipants(min_participants), scores(s) {}
+    ScoringRule(int min_participants, std::vector<int> s)
+        : minParticipants(min_participants), scores(std::move(s)) {}
 };
 
 #endif // SCORINGRULE_H 
