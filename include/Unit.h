@@ -9,29 +9,15 @@
 class Athlete;
 
 class Unit {
-private:
-    std::string name;
-    // 使用智能指针管理运动员对象的生命周期
-    std::vector<std::unique_ptr<Athlete>> athletes;
-    int totalScore;
-
 public:
+    std::string name;
+    int score = 0;
+    std::vector<std::unique_ptr<Athlete>> athletes;
+
     Unit(const std::string& name);
 
-    // Getters
-    std::string getName() const;
-    int getTotalScore() const;
-    const std::vector<std::unique_ptr<Athlete>>& getAthletes() const;
-
-    // Setters
-    void setTotalScore(int score);
-
-    // Functions
-    // 添加运动员，返回指向新创建运动员的原始指针以便于操作
-    Athlete* addAthlete(const std::string& name, const std::string& id, bool isMale);
-    void addScore(int score);
-
-    // 根据ID查找运动员
+    void addAthlete(const std::string& athleteId, const std::string& athleteName, const std::string& gender);
+    void addScore(int points);
     Athlete* findAthlete(const std::string& athleteId);
 };
 

@@ -9,6 +9,7 @@
 // 前向声明，避免循环依赖
 class Event;
 class Athlete;
+class SportsMeet;
 
 /**
  * @brief 代表一个具体的、已安排的比赛日程
@@ -30,13 +31,14 @@ struct ScheduledSession {
  */
 class Schedule {
 private:
+    SportsMeet& sm;
     std::vector<ScheduledSession> scheduled_sessions;
     // 使用 <day, vector<pair<start, end>>> 结构记录繁忙时段
     std::map<std::string, std::map<int, std::vector<std::pair<int, int>>>> venue_busy_slots;
     std::map<std::string, std::map<int, std::vector<std::pair<int, int>>>> athlete_busy_slots;
 
 public:
-    Schedule() = default;
+    explicit Schedule(SportsMeet& sportsMeet);
 
     // 添加一个已安排的场次
     void addSession(int day, int startTime, int endTime, const std::string& venue, Event* event);

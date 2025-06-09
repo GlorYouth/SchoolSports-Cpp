@@ -1,64 +1,19 @@
 #include "Event.h"
+#include <algorithm>
 
-Event::Event(const std::string& name, EventType type, GenderCategory gender, int duration, int min, int max)
-    : name(name), type(type), gender(gender), duration(duration), minParticipants(min), maxParticipants(max) {}
+Event::Event(const std::string& name, const std::string& gender, bool isTimeBased)
+    : name(name), gender(gender), isTimeBased(isTimeBased), isCancelled(false) {}
 
-std::string Event::getName() const {
-    return name;
+void Event::addAthlete(const std::string& athleteId) {
+    // Prevent duplicate entries
+    if (std::find(registeredAthletes.begin(), registeredAthletes.end(), athleteId) == registeredAthletes.end()) {
+        registeredAthletes.push_back(athleteId);
+    }
 }
 
-EventType Event::getType() const {
-    return type;
+void Event::removeAthlete(const std::string& athleteId) {
+    auto it = std::remove(registeredAthletes.begin(), registeredAthletes.end(), athleteId);
+    if (it != registeredAthletes.end()) {
+        registeredAthletes.erase(it, registeredAthletes.end());
+    }
 }
-
-GenderCategory Event::getGender() const {
-    return gender;
-}
-
-int Event::getDuration() const {
-    return duration;
-}
-
-int Event::getMinParticipants() const {
-    return minParticipants;
-}
-
-int Event::getMaxParticipants() const {
-    return maxParticipants;
-}
-
-void Event::setDuration(int new_duration) {
-    this->duration = new_duration;
-}
-
-void Event::setMinParticipants(int min) {
-    this->minParticipants = min;
-}
-
-void Event::setMaxParticipants(int max) {
-    this->maxParticipants = max;
-}
-
-void Event::addParticipant(Athlete* athlete) {
-    participants.push_back(athlete);
-}
-
-int Event::getParticipantCount() const {
-    return participants.size();
-}
-
-const std::vector<Athlete*>& Event::getParticipants() const {
-    return participants;
-}
-
-void Event::setResults(const std::vector<Result>& res) {
-    this->results = res;
-}
-
-const std::vector<Result>& Event::getResults() const {
-    return results;
-}
-
-bool Event::hasResults() const {
-    return !results.empty();
-} 
