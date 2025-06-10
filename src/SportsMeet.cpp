@@ -14,6 +14,7 @@
 #include <map>
 #include <sstream>
 #include <limits> // 添加此行以支持 std::numeric_limits
+#include <chrono>
 
 SportsMeet::SportsMeet() : 
     schedule(*this),  // 正确初始化Schedule
@@ -132,6 +133,10 @@ void SportsMeet::addAthleteToUnit(const std::string& unitName, const std::string
     if (unit) {
         unit->addAthlete(athleteId, athleteName, gender);
         std::cout << "运动员 '" << athleteName << "' 已添加到单位 '" << unitName << "'。\n";
+        
+        // 标记查询数据结构需要重新初始化
+        isHashMapInitialized = false;
+        isSortedVectorInitialized = false;
     } else {
         std::cout << "错误: 未找到单位 '" << unitName << "'。\n";
     }
@@ -1160,10 +1165,152 @@ void SportsMeet::restoreData(const std::string& filename) {
     
     // 6. 恢复成绩
     this->eventResults = dataPackage.allEventResults;
+    
+    // 7. 重置查询数据结构状态
+    this->isHashMapInitialized = false;
+    this->isSortedVectorInitialized = false;
 
     std::cout << "数据恢复成功。" << std::endl;
 }
 
 const std::vector<ScoringRule>& SportsMeet::getScoringRules() const {
     return scoringRules;
+}
+
+// 初始化运动员查询数据结构
+void SportsMeet::initializeAthleteSearchStructures() const {
+    // 清空之前的数据
+    athleteHashMap.clear();
+    sortedAthletes.clear();
+    
+    // 收集所有运动员
+    for (const auto& unit : units) {
+        for (const auto& athlete : unit->athletes) {
+            athleteHashMap[athlete->id] = athlete.get();
+            sortedAthletes.emplace_back(athlete->id, athlete.get());
+        }
+    }
+    
+    // 排序以便进行二分查找
+    std::sort(sortedAthletes.begin(), sortedAthletes.end(), 
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+    
+    isHashMapInitialized = true;
+    isSortedVectorInitialized = true;
+}
+
+// 使用哈希表查找运动员
+Athlete* SportsMeet::findAthleteByHash(const std::string& athleteId) const {
+    if (!isHashMapInitialized) {
+        initializeAthleteSearchStructures();
+    }
+    
+    auto it = athleteHashMap.find(athleteId);
+    if (it != athleteHashMap.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+// 使用二分查找运动员
+Athlete* SportsMeet::findAthleteByBinarySearch(const std::string& athleteId) const {
+    if (!isSortedVectorInitialized) {
+        initializeAthleteSearchStructures();
+    }
+    
+    auto it = std::lower_bound(sortedAthletes.begin(), sortedAthletes.end(), athleteId,
+                               [](const auto& pair, const std::string& id) {
+                                   return pair.first < id;
+                               });
+    
+    if (it != sortedAthletes.end() && it->first == athleteId) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+// 运动员查询算法性能比较
+void SportsMeet::compareAthleteSearchAlgorithms() const {
+    if (units.empty()) {
+        std::cout << "没有单位信息，无法进行查询性能比较。\n";
+        return;
+    }
+    
+    // 确保数据结构已初始化
+    initializeAthleteSearchStructures();
+    
+    // 获取所有运动员ID用于测试
+    std::vector<std::string> athleteIds;
+    for (const auto& unit : units) {
+        for (const auto& athlete : unit->athletes) {
+            athleteIds.push_back(athlete->id);
+        }
+    }
+    
+    if (athleteIds.empty()) {
+        std::cout << "没有运动员信息，无法进行查询性能比较。\n";
+        return;
+    }
+    
+    std::cout << "\n=== 运动员查询算法性能比较 ===\n";
+    std::cout << "测试数据规模: " << athleteIds.size() << " 个运动员\n\n";
+    
+    // 线性查找性能测试
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        for (const auto& id : athleteIds) {
+            Athlete* athlete = findAthlete(id);
+            if (!athlete) {
+                std::cout << "错误: 线性查找未找到运动员 " << id << "\n";
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "1. 线性查找 (O(n*m)):\n";
+        std::cout << "   总耗时: " << duration.count() << " 毫秒\n";
+        std::cout << "   平均每次查询: " << duration.count() / athleteIds.size() << " 毫秒\n\n";
+    }
+    
+    // 哈希表查找性能测试
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        for (const auto& id : athleteIds) {
+            Athlete* athlete = findAthleteByHash(id);
+            if (!athlete) {
+                std::cout << "错误: 哈希表查找未找到运动员 " << id << "\n";
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "2. 哈希表查找 (O(1)):\n";
+        std::cout << "   总耗时: " << duration.count() << " 毫秒\n";
+        std::cout << "   平均每次查询: " << duration.count() / athleteIds.size() << " 毫秒\n\n";
+    }
+    
+    // 二分查找性能测试
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        for (const auto& id : athleteIds) {
+            Athlete* athlete = findAthleteByBinarySearch(id);
+            if (!athlete) {
+                std::cout << "错误: 二分查找未找到运动员 " << id << "\n";
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "3. 二分查找 (O(log n)):\n";
+        std::cout << "   总耗时: " << duration.count() << " 毫秒\n";
+        std::cout << "   平均每次查询: " << duration.count() / athleteIds.size() << " 毫秒\n\n";
+    }
+    
+    std::cout << "=== 性能比较结论 ===\n";
+    std::cout << "从理论上分析:\n";
+    std::cout << "- 线性查找: O(n*m) 复杂度，其中n是单位数，m是每个单位的平均运动员数\n";
+    std::cout << "- 哈希表查找: O(1) 期望复杂度，但需要额外空间存储哈希表\n";
+    std::cout << "- 二分查找: O(log n) 复杂度，n是总运动员数，但需要预先排序\n";
+    std::cout << "实际表现见上述测试数据。\n";
+    
+    // 提示数据结构维护的开销
+    std::cout << "\n注意: 哈希表和排序数组需要在数据变更时更新，这会带来额外开销。\n";
+    std::cout << "在大型比赛中，查询次数远多于变更次数时，优化的查找方法优势更为明显。\n";
 }

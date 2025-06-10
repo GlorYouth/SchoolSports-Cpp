@@ -360,7 +360,9 @@ void handleInfoQuery(SportsMeet& sm) {
         std::cout << "  2. 查询特定单位详情\n";
         std::cout << "  3. 查询所有项目\n";
         std::cout << "  4. 查询特定项目详情\n";
-        std::cout << "  5. 返回上级菜单\n";
+        std::cout << "  5. 查询运动员（学号）\n";
+        std::cout << "  6. 运动员查询算法性能比较\n";
+        std::cout << "  7. 返回上级菜单\n";
         std::cout << "--------------------\n";
         std::cout << "请输入选项: ";
         
@@ -389,7 +391,17 @@ void handleInfoQuery(SportsMeet& sm) {
                 }
                 break;
             }
-            case 5:
+            case 5: {
+                std::string athleteId;
+                std::cout << "请输入运动员学号: ";
+                std::getline(std::cin, athleteId);
+                sm.showAthleteResults(athleteId);
+                break;
+            }
+            case 6:
+                sm.compareAthleteSearchAlgorithms();
+                break;
+            case 7:
                 return;
             default:
                 std::cout << "无效选项，请重试。\n";

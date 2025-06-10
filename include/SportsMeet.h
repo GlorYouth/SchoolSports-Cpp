@@ -10,6 +10,9 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <algorithm>
+#include <chrono>
 
 #include <map>
 #include "Result.h"
@@ -32,6 +35,12 @@ private:
     int maxEventsPerAthlete;
     int minParticipantsForCancel;       // 项目取消的最低人数要求
     std::vector<ScoringRule> scoringRules; // 计分规则列表
+    
+    // 用于运动员查找算法优化的内部数据结构
+    mutable std::unordered_map<std::string, Athlete*> athleteHashMap;
+    mutable std::vector<std::pair<std::string, Athlete*>> sortedAthletes;
+    mutable bool isHashMapInitialized = false;
+    mutable bool isSortedVectorInitialized = false;
 
 public:
     Schedule schedule; // 秩序册对象
@@ -83,7 +92,19 @@ public:
     void showEventDetails(const std::string& eventName, Gender gender) const;
     void showUnitResults(const std::string& unitName) const;
     void showAthleteResults(const std::string& athleteId) const;
+    
+    // 运动员查找方法 - 原始线性查找
     Athlete* findAthlete(const std::string& athleteId) const;
+    
+    // 运动员查找算法优化相关方法
+    // 初始化哈希表和排序向量
+    void initializeAthleteSearchStructures() const;
+    // 哈希表查找 - O(1)
+    Athlete* findAthleteByHash(const std::string& athleteId) const;
+    // 二分查找 - O(log n)
+    Athlete* findAthleteByBinarySearch(const std::string& athleteId) const;
+    // 性能比较
+    void compareAthleteSearchAlgorithms() const;
     
     // --- 秩序册 ---
     void generateSchedule();
