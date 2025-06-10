@@ -29,6 +29,7 @@ struct EventData {
     std::string gender;
     bool isTimeBased;
     bool isCancelled;
+    std::string scoringRuleName;
     std::vector<std::string> registeredAthletes;
 };
 

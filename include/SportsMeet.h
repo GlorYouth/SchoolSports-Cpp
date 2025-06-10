@@ -42,10 +42,11 @@ public:
     void addAthleteToUnit(const std::string& unitName, const std::string& athleteId, const std::string& athleteName, const std::string& gender);
     
     // --- 赛事管理 ---
-    void addEvent(const std::string& name, const std::string& gender, bool isTimeBased);
+    void addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule);
     void deleteEvent(const std::string& eventName, const std::string& gender);
     void cancelEvent(const std::string& eventName);
     void manageScoringRules();
+    const std::vector<ScoringRule>& getScoringRules() const;
     
     // --- 核心功能 ---
     void registerAthlete(); // 运动员报名登记

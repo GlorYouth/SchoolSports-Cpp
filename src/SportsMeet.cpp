@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <limits> // 添加此行以支持 std::numeric_limits
 
 SportsMeet::SportsMeet() : schedule(*this), maxEventsPerAthlete(3), minParticipantsForCancel(4) {
     // 初始化排程参数
@@ -23,15 +24,15 @@ SportsMeet::SportsMeet() : schedule(*this), maxEventsPerAthlete(3), minParticipa
     dailyEndTime = 17 * 60;   // 17:00
 
     // 初始化默认计分规则
-    // 规则1: 参赛人数 >= 7, 取前5名
-    scoringRules.emplace_back(7, std::vector<int>{7, 5, 3, 2, 1});
-    // 规则2: 参赛人数 4-6人, 取前3名
-    scoringRules.emplace_back(4, std::vector<int>{5, 3, 2});
+    // 根据要求创建学校运动会计分规则
+    std::vector<SubRule> subRules;
+    // 子规则1: 参赛人数 > 6人，取前5名
+    subRules.emplace_back(7, std::vector<int>{7, 5, 3, 2, 1});
+    // 子规则2: 参赛人数 ≤ 6人，取前3名
+    subRules.emplace_back(4, std::vector<int>{5, 3, 2});
     
-    // 将规则按最少参与人数降序排序，便于查找
-    std::sort(scoringRules.begin(), scoringRules.end(), [](const ScoringRule& a, const ScoringRule& b) {
-        return a.minParticipants > b.minParticipants;
-    });
+    // 创建完整规则，规定最少参赛人数为4
+    scoringRules.emplace_back("标准学校运动会计分规则", 4, subRules);
 }
 
 SportsMeet::~SportsMeet() = default;
@@ -61,12 +62,12 @@ void SportsMeet::addAthleteToUnit(const std::string& unitName, const std::string
     }
 }
 
-void SportsMeet::addEvent(const std::string& name, const std::string& gender, bool isTimeBased) {
+void SportsMeet::addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule) {
     if (findEvent(name, gender)) {
         std::cout << "错误: 项目 '" << name << "' (" << gender << ") 已存在。\n";
         return;
     }
-    events.emplace_back(std::make_unique<Event>(name, gender, isTimeBased));
+    events.emplace_back(std::make_unique<Event>(name, gender, isTimeBased, rule));
     std::cout << "项目 '" << name << "' 添加成功！\n";
 }
 
@@ -133,10 +134,10 @@ void SportsMeet::recordResult(const std::string& eventName, const std::string& e
         return;
     }
 
-    // This is a simplified recording. A full implementation would involve sorting and scoring.
+    // 使用 eventName + "_" + eventGender 作为键，与 processScoresForEvent 保持一致
     Result result(athleteId, performance);
-    eventResults[event->name].push_back(result);
-    std::cout << "已记录 " << athlete->name << " 在项目 '" << event->name << "' 的成绩: " << performance << "\n";
+    eventResults[eventName + "_" + eventGender].push_back(result);
+    std::cout << "已记录 " << athlete->name << " 在项目 '" << eventName << "' 的成绩: " << performance << "\n";
 }
 
 
@@ -162,6 +163,7 @@ void SportsMeet::showAllEvents() const {
                   << events[i]->name
                   << " (" << events[i]->gender << ")"
                   << (events[i]->isTimeBased ? " [计时赛]" : " [计分赛]")
+                  << " [计分规则: " << events[i]->scoringRule.ruleName << "]"
                   << (events[i]->isCancelled ? " [已取消]" : "")
                   << "\n";
     }
@@ -279,7 +281,7 @@ void SportsMeet::showEventDetails(const std::string& eventName, const std::strin
     }
 
     // 新增：显示比赛结果
-    auto it = eventResults.find(event->name);
+    auto it = eventResults.find(event->name + "_" + event->gender);
     if (it != eventResults.end() && !it->second.empty()) {
         std::cout << "\n  比赛结果:\n";
         std::cout << "    " << std::left << std::setw(8) << "名次"
@@ -384,7 +386,103 @@ void SportsMeet::cancelEvent(const std::string& eventName) {
 }
 
 void SportsMeet::manageScoringRules() {
-    // This functionality needs to be fully implemented.
+    while (true) {
+        std::cout << "\n--- 计分规则管理 ---\n";
+        std::cout << "  1. 查看所有计分规则\n";
+        std::cout << "  2. 添加新计分规则\n";
+        std::cout << "  3. 返回上级菜单\n";
+        std::cout << "-----------------------\n";
+        std::cout << "请输入选项: ";
+        
+        int choice;
+        std::cin >> choice;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        if (choice == 1) {
+            std::cout << "\n--- 当前计分规则 ---\n";
+            for (size_t i = 0; i < scoringRules.size(); ++i) {
+                const auto& rule = scoringRules[i];
+                std::cout << i + 1 << ". " << rule.ruleName 
+                          << " (最少参赛人数: " << rule.minParticipantsRequired << ")\n";
+                
+                for (size_t j = 0; j < rule.subRules.size(); ++j) {
+                    const auto& subRule = rule.subRules[j];
+                    std::cout << "   子规则 " << j + 1 << ": 参赛人数 >= " 
+                              << subRule.minParticipants << " 时\n";
+                    std::cout << "     计分: ";
+                    for (int score : subRule.scores) {
+                        std::cout << score << " ";
+                    }
+                    std::cout << "\n";
+                }
+            }
+        } else if (choice == 2) {
+            std::string ruleName;
+            int minParticipantsRequired;
+            
+            std::cout << "请输入规则名称: ";
+            std::getline(std::cin, ruleName);
+            
+            std::cout << "请输入举办比赛的最少参赛人数: ";
+            std::cin >> minParticipantsRequired;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            std::vector<SubRule> subRules;
+            while (true) {
+                std::cout << "\n--- 添加子规则 ---\n";
+                std::cout << "  1. 添加子规则\n";
+                std::cout << "  2. 完成子规则添加\n";
+                std::cout << "-----------------\n";
+                std::cout << "请输入选项: ";
+                
+                int subChoice;
+                std::cin >> subChoice;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                
+                if (subChoice == 1) {
+                    int minParticipants;
+                    std::string scoresStr;
+                    
+                    std::cout << "请输入子规则适用的最少参赛人数: ";
+                    std::cin >> minParticipants;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    
+                    std::cout << "请输入计分列表 (用空格分隔, 例如 7 5 3 2 1): ";
+                    std::getline(std::cin, scoresStr);
+                    
+                    std::vector<int> scores;
+                    std::stringstream ss(scoresStr);
+                    int score;
+                    while(ss >> score) {
+                        scores.push_back(score);
+                    }
+                    
+                    subRules.emplace_back(minParticipants, std::move(scores));
+                    std::cout << "子规则已添加。\n";
+                } else if (subChoice == 2) {
+                    break;
+                } else {
+                    std::cout << "无效选项。\n";
+                }
+            }
+            
+            if (!subRules.empty()) {
+                // 按照最少参赛人数降序排序子规则
+                std::sort(subRules.begin(), subRules.end(), [](const SubRule& a, const SubRule& b) {
+                    return a.minParticipants > b.minParticipants;
+                });
+                
+                scoringRules.emplace_back(ruleName, minParticipantsRequired, std::move(subRules));
+                std::cout << "新计分规则已添加。\n";
+            } else {
+                std::cout << "未添加任何子规则，计分规则创建失败。\n";
+            }
+        } else if (choice == 3) {
+            break;
+        } else {
+            std::cout << "无效选项。\n";
+        }
+    }
 }
 
 void SportsMeet::recordAndScoreEvent(Event* event) {
@@ -419,64 +517,92 @@ void SportsMeet::recordAndScoreEvent(Event* event) {
 }
 
 void SportsMeet::processScoresForEvent(const std::string& eventName, const std::string& gender) {
+    // 找到项目
     Event* event = findEvent(eventName, gender);
     if (!event) {
-        std::cout << "错误：找不到项目 " << eventName << " (" << gender << ") 以进行计分。\n";
+        std::cout << "错误: 未找到要处理的项目。\n";
         return;
     }
-
-    auto it = eventResults.find(event->name);
-    if (it == eventResults.end() || it->second.empty()) {
-        std::cout << "项目 " << eventName << " 没有成绩记录可供处理。\n";
+    
+    // 获取该项目的所有结果
+    auto resultsIt = eventResults.find(event->name + "_" + event->gender);
+    if (resultsIt == eventResults.end() || resultsIt->second.empty()) {
+        std::cout << "该项目还没有记录成绩。\n";
         return;
     }
-
-    std::vector<Result>& results = it->second;
-
-    // 排序
-    bool sortAscending = event->isTimeBased; // 计时项目，成绩越小越好
-    std::sort(results.begin(), results.end(), [sortAscending](const Result& a, const Result& b) {
-        if (sortAscending) {
+    
+    // 复制比赛结果以进行排序
+    std::vector<Result> results = resultsIt->second;
+    
+    // 按照成绩排序 (计时赛和计分赛的排序方向相反)
+    if (event->isTimeBased) {
+        // 计时赛，小的成绩更好
+        std::sort(results.begin(), results.end(), [](const Result& a, const Result& b) {
             return a.performance < b.performance;
-        } else {
-            return a.performance > b.performance;
-        }
-    });
-
-    // 查找合适的计分规则
-    const ScoringRule* ruleToUse = nullptr;
-    for (const auto& rule : scoringRules) {
-        if (results.size() >= (size_t)rule.minParticipants) {
-            ruleToUse = &rule;
-            break; 
-        }
-    }
-
-    // 分配名次和积分
-    if (ruleToUse) {
-        std::cout << "\n--- 项目 '" << eventName << "' 计分结果 ---\n";
-        int placesToAward = ruleToUse->scores.size();
-        for (int i = 0; i < (int)results.size() && i < placesToAward; ++i) {
-            results[i].rank = i + 1;
-            results[i].points = ruleToUse->scores[i];
-            
-            Athlete* athlete = findAthlete(results[i].athleteId);
-            if (athlete) {
-                athlete->score += results[i].points;
-                Unit* unit = findUnit(athlete->unit->name); // 通过名字找到运动员所在的单位
-                if(unit) {
-                    unit->score += results[i].points;
-                }
-
-                 std::cout << "第 " << results[i].rank << " 名: " 
-                      << athlete->name << " (" << unit->name << ")"
-                      << ", 成绩: " << results[i].performance 
-                      << ", 获得 " << results[i].points << " 分。\n";
-            }
-        }
+        });
     } else {
-        std::cout << "没有适用于 " << results.size() << " 人参赛的计分规则。\n";
+        // 计分赛，大的成绩更好
+        std::sort(results.begin(), results.end(), [](const Result& a, const Result& b) {
+            return a.performance > b.performance;
+        });
     }
+    
+    // 确定适用的计分规则
+    if (results.size() < (size_t)minParticipantsForCancel) {
+        std::cout << "项目 '" << eventName << "' 参赛人数不足，该项目被取消。\n";
+        event->isCancelled = true;
+        return;
+    }
+    
+    // 获取绑定的计分规则
+    const ScoringRule& rule = event->scoringRule;
+    
+    // 获取基于参赛人数的适用子规则
+    const SubRule* subRule = rule.getSubRuleForParticipants(results.size());
+    
+    if (!subRule) {
+        std::cout << "无法为项目 '" << eventName << "' 找到适用的计分规则，参赛人数： " 
+                  << results.size() << "\n";
+        return;
+    }
+    
+    std::cout << "\n--- 项目 '" << eventName << "' 计分结果 ---\n";
+    std::cout << "使用规则：" << rule.ruleName << "\n";
+    std::cout << "参赛人数：" << results.size() << "\n";
+    
+    // 计分人数不能超过参赛人数或计分表的长度
+    int placesToAward = std::min(static_cast<size_t>(subRule->scores.size()), results.size());
+    
+    for (int i = 0; i < placesToAward; ++i) {
+        results[i].rank = i + 1;
+        results[i].points = subRule->scores[i];
+        
+        Athlete* athlete = findAthlete(results[i].athleteId);
+        if (athlete) {
+            athlete->score += results[i].points;
+            
+            // 找到运动员所属单位并计分
+            for (auto& unit : units) {
+                auto athlete_it = std::find_if(unit->athletes.begin(), unit->athletes.end(),
+                    [&](const std::unique_ptr<Athlete>& a) { 
+                        return a->id == results[i].athleteId; 
+                    });
+                
+                if (athlete_it != unit->athletes.end()) {
+                    unit->score += results[i].points;
+                    break;
+                }
+            }
+            
+            std::cout << results[i].rank << ". " 
+                      << athlete->name << ": " 
+                      << results[i].performance << ", 得分: " 
+                      << results[i].points << "\n";
+        }
+    }
+    
+    // 更新事件结果
+    resultsIt->second = results;
 }
 
 
@@ -489,6 +615,14 @@ void SportsMeet::processScoresForEvent(const std::string& eventName, const std::
  */
 void SportsMeet::generateSchedule() {
     schedule.clear(); // 清空现有秩序册
+
+    // 首先检查所有项目的报名人数，标记参赛人数不足的项目为已取消
+    for (auto& event_ptr : this->events) {
+        if (!event_ptr->isCancelled && event_ptr->registeredAthletes.size() < (size_t)minParticipantsForCancel) {
+            std::cout << "项目 '" << event_ptr->name << " (" << event_ptr->gender << ")' 参赛人数不足，该项目被取消。\n";
+            event_ptr->isCancelled = true;
+        }
+    }
 
     std::vector<Event*> events_to_schedule;
     for (auto& event_ptr : this->events) {
@@ -676,8 +810,18 @@ void write_map(std::ofstream& ofs, const std::map<K, V>& m, FuncV write_value) {
 
 // --- 各种数据结构的写入函数 ---
 void write_scoring_rule(std::ofstream& ofs, const ScoringRule& rule) {
-    write_binary(ofs, rule.minParticipants);
-    write_vector(ofs, rule.scores, [](std::ofstream& out, int score){ write_binary(out, score); });
+    write_binary(ofs, rule.ruleName);
+    write_binary(ofs, rule.minParticipantsRequired);
+    
+    // 写入子规则数量
+    size_t subRulesCount = rule.subRules.size();
+    write_binary(ofs, subRulesCount);
+    
+    // 写入每个子规则
+    for (const auto& subRule : rule.subRules) {
+        write_binary(ofs, subRule.minParticipants);
+        write_vector(ofs, subRule.scores, [](std::ofstream& out, int score){ write_binary(out, score); });
+    }
 }
 void write_athlete_data(std::ofstream& ofs, const AthleteData& data) {
     write_binary(ofs, data.id);
@@ -696,7 +840,8 @@ void write_event_data(std::ofstream& ofs, const EventData& data) {
     write_binary(ofs, data.gender);
     write_binary(ofs, data.isTimeBased);
     write_binary(ofs, data.isCancelled);
-    write_vector(ofs, data.registeredAthletes, [](std::ofstream& out, const std::string& s){ write_binary(out, s); });
+    write_binary(ofs, data.scoringRuleName);
+    write_vector(ofs, data.registeredAthletes, [](std::ofstream& out, const std::string& str){ write_binary(out, str); });
 }
 void write_result(std::ofstream& ofs, const Result& result) {
     write_binary(ofs, result.athleteId);
@@ -743,8 +888,23 @@ void read_map(std::ifstream& ifs, std::map<K, V>& m, FuncV read_value) {
 
 // --- 各种数据结构的读取函数 ---
 void read_scoring_rule(std::ifstream& ifs, ScoringRule& rule) {
-    read_binary(ifs, rule.minParticipants);
-    read_vector(ifs, rule.scores, [](std::ifstream& in, int& score){ read_binary(in, score); });
+    read_binary(ifs, rule.ruleName);
+    read_binary(ifs, rule.minParticipantsRequired);
+    
+    // 读取子规则数量
+    size_t subRulesCount;
+    read_binary(ifs, subRulesCount);
+    
+    rule.subRules.clear();
+    rule.subRules.reserve(subRulesCount);
+    
+    // 读取每个子规则
+    for (size_t i = 0; i < subRulesCount; ++i) {
+        SubRule subRule;
+        read_binary(ifs, subRule.minParticipants);
+        read_vector(ifs, subRule.scores, [](std::ifstream& in, int& score){ read_binary(in, score); });
+        rule.subRules.push_back(std::move(subRule));
+    }
 }
 void read_athlete_data(std::ifstream& ifs, AthleteData& data) {
     read_binary(ifs, data.id);
@@ -763,7 +923,8 @@ void read_event_data(std::ifstream& ifs, EventData& data) {
     read_binary(ifs, data.gender);
     read_binary(ifs, data.isTimeBased);
     read_binary(ifs, data.isCancelled);
-    read_vector(ifs, data.registeredAthletes, [](std::ifstream& in, std::string& s){ read_binary(in, s); });
+    read_binary(ifs, data.scoringRuleName);
+    read_vector(ifs, data.registeredAthletes, [](std::ifstream& in, std::string& str){ read_binary(in, str); });
 }
 void read_result(std::ifstream& ifs, Result& result) {
     read_binary(ifs, result.athleteId);
@@ -806,6 +967,7 @@ void SportsMeet::backupData(const std::string& filename) const {
         eventData.gender = event_ptr->gender;
         eventData.isTimeBased = event_ptr->isTimeBased;
         eventData.isCancelled = event_ptr->isCancelled;
+        eventData.scoringRuleName = event_ptr->scoringRule.ruleName;
         eventData.registeredAthletes = event_ptr->registeredAthletes;
         dataPackage.allEvents.push_back(eventData);
     }
@@ -885,15 +1047,38 @@ void SportsMeet::restoreData(const std::string& filename) {
     }
 
     // 5. 重建项目
-    for (const auto& eventData : dataPackage.allEvents) {
-        auto newEvent = std::make_unique<Event>(eventData.name, eventData.gender, eventData.isTimeBased);
-        newEvent->isCancelled = eventData.isCancelled;
-        newEvent->registeredAthletes = eventData.registeredAthletes;
-        this->events.push_back(std::move(newEvent));
+    for (const auto& event_data : dataPackage.allEvents) {
+        // 在恢复时，需要根据名称找到计分规则
+        auto it = std::find_if(scoringRules.begin(), scoringRules.end(),
+                               [&](const ScoringRule& rule){ return rule.ruleName == event_data.scoringRuleName; });
+        
+        if (it != scoringRules.end()) {
+            auto event = std::make_unique<Event>(event_data.name, event_data.gender, event_data.isTimeBased, *it);
+            event->isCancelled = event_data.isCancelled;
+            event->registeredAthletes = event_data.registeredAthletes;
+            this->events.push_back(std::move(event));
+        } else {
+            // 如果找不到匹配的规则，可以使用一个默认规则或抛出错误
+            // 这里我们使用第一个可用的规则作为后备
+            if (!scoringRules.empty()) {
+                std::cerr << "警告: 未找到计分规则 '" << event_data.scoringRuleName << "'。为项目 '"
+                          << event_data.name << "' 使用默认规则。\n";
+                auto event = std::make_unique<Event>(event_data.name, event_data.gender, event_data.isTimeBased, scoringRules.front());
+                event->isCancelled = event_data.isCancelled;
+                event->registeredAthletes = event_data.registeredAthletes;
+                this->events.push_back(std::move(event));
+            } else {
+                std::cerr << "错误: 无法恢复项目 '" << event_data.name << "' 因为没有可用的计分规则。\n";
+            }
+        }
     }
     
     // 6. 恢复成绩
     this->eventResults = dataPackage.allEventResults;
 
     std::cout << "数据恢复成功。" << std::endl;
+}
+
+const std::vector<ScoringRule>& SportsMeet::getScoringRules() const {
+    return scoringRules;
 }

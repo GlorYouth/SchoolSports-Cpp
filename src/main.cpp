@@ -28,6 +28,7 @@ void handleResultsManagement(SportsMeet& sm);
 void handleInfoQuery(SportsMeet& sm);
 void handleScheduleManagement(SportsMeet& sm);
 void handleBackupAndRestore(SportsMeet& sm);
+void handleScoringRuleManagement(SportsMeet& sm);
 void loadSampleData(SportsMeet& sm);
 
 Event* selectEvent(SportsMeet& sm);
@@ -80,6 +81,9 @@ int main() {
                 handleBackupAndRestore(sm);
                 break;
             case 8:
+                handleScoringRuleManagement(sm);
+                break;
+            case 9:
                 std::cout << "感谢使用，再见！\n";
                 return 0;
             default:
@@ -99,7 +103,8 @@ void showMainMenu() {
     std::cout << "  5. 信息查询\n";
     std::cout << "  6. 秩序册管理\n";
     std::cout << "  7. 数据备份与恢复\n";
-    std::cout << "  8. 退出系统\n";
+    std::cout << "  8. 计分规则管理\n";
+    std::cout << "  9. 退出系统\n";
     std::cout << "---------------------------------\n";
     std::cout << "请输入选项: ";
 }
@@ -180,7 +185,30 @@ void handleEventManagement(SportsMeet& sm) {
                 std::cout << "是计时赛吗? (1 表示是, 0 表示否): ";
                 std::cin >> isTimeBasedChoice;
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                sm.addEvent(name, gender, isTimeBasedChoice == 1);
+
+                // 选择计分规则
+                const auto& rules = sm.getScoringRules();
+                if (rules.empty()) {
+                    std::cout << "错误：系统中没有可用的计分规则。请先添加计分规则。\n";
+                    break;
+                }
+                
+                std::cout << "\n--- 请选择计分规则 ---\n";
+                for (size_t i = 0; i < rules.size(); ++i) {
+                    std::cout << "  " << i + 1 << ". " << rules[i].ruleName << "\n";
+                }
+                std::cout << "------------------------\n";
+                std::cout << "请输入选项: ";
+                int ruleChoice;
+                std::cin >> ruleChoice;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                if (ruleChoice < 1 || ruleChoice > rules.size()) {
+                    std::cout << "无效的计分规则选项。\n";
+                    break;
+                }
+
+                sm.addEvent(name, gender, isTimeBasedChoice == 1, rules[ruleChoice - 1]);
                 break;
             }
             case 2: {
@@ -378,38 +406,43 @@ void handleScheduleManagement(SportsMeet& sm) {
 }
 
 void handleBackupAndRestore(SportsMeet& sm) {
-    const std::string filename = "sports_meet.dat";
-    while (true) {
+    while(true) {
         std::cout << "\n--- 数据备份与恢复 ---\n";
-        std::cout << "  1. 备份当前数据\n";
+        std::cout << "  1. 备份数据到文件\n";
         std::cout << "  2. 从文件恢复数据\n";
-        std::cout << "  3. 返回主菜单\n";
+        std::cout << "  3. 返回上级菜单\n";
         std::cout << "-----------------------\n";
         std::cout << "请输入选项: ";
-
+        
         int choice;
         std::cin >> choice;
-        if (std::cin.fail()) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "无效输入，请输入数字。\n";
-            continue;
-        }
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         switch (choice) {
-            case 1:
+            case 1: {
+                std::string filename;
+                std::cout << "请输入备份文件名 (例如 sports_meet.dat): ";
+                std::getline(std::cin, filename);
                 sm.backupData(filename);
                 break;
-            case 2:
+            }
+            case 2: {
+                std::string filename;
+                std::cout << "请输入恢复文件名 (例如 sports_meet.dat): ";
+                std::getline(std::cin, filename);
                 sm.restoreData(filename);
                 break;
+            }
             case 3:
                 return;
             default:
                 std::cout << "无效选项，请重试。\n";
         }
     }
+}
+
+void handleScoringRuleManagement(SportsMeet& sm) {
+    sm.manageScoringRules();
 }
 
 Event* selectEvent(SportsMeet& sm) {
@@ -478,14 +511,23 @@ void loadSampleData(SportsMeet& sm) {
     sm.addUnit("理学院");
 
     // 2. 添加项目 (名称, 性别, 是否为计时赛)
-    sm.addEvent("男子100米", "男", true);
-    sm.addEvent("男子1500米", "男", true);
-    sm.addEvent("男子跳高", "男", false);
-    sm.addEvent("男子铅球", "男", false);
-    sm.addEvent("女子100米", "女", true);
-    sm.addEvent("女子800米", "女", true);
-    sm.addEvent("女子跳远", "女", false);
-    sm.addEvent("女子400米", "女", true);
+    const auto& rules = sm.getScoringRules();
+    if (rules.empty()) {
+        std::cout << "无法加载示例项目，因为没有计分规则！\n";
+        return;
+    }
+    
+    // 使用第一个可用的规则
+    const ScoringRule& defaultRule = rules[0];
+    
+    sm.addEvent("男子100米", "男", true, defaultRule);
+    sm.addEvent("男子1500米", "男", true, defaultRule);
+    sm.addEvent("男子跳高", "男", false, defaultRule);
+    sm.addEvent("男子铅球", "男", false, defaultRule);
+    sm.addEvent("女子100米", "女", true, defaultRule);
+    sm.addEvent("女子800米", "女", true, defaultRule);
+    sm.addEvent("女子跳远", "女", false, defaultRule);
+    sm.addEvent("女子400米", "女", true, defaultRule);
 
     // 3. 注册运动员并报名
     // 计算机学院

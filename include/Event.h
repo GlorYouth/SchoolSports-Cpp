@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "ScoringRule.h"
 
 class Event {
 public:
@@ -11,8 +12,9 @@ public:
     bool isTimeBased; // true for track, false for field
     std::vector<std::string> registeredAthletes;
     bool isCancelled = false;
+    ScoringRule scoringRule;
 
-    Event(const std::string& name, const std::string& gender, bool isTimeBased);
+    Event(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule);
 
     void addAthlete(const std::string& athleteId);
     void removeAthlete(const std::string& athleteId);
