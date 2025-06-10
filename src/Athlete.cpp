@@ -2,7 +2,7 @@
 #include "Event.h"
 #include <algorithm>
 
-Athlete::Athlete(const std::string& name, const std::string& id, const std::string& gender, Unit* unit)
+Athlete::Athlete(const std::string& name, const std::string& id, Gender gender, Unit* unit)
     : name(name), id(id), gender(gender), unit(unit) {}
 
 bool Athlete::canRegister(int maxEvents) const {

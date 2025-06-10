@@ -6,6 +6,7 @@
 #include "Athlete.h"
 #include "ScoringRule.h"
 #include "Schedule.h" // 包含 Schedule 头文件
+#include "Gender.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -40,9 +41,11 @@ public:
 
     // --- 系统设置功能 ---
     void setMaxEventsPerAthlete(int max);
+    void setCompetitionDays(int days);                     // 新增：设置比赛天数
     void setMorningTimeWindow(int startHour, int startMinute, int endHour, int endMinute);
     void setAfternoonTimeWindow(int startHour, int startMinute, int endHour, int endMinute);
     int getMaxEventsPerAthlete() const { return maxEventsPerAthlete; }
+    int getCompetitionDays() const { return competitionDays; }  // 新增：获取比赛天数
     int getMorningStartHour() const { return morningStartTime / 60; }
     int getMorningStartMinute() const { return morningStartTime % 60; }
     int getMorningEndHour() const { return morningEndTime / 60; }
@@ -53,11 +56,11 @@ public:
     int getAfternoonEndMinute() const { return afternoonEndTime % 60; }
     
     void addUnit(const std::string& unitName);
-    void addAthleteToUnit(const std::string& unitName, const std::string& athleteId, const std::string& athleteName, const std::string& gender);
+    void addAthleteToUnit(const std::string& unitName, const std::string& athleteId, const std::string& athleteName, Gender gender);
     
     // --- 赛事管理 ---
-    void addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule, int durationMinutes);
-    void deleteEvent(const std::string& eventName, const std::string& gender);
+    void addEvent(const std::string& name, Gender gender, bool isTimeBased, const ScoringRule& rule, int durationMinutes);
+    void deleteEvent(const std::string& eventName, Gender gender);
     void cancelEvent(const std::string& eventName);
     void manageScoringRules();
     const std::vector<ScoringRule>& getScoringRules() const;
@@ -74,10 +77,10 @@ public:
     // --- 查询功能 ---
     Unit* findUnit(const std::string& unitName);
     const Unit* findUnit(const std::string& unitName) const;
-    Event* findEvent(const std::string& eventName, const std::string& gender);
-    const Event* findEvent(const std::string& eventName, const std::string& gender) const;
+    Event* findEvent(const std::string& eventName, Gender gender);
+    const Event* findEvent(const std::string& eventName, Gender gender) const;
     void showUnitDetails(const std::string& unitName) const;
-    void showEventDetails(const std::string& eventName, const std::string& gender) const;
+    void showEventDetails(const std::string& eventName, Gender gender) const;
     void showUnitResults(const std::string& unitName) const;
     void showAthleteResults(const std::string& athleteId) const;
     Athlete* findAthlete(const std::string& athleteId) const;
@@ -91,11 +94,11 @@ public:
     void restoreData(const std::string& filename);
     
     // --- 报名管理 ---
-    void registerAthleteForEvent(const std::string& athleteId, const std::string& eventName, const std::string& eventGender);
+    void registerAthleteForEvent(const std::string& athleteId, const std::string& eventName, Gender eventGender);
 
     // --- 成绩与排名 ---
-    void recordResult(const std::string& eventName, const std::string& eventGender, const std::string& athleteId, double performance);
-    void processScoresForEvent(const std::string& eventName, const std::string& gender);
+    void recordResult(const std::string& eventName, Gender eventGender, const std::string& athleteId, double performance);
+    void processScoresForEvent(const std::string& eventName, Gender gender);
 
     // ... 其他管理功能待实现 ...
     // void generateSchedule();

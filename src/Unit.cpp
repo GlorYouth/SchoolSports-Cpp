@@ -4,7 +4,7 @@
 
 Unit::Unit(const std::string& name) : name(name), score(0) {}
 
-void Unit::addAthlete(const std::string& athleteId, const std::string& athleteName, const std::string& gender) {
+void Unit::addAthlete(const std::string& athleteId, const std::string& athleteName, Gender gender) {
     athletes.emplace_back(std::make_unique<Athlete>(athleteName, athleteId, gender, this));
 }
 

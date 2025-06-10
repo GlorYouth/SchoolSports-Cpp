@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "Gender.h"
 
 // 前向声明以避免循环依赖
 class Athlete;
@@ -16,7 +17,7 @@ public:
 
     Unit(const std::string& name);
 
-    void addAthlete(const std::string& athleteId, const std::string& athleteName, const std::string& gender);
+    void addAthlete(const std::string& athleteId, const std::string& athleteName, Gender gender);
     void addScore(int points);
     Athlete* findAthlete(const std::string& athleteId);
 };

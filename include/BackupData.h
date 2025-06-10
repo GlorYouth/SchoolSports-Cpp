@@ -6,12 +6,13 @@
 #include <map>
 #include "ScoringRule.h"
 #include "Result.h"
+#include "Gender.h"
 
 // 用于序列化的运动员数据结构
 struct AthleteData {
     std::string id;
     std::string name;
-    std::string gender;
+    Gender gender;
     double score;
     std::vector<std::string> registeredEvents;
 };
@@ -26,7 +27,7 @@ struct UnitData {
 // 用于序列化的项目数据结构
 struct EventData {
     std::string name;
-    std::string gender;
+    Gender gender;
     bool isTimeBased;
     bool isCancelled;
     std::string scoringRuleName;
@@ -38,6 +39,7 @@ struct EventData {
 struct BackupData {
     int maxEventsPerAthlete;
     int minParticipantsForCancel;
+    int competitionDays;       // 比赛天数
     int morningStartTime;
     int morningEndTime;
     int afternoonStartTime;
