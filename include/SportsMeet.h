@@ -22,8 +22,10 @@ private:
     // 排程参数
     std::vector<std::string> venues; // 可用场地列表
     int competitionDays;             // 比赛总天数
-    int dailyStartTime;              // 每日开始时间 (分钟)
-    int dailyEndTime;                // 每日结束时间 (分钟)
+    int morningStartTime;            // 上午比赛开始时间 (分钟)
+    int morningEndTime;              // 上午比赛结束时间 (分钟)
+    int afternoonStartTime;          // 下午比赛开始时间 (分钟)
+    int afternoonEndTime;            // 下午比赛结束时间 (分钟)
 
     // 系统设置
     int maxEventsPerAthlete;
@@ -38,6 +40,18 @@ public:
 
     // --- 系统设置功能 ---
     void setMaxEventsPerAthlete(int max);
+    void setMorningTimeWindow(int startHour, int startMinute, int endHour, int endMinute);
+    void setAfternoonTimeWindow(int startHour, int startMinute, int endHour, int endMinute);
+    int getMaxEventsPerAthlete() const { return maxEventsPerAthlete; }
+    int getMorningStartHour() const { return morningStartTime / 60; }
+    int getMorningStartMinute() const { return morningStartTime % 60; }
+    int getMorningEndHour() const { return morningEndTime / 60; }
+    int getMorningEndMinute() const { return morningEndTime % 60; }
+    int getAfternoonStartHour() const { return afternoonStartTime / 60; }
+    int getAfternoonStartMinute() const { return afternoonStartTime % 60; }
+    int getAfternoonEndHour() const { return afternoonEndTime / 60; }
+    int getAfternoonEndMinute() const { return afternoonEndTime % 60; }
+    
     void addUnit(const std::string& unitName);
     void addAthleteToUnit(const std::string& unitName, const std::string& athleteId, const std::string& athleteName, const std::string& gender);
     

@@ -37,6 +37,10 @@ struct EventData {
 struct BackupData {
     int maxEventsPerAthlete;
     int minParticipantsForCancel;
+    int morningStartTime;
+    int morningEndTime;
+    int afternoonStartTime;
+    int afternoonEndTime;
     std::vector<ScoringRule> allScoringRules;
     std::vector<UnitData> allUnits;
     std::vector<EventData> allEvents;

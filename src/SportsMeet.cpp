@@ -20,8 +20,10 @@ SportsMeet::SportsMeet() : schedule(*this), maxEventsPerAthlete(3), minParticipa
     // 初始化排程参数
     venues = {"主田径场", "跳远沙坑", "铅球区"};
     competitionDays = 2;
-    dailyStartTime = 9 * 60; // 09:00
-    dailyEndTime = 17 * 60;   // 17:00
+    morningStartTime = 9 * 60;     // 09:00
+    morningEndTime = 12 * 60;      // 12:00
+    afternoonStartTime = 14 * 60;  // 14:00
+    afternoonEndTime = 17 * 60;    // 17:00
 
     // 初始化默认计分规则
     // 根据要求创建学校运动会计分规则
@@ -40,7 +42,78 @@ SportsMeet::~SportsMeet() = default;
 void SportsMeet::setMaxEventsPerAthlete(int max) {
     if (max > 0) {
         maxEventsPerAthlete = max;
+        std::cout << "运动员参赛项目数量限制已设置为 " << max << " 个项目。\n";
+    } else {
+        std::cout << "错误：参赛项目数量限制必须大于0。\n";
     }
+}
+
+void SportsMeet::setMorningTimeWindow(int startHour, int startMinute, int endHour, int endMinute) {
+    // 检查时间格式有效性
+    if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59 ||
+        endHour < 0 || endHour > 23 || endMinute < 0 || endMinute > 59) {
+        std::cout << "错误：时间格式无效。小时必须在0-23之间，分钟必须在0-59之间。\n";
+        return;
+    }
+    
+    // 检查开始时间是否早于结束时间
+    int newStartTime = startHour * 60 + startMinute;
+    int newEndTime = endHour * 60 + endMinute;
+    
+    if (newStartTime >= newEndTime) {
+        std::cout << "错误：上午开始时间必须早于结束时间。\n";
+        return;
+    }
+    
+    // 检查上午时间是否与下午时间重叠
+    if (newEndTime > afternoonStartTime) {
+        std::cout << "错误：上午结束时间不能晚于下午开始时间 (" 
+                  << afternoonStartTime / 60 << ":" 
+                  << std::setw(2) << std::setfill('0') << afternoonStartTime % 60 << ")。\n";
+        return;
+    }
+    
+    morningStartTime = newStartTime;
+    morningEndTime = newEndTime;
+    
+    std::cout << "上午比赛时间窗口已设置为 " 
+              << startHour << ":" << std::setw(2) << std::setfill('0') << startMinute 
+              << " - " 
+              << endHour << ":" << std::setw(2) << std::setfill('0') << endMinute << "\n";
+}
+
+void SportsMeet::setAfternoonTimeWindow(int startHour, int startMinute, int endHour, int endMinute) {
+    // 检查时间格式有效性
+    if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59 ||
+        endHour < 0 || endHour > 23 || endMinute < 0 || endMinute > 59) {
+        std::cout << "错误：时间格式无效。小时必须在0-23之间，分钟必须在0-59之间。\n";
+        return;
+    }
+    
+    // 检查开始时间是否早于结束时间
+    int newStartTime = startHour * 60 + startMinute;
+    int newEndTime = endHour * 60 + endMinute;
+    
+    if (newStartTime >= newEndTime) {
+        std::cout << "错误：下午开始时间必须早于结束时间。\n";
+        return;
+    }
+    
+    // 检查下午时间是否与上午时间重叠
+    if (newStartTime < morningEndTime) {
+        std::cout << "错误：下午开始时间不能早于上午结束时间 (" 
+                  << morningEndTime / 60 << ":" 
+                  << std::setw(2) << std::setfill('0') << morningEndTime % 60 << ")。\n";
+        return;
+    }
+    
+    afternoonStartTime = newStartTime;
+    afternoonEndTime = newEndTime;
+    
+    std::cout << "下午比赛时间窗口已设置为 " 
+              << startHour << ":" << std::setw(2) << std::setfill('0') << startMinute 
+              << " - " 
+              << endHour << ":" << std::setw(2) << std::setfill('0') << endMinute << "\n";
 }
 
 void SportsMeet::addUnit(const std::string& unitName) {
@@ -647,10 +720,10 @@ void SportsMeet::generateSchedule() {
     const int eventDuration = 60; // 假设所有项目持续60分钟
     const int time_step = 15;     // 以15分钟为步长寻找可用时间
 
-    // 定义比赛时间窗口
+    // 使用实例中的时间窗口设置
     const std::vector<std::pair<int, int>> time_windows = {
-        {9 * 60, 12 * 60},  // 上午: 09:00 - 12:00
-        {14 * 60, 17 * 60} // 下午: 14:00 - 17:00
+        {morningStartTime, morningEndTime},      // 上午时间窗口
+        {afternoonStartTime, afternoonEndTime}  // 下午时间窗口
     };
 
     for (Event* event : events_to_schedule) {
@@ -941,6 +1014,10 @@ void SportsMeet::backupData(const std::string& filename) const {
     // 1. 填充系统设置
     dataPackage.maxEventsPerAthlete = this->maxEventsPerAthlete;
     dataPackage.minParticipantsForCancel = this->minParticipantsForCancel;
+    dataPackage.morningStartTime = this->morningStartTime;
+    dataPackage.morningEndTime = this->morningEndTime;
+    dataPackage.afternoonStartTime = this->afternoonStartTime;
+    dataPackage.afternoonEndTime = this->afternoonEndTime;
     dataPackage.allScoringRules = this->scoringRules;
 
     // 2. 填充单位和运动员数据
@@ -984,6 +1061,10 @@ void SportsMeet::backupData(const std::string& filename) const {
 
     write_binary(ofs, dataPackage.maxEventsPerAthlete);
     write_binary(ofs, dataPackage.minParticipantsForCancel);
+    write_binary(ofs, dataPackage.morningStartTime);
+    write_binary(ofs, dataPackage.morningEndTime);
+    write_binary(ofs, dataPackage.afternoonStartTime);
+    write_binary(ofs, dataPackage.afternoonEndTime);
     write_vector(ofs, dataPackage.allScoringRules, write_scoring_rule);
     write_vector(ofs, dataPackage.allUnits, write_unit_data);
     write_vector(ofs, dataPackage.allEvents, write_event_data);
@@ -1010,6 +1091,10 @@ void SportsMeet::restoreData(const std::string& filename) {
     // 1. 从文件读取数据
     read_binary(ifs, dataPackage.maxEventsPerAthlete);
     read_binary(ifs, dataPackage.minParticipantsForCancel);
+    read_binary(ifs, dataPackage.morningStartTime);
+    read_binary(ifs, dataPackage.morningEndTime);
+    read_binary(ifs, dataPackage.afternoonStartTime);
+    read_binary(ifs, dataPackage.afternoonEndTime);
     read_vector(ifs, dataPackage.allScoringRules, read_scoring_rule);
     read_vector(ifs, dataPackage.allUnits, read_unit_data);
     read_vector(ifs, dataPackage.allEvents, read_event_data);
@@ -1029,6 +1114,10 @@ void SportsMeet::restoreData(const std::string& filename) {
     // 3. 恢复设置
     this->maxEventsPerAthlete = dataPackage.maxEventsPerAthlete;
     this->minParticipantsForCancel = dataPackage.minParticipantsForCancel;
+    this->morningStartTime = dataPackage.morningStartTime;
+    this->morningEndTime = dataPackage.morningEndTime;
+    this->afternoonStartTime = dataPackage.afternoonStartTime;
+    this->afternoonEndTime = dataPackage.afternoonEndTime;
     this->scoringRules = dataPackage.allScoringRules;
 
     // 4. 重建单位和运动员

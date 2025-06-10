@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <iomanip>
 #include "SportsMeet.h"
 #include "Unit.h"
 #include "Event.h"
@@ -29,6 +30,7 @@ void handleInfoQuery(SportsMeet& sm);
 void handleScheduleManagement(SportsMeet& sm);
 void handleBackupAndRestore(SportsMeet& sm);
 void handleScoringRuleManagement(SportsMeet& sm);
+void handleSystemSettings(SportsMeet& sm);
 void loadSampleData(SportsMeet& sm);
 
 Event* selectEvent(SportsMeet& sm);
@@ -84,6 +86,9 @@ int main() {
                 handleScoringRuleManagement(sm);
                 break;
             case 9:
+                handleSystemSettings(sm);
+                break;
+            case 10:
                 std::cout << "感谢使用，再见！\n";
                 return 0;
             default:
@@ -104,7 +109,8 @@ void showMainMenu() {
     std::cout << "  6. 秩序册管理\n";
     std::cout << "  7. 数据备份与恢复\n";
     std::cout << "  8. 计分规则管理\n";
-    std::cout << "  9. 退出系统\n";
+    std::cout << "  9. 系统设置\n";
+    std::cout << "  10. 退出系统\n";
     std::cout << "---------------------------------\n";
     std::cout << "请输入选项: ";
 }
@@ -443,6 +449,124 @@ void handleBackupAndRestore(SportsMeet& sm) {
 
 void handleScoringRuleManagement(SportsMeet& sm) {
     sm.manageScoringRules();
+}
+
+void handleSystemSettings(SportsMeet& sm) {
+    while (true) {
+        std::cout << "\n--- 系统设置 ---\n";
+        std::cout << "  1. 修改运动员参赛项目数目限制\n";
+        std::cout << "  2. 修改上午比赛时间段\n";
+        std::cout << "  3. 修改下午比赛时间段\n";
+        std::cout << "  4. 查看当前系统设置\n";
+        std::cout << "  5. 返回上级菜单\n";
+        std::cout << "-----------------\n";
+        std::cout << "请输入选项: ";
+        
+        int choice;
+        if(!(std::cin >> choice)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "无效输入，请输入数字。\n";
+            continue;
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        
+        switch (choice) {
+            case 1: {
+                std::cout << "当前运动员参赛项目数目限制: " << sm.getMaxEventsPerAthlete() << "\n";
+                std::cout << "请输入新的运动员参赛项目数目限制: ";
+                int max;
+                if(!(std::cin >> max)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "无效输入，请输入数字。\n";
+                    break;
+                }
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                sm.setMaxEventsPerAthlete(max);
+                break;
+            }
+            case 2: {
+                std::cout << "当前上午比赛时间段: " 
+                          << sm.getMorningStartHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getMorningStartMinute()
+                          << " - " 
+                          << sm.getMorningEndHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getMorningEndMinute() << "\n";
+                
+                int startHour, startMinute, endHour, endMinute;
+                std::cout << "请输入新的上午开始时间（小时 分钟，用空格分隔）: ";
+                if(!(std::cin >> startHour >> startMinute)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "无效输入，请输入数字。\n";
+                    break;
+                }
+                
+                std::cout << "请输入新的上午结束时间（小时 分钟，用空格分隔）: ";
+                if(!(std::cin >> endHour >> endMinute)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "无效输入，请输入数字。\n";
+                    break;
+                }
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                
+                sm.setMorningTimeWindow(startHour, startMinute, endHour, endMinute);
+                break;
+            }
+            case 3: {
+                std::cout << "当前下午比赛时间段: " 
+                          << sm.getAfternoonStartHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getAfternoonStartMinute() 
+                          << " - " 
+                          << sm.getAfternoonEndHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getAfternoonEndMinute() << "\n";
+                
+                int startHour, startMinute, endHour, endMinute;
+                std::cout << "请输入新的下午开始时间（小时 分钟，用空格分隔）: ";
+                if(!(std::cin >> startHour >> startMinute)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "无效输入，请输入数字。\n";
+                    break;
+                }
+                
+                std::cout << "请输入新的下午结束时间（小时 分钟，用空格分隔）: ";
+                if(!(std::cin >> endHour >> endMinute)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "无效输入，请输入数字。\n";
+                    break;
+                }
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                
+                sm.setAfternoonTimeWindow(startHour, startMinute, endHour, endMinute);
+                break;
+            }
+            case 4: {
+                std::cout << "\n--- 当前系统设置 ---\n";
+                std::cout << "运动员参赛项目数目限制: " << sm.getMaxEventsPerAthlete() << "\n";
+                std::cout << "上午比赛时间段: " 
+                          << sm.getMorningStartHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getMorningStartMinute()
+                          << " - " 
+                          << sm.getMorningEndHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getMorningEndMinute() << "\n";
+                std::cout << "下午比赛时间段: " 
+                          << sm.getAfternoonStartHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getAfternoonStartMinute() 
+                          << " - " 
+                          << sm.getAfternoonEndHour() << ":" 
+                          << std::setw(2) << std::setfill('0') << sm.getAfternoonEndMinute() << "\n";
+                break;
+            }
+            case 5:
+                return;
+            default:
+                std::cout << "无效选项，请重试。\n";
+        }
+    }
 }
 
 Event* selectEvent(SportsMeet& sm) {
