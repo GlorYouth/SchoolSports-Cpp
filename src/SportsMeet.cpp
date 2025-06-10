@@ -135,12 +135,12 @@ void SportsMeet::addAthleteToUnit(const std::string& unitName, const std::string
     }
 }
 
-void SportsMeet::addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule) {
+void SportsMeet::addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule, int durationMinutes) {
     if (findEvent(name, gender)) {
         std::cout << "错误: 项目 '" << name << "' (" << gender << ") 已存在。\n";
         return;
     }
-    events.emplace_back(std::make_unique<Event>(name, gender, isTimeBased, rule));
+    events.emplace_back(std::make_unique<Event>(name, gender, isTimeBased, rule, durationMinutes));
     std::cout << "项目 '" << name << "' 添加成功！\n";
 }
 
@@ -237,6 +237,7 @@ void SportsMeet::showAllEvents() const {
                   << " (" << events[i]->gender << ")"
                   << (events[i]->isTimeBased ? " [计时赛]" : " [计分赛]")
                   << " [计分规则: " << events[i]->scoringRule.ruleName << "]"
+                  << " [持续时间: " << events[i]->durationMinutes << "分钟]"
                   << (events[i]->isCancelled ? " [已取消]" : "")
                   << "\n";
     }
@@ -340,6 +341,7 @@ void SportsMeet::showEventDetails(const std::string& eventName, const std::strin
     std::cout << "\n--- 项目详情: " << event->name << " ---\n";
     std::cout << "  性别要求: " << event->gender << "\n";
     std::cout << "  类型: " << (event->isTimeBased ? "径赛 (时间越短越好)" : "田赛 (数值越高越好)") << "\n";
+    std::cout << "  持续时间: " << event->durationMinutes << " 分钟\n";
     std::cout << "  状态: " << (event->isCancelled ? "已取消" : "正常") << "\n";
     std::cout << "  已报名运动员 (" << event->registeredAthletes.size() << "人):\n";
     if (event->registeredAthletes.empty()) {
@@ -717,7 +719,6 @@ void SportsMeet::generateSchedule() {
 
     std::cout << "\n正在生成秩序册...\n";
 
-    const int eventDuration = 60; // 假设所有项目持续60分钟
     const int time_step = 15;     // 以15分钟为步长寻找可用时间
 
     // 使用实例中的时间窗口设置
@@ -735,8 +736,8 @@ void SportsMeet::generateSchedule() {
 
         for (int day = 1; day <= competitionDays; ++day) {
             for (const auto& window : time_windows) {
-                for (int start_time = window.first; start_time <= window.second - eventDuration; start_time += time_step) {
-                    int end_time = start_time + eventDuration;
+                for (int start_time = window.first; start_time <= window.second - event->durationMinutes; start_time += time_step) {
+                    int end_time = start_time + event->durationMinutes;
                     
                     // 检查场地和所有运动员是否都可用
                     bool is_available = schedule.isVenueAvailable(venue, day, start_time, end_time);
@@ -778,7 +779,7 @@ void SportsMeet::generateSchedule() {
         
         // 将项目安排在找到的最佳时间
         if (best_day != -1) {
-            schedule.addSession(best_day, best_start_time, best_start_time + eventDuration, venue, event);
+            schedule.addSession(best_day, best_start_time, best_start_time + event->durationMinutes, venue, event);
         } else {
             std::cout << "警告：项目 " << event->name << " 无法在 " << competitionDays << " 天内找到合适的时间安排！" << std::endl;
         }
@@ -914,6 +915,7 @@ void write_event_data(std::ofstream& ofs, const EventData& data) {
     write_binary(ofs, data.isTimeBased);
     write_binary(ofs, data.isCancelled);
     write_binary(ofs, data.scoringRuleName);
+    write_binary(ofs, data.durationMinutes);
     write_vector(ofs, data.registeredAthletes, [](std::ofstream& out, const std::string& str){ write_binary(out, str); });
 }
 void write_result(std::ofstream& ofs, const Result& result) {
@@ -997,6 +999,7 @@ void read_event_data(std::ifstream& ifs, EventData& data) {
     read_binary(ifs, data.isTimeBased);
     read_binary(ifs, data.isCancelled);
     read_binary(ifs, data.scoringRuleName);
+    read_binary(ifs, data.durationMinutes);
     read_vector(ifs, data.registeredAthletes, [](std::ifstream& in, std::string& str){ read_binary(in, str); });
 }
 void read_result(std::ifstream& ifs, Result& result) {
@@ -1045,6 +1048,7 @@ void SportsMeet::backupData(const std::string& filename) const {
         eventData.isTimeBased = event_ptr->isTimeBased;
         eventData.isCancelled = event_ptr->isCancelled;
         eventData.scoringRuleName = event_ptr->scoringRule.ruleName;
+        eventData.durationMinutes = event_ptr->durationMinutes;
         eventData.registeredAthletes = event_ptr->registeredAthletes;
         dataPackage.allEvents.push_back(eventData);
     }
@@ -1142,7 +1146,7 @@ void SportsMeet::restoreData(const std::string& filename) {
                                [&](const ScoringRule& rule){ return rule.ruleName == event_data.scoringRuleName; });
         
         if (it != scoringRules.end()) {
-            auto event = std::make_unique<Event>(event_data.name, event_data.gender, event_data.isTimeBased, *it);
+            auto event = std::make_unique<Event>(event_data.name, event_data.gender, event_data.isTimeBased, *it, event_data.durationMinutes);
             event->isCancelled = event_data.isCancelled;
             event->registeredAthletes = event_data.registeredAthletes;
             this->events.push_back(std::move(event));
@@ -1152,7 +1156,7 @@ void SportsMeet::restoreData(const std::string& filename) {
             if (!scoringRules.empty()) {
                 std::cerr << "警告: 未找到计分规则 '" << event_data.scoringRuleName << "'。为项目 '"
                           << event_data.name << "' 使用默认规则。\n";
-                auto event = std::make_unique<Event>(event_data.name, event_data.gender, event_data.isTimeBased, scoringRules.front());
+                auto event = std::make_unique<Event>(event_data.name, event_data.gender, event_data.isTimeBased, scoringRules.front(), event_data.durationMinutes);
                 event->isCancelled = event_data.isCancelled;
                 event->registeredAthletes = event_data.registeredAthletes;
                 this->events.push_back(std::move(event));

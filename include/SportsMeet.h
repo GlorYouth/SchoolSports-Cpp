@@ -56,7 +56,7 @@ public:
     void addAthleteToUnit(const std::string& unitName, const std::string& athleteId, const std::string& athleteName, const std::string& gender);
     
     // --- 赛事管理 ---
-    void addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule);
+    void addEvent(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule, int durationMinutes);
     void deleteEvent(const std::string& eventName, const std::string& gender);
     void cancelEvent(const std::string& eventName);
     void manageScoringRules();

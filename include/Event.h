@@ -13,8 +13,9 @@ public:
     std::vector<std::string> registeredAthletes;
     bool isCancelled = false;
     ScoringRule scoringRule;
+    int durationMinutes; // 添加表示持续时间的成员变量（分钟）
 
-    Event(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule);
+    Event(const std::string& name, const std::string& gender, bool isTimeBased, const ScoringRule& rule, int durationMinutes);
 
     void addAthlete(const std::string& athleteId);
     void removeAthlete(const std::string& athleteId);

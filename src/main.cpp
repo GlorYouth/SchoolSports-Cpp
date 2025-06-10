@@ -214,7 +214,18 @@ void handleEventManagement(SportsMeet& sm) {
                     break;
                 }
 
-                sm.addEvent(name, gender, isTimeBasedChoice == 1, rules[ruleChoice - 1]);
+                // 输入项目持续时间
+                int durationMinutes;
+                std::cout << "请输入项目持续时间(分钟): ";
+                std::cin >> durationMinutes;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                
+                if (durationMinutes <= 0) {
+                    std::cout << "错误: 持续时间必须为正数。\n";
+                    break;
+                }
+
+                sm.addEvent(name, gender, isTimeBasedChoice == 1, rules[ruleChoice - 1], durationMinutes);
                 break;
             }
             case 2: {
@@ -644,14 +655,14 @@ void loadSampleData(SportsMeet& sm) {
     // 使用第一个可用的规则
     const ScoringRule& defaultRule = rules[0];
     
-    sm.addEvent("男子100米", "男", true, defaultRule);
-    sm.addEvent("男子1500米", "男", true, defaultRule);
-    sm.addEvent("男子跳高", "男", false, defaultRule);
-    sm.addEvent("男子铅球", "男", false, defaultRule);
-    sm.addEvent("女子100米", "女", true, defaultRule);
-    sm.addEvent("女子800米", "女", true, defaultRule);
-    sm.addEvent("女子跳远", "女", false, defaultRule);
-    sm.addEvent("女子400米", "女", true, defaultRule);
+    sm.addEvent("男子100米", "男", true, defaultRule, 30);     // 短跑项目大约需要30分钟
+    sm.addEvent("男子1500米", "男", true, defaultRule, 45);    // 中长跑需要更多时间
+    sm.addEvent("男子跳高", "男", false, defaultRule, 60);     // 田赛项目通常需要更长时间
+    sm.addEvent("男子铅球", "男", false, defaultRule, 60);
+    sm.addEvent("女子100米", "女", true, defaultRule, 30);
+    sm.addEvent("女子800米", "女", true, defaultRule, 40);
+    sm.addEvent("女子跳远", "女", false, defaultRule, 60);
+    sm.addEvent("女子400米", "女", true, defaultRule, 35);
 
     // 3. 注册运动员并报名
     // 计算机学院

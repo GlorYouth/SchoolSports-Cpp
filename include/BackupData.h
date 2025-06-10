@@ -31,6 +31,7 @@ struct EventData {
     bool isCancelled;
     std::string scoringRuleName;
     std::vector<std::string> registeredAthletes;
+    int durationMinutes;
 };
 
 // 用于序列化的总数据包
