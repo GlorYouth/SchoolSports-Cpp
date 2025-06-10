@@ -655,6 +655,7 @@ void loadSampleData(SportsMeet& sm) {
     // 使用第一个可用的规则
     const ScoringRule& defaultRule = rules[0];
     
+    // 已有项目
     sm.addEvent("男子100米", "男", true, defaultRule, 30);     // 短跑项目大约需要30分钟
     sm.addEvent("男子1500米", "男", true, defaultRule, 45);    // 中长跑需要更多时间
     sm.addEvent("男子跳高", "男", false, defaultRule, 60);     // 田赛项目通常需要更长时间
@@ -663,6 +664,21 @@ void loadSampleData(SportsMeet& sm) {
     sm.addEvent("女子800米", "女", true, defaultRule, 40);
     sm.addEvent("女子跳远", "女", false, defaultRule, 60);
     sm.addEvent("女子400米", "女", true, defaultRule, 35);
+    
+    // 添加新项目
+    sm.addEvent("男子200米", "男", true, defaultRule, 30);     // 短跑
+    sm.addEvent("男子400米", "男", true, defaultRule, 35);     // 中短跑
+    sm.addEvent("男子跳远", "男", false, defaultRule, 60);     // 田赛
+    sm.addEvent("男子三级跳远", "男", false, defaultRule, 70); // 田赛
+    sm.addEvent("男子标枪", "男", false, defaultRule, 65);     // 田赛
+    sm.addEvent("男子4x100米接力", "男", true, defaultRule, 40); // 接力赛
+    
+    sm.addEvent("女子200米", "女", true, defaultRule, 30);     // 短跑
+    sm.addEvent("女子1500米", "女", true, defaultRule, 45);    // 中长跑
+    sm.addEvent("女子铅球", "女", false, defaultRule, 60);     // 田赛
+    sm.addEvent("女子三级跳远", "女", false, defaultRule, 70); // 田赛
+    sm.addEvent("女子标枪", "女", false, defaultRule, 65);     // 田赛
+    sm.addEvent("女子4x100米接力", "女", true, defaultRule, 40); // 接力赛
 
     // 3. 注册运动员并报名
     // 计算机学院
@@ -707,6 +723,39 @@ void loadSampleData(SportsMeet& sm) {
     sm.addAthleteToUnit("计算机学院", "CS104", "蒋一四", "女");
     sm.registerAthleteForEvent("CS104", "女子400米", "女");
 
+    // 计算机学院 - 添加新的运动员及其报名项目
+    sm.addAthleteToUnit("计算机学院", "CS009", "徐一五", "男");
+    sm.registerAthleteForEvent("CS009", "男子200米", "男");
+    sm.registerAthleteForEvent("CS009", "男子跳远", "男");
+
+    sm.addAthleteToUnit("计算机学院", "CS010", "丁一六", "男");
+    sm.registerAthleteForEvent("CS010", "男子400米", "男");
+    sm.registerAthleteForEvent("CS010", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("计算机学院", "CS011", "方一七", "男");
+    sm.registerAthleteForEvent("CS011", "男子三级跳远", "男");
+    sm.registerAthleteForEvent("CS011", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("计算机学院", "CS012", "倪一八", "男");
+    sm.registerAthleteForEvent("CS012", "男子标枪", "男");
+    sm.registerAthleteForEvent("CS012", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("计算机学院", "CS105", "江一九", "女");
+    sm.registerAthleteForEvent("CS105", "女子200米", "女");
+    sm.registerAthleteForEvent("CS105", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("计算机学院", "CS106", "董二十", "女");
+    sm.registerAthleteForEvent("CS106", "女子1500米", "女");
+    sm.registerAthleteForEvent("CS106", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("计算机学院", "CS107", "程二一", "女");
+    sm.registerAthleteForEvent("CS107", "女子铅球", "女");
+    sm.registerAthleteForEvent("CS107", "女子标枪", "女");
+
+    sm.addAthleteToUnit("计算机学院", "CS108", "牛二二", "女");
+    sm.registerAthleteForEvent("CS108", "女子三级跳远", "女");
+    sm.registerAthleteForEvent("CS108", "女子4x100米接力", "女");
+
     // 外国语学院
     sm.addAthleteToUnit("外国语学院", "FL001", "冯A", "男");
     sm.registerAthleteForEvent("FL001", "男子100米", "男");
@@ -729,6 +778,39 @@ void loadSampleData(SportsMeet& sm) {
     sm.addAthleteToUnit("外国语学院", "FL104", "沈F", "女");
     sm.registerAthleteForEvent("FL104", "女子800米", "女");
     
+    // 外国语学院 - 添加新的运动员及其报名项目
+    sm.addAthleteToUnit("外国语学院", "FL003", "马T", "男");
+    sm.registerAthleteForEvent("FL003", "男子200米", "男");
+    sm.registerAthleteForEvent("FL003", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("外国语学院", "FL004", "孙U", "男");
+    sm.registerAthleteForEvent("FL004", "男子400米", "男");
+    sm.registerAthleteForEvent("FL004", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("外国语学院", "FL005", "黄V", "男");
+    sm.registerAthleteForEvent("FL005", "男子跳远", "男");
+    sm.registerAthleteForEvent("FL005", "男子三级跳远", "男");
+
+    sm.addAthleteToUnit("外国语学院", "FL006", "石W", "男");
+    sm.registerAthleteForEvent("FL006", "男子标枪", "男");
+    sm.registerAthleteForEvent("FL006", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("外国语学院", "FL105", "章X", "女");
+    sm.registerAthleteForEvent("FL105", "女子200米", "女");
+    sm.registerAthleteForEvent("FL105", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("外国语学院", "FL106", "郝Y", "女");
+    sm.registerAthleteForEvent("FL106", "女子1500米", "女");
+    sm.registerAthleteForEvent("FL106", "女子铅球", "女");
+
+    sm.addAthleteToUnit("外国语学院", "FL107", "邓Z", "女");
+    sm.registerAthleteForEvent("FL107", "女子三级跳远", "女");
+    sm.registerAthleteForEvent("FL107", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("外国语学院", "FL108", "袁AA", "女");
+    sm.registerAthleteForEvent("FL108", "女子标枪", "女");
+    sm.registerAthleteForEvent("FL108", "女子4x100米接力", "女");
+
     // 机械工程学院
     sm.addAthleteToUnit("机械工程学院", "ME001", "韩G", "男");
     sm.registerAthleteForEvent("ME001", "男子1500米", "男");
@@ -752,6 +834,39 @@ void loadSampleData(SportsMeet& sm) {
     sm.addAthleteToUnit("机械工程学院", "ME102", "许L", "女");
     sm.registerAthleteForEvent("ME102", "女子跳远", "女");
     
+    // 机械工程学院 - 添加新的运动员及其报名项目
+    sm.addAthleteToUnit("机械工程学院", "ME006", "高BB", "男");
+    sm.registerAthleteForEvent("ME006", "男子200米", "男");
+    sm.registerAthleteForEvent("ME006", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("机械工程学院", "ME007", "谢CC", "男");
+    sm.registerAthleteForEvent("ME007", "男子400米", "男");
+    sm.registerAthleteForEvent("ME007", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("机械工程学院", "ME008", "赖DD", "男");
+    sm.registerAthleteForEvent("ME008", "男子跳远", "男");
+    sm.registerAthleteForEvent("ME008", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("机械工程学院", "ME009", "曾EE", "男");
+    sm.registerAthleteForEvent("ME009", "男子三级跳远", "男");
+    sm.registerAthleteForEvent("ME009", "男子标枪", "男");
+
+    sm.addAthleteToUnit("机械工程学院", "ME103", "毛FF", "女");
+    sm.registerAthleteForEvent("ME103", "女子200米", "女");
+    sm.registerAthleteForEvent("ME103", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("机械工程学院", "ME104", "韦GG", "女");
+    sm.registerAthleteForEvent("ME104", "女子1500米", "女");
+    sm.registerAthleteForEvent("ME104", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("机械工程学院", "ME105", "傅HH", "女");
+    sm.registerAthleteForEvent("ME105", "女子铅球", "女");
+    sm.registerAthleteForEvent("ME105", "女子标枪", "女");
+
+    sm.addAthleteToUnit("机械工程学院", "ME106", "常II", "女");
+    sm.registerAthleteForEvent("ME106", "女子三级跳远", "女");
+    sm.registerAthleteForEvent("ME106", "女子4x100米接力", "女");
+
     // 理学院
     sm.addAthleteToUnit("理学院", "SCI001", "何M", "男");
     sm.registerAthleteForEvent("SCI001", "男子跳高", "男");
@@ -777,6 +892,39 @@ void loadSampleData(SportsMeet& sm) {
     sm.addAthleteToUnit("理学院", "SCI104", "严S", "女");
     sm.registerAthleteForEvent("SCI104", "女子400米", "女");
     
+    // 理学院 - 添加新的运动员及其报名项目
+    sm.addAthleteToUnit("理学院", "SCI005", "乐JJ", "男");
+    sm.registerAthleteForEvent("SCI005", "男子200米", "男");
+    sm.registerAthleteForEvent("SCI005", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("理学院", "SCI006", "熊KK", "男");
+    sm.registerAthleteForEvent("SCI006", "男子400米", "男");
+    sm.registerAthleteForEvent("SCI006", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("理学院", "SCI007", "贺LL", "男");
+    sm.registerAthleteForEvent("SCI007", "男子跳远", "男");
+    sm.registerAthleteForEvent("SCI007", "男子三级跳远", "男");
+
+    sm.addAthleteToUnit("理学院", "SCI008", "龙MM", "男");
+    sm.registerAthleteForEvent("SCI008", "男子标枪", "男");
+    sm.registerAthleteForEvent("SCI008", "男子4x100米接力", "男");
+
+    sm.addAthleteToUnit("理学院", "SCI105", "阮NN", "女");
+    sm.registerAthleteForEvent("SCI105", "女子200米", "女");
+    sm.registerAthleteForEvent("SCI105", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("理学院", "SCI106", "雷OO", "女");
+    sm.registerAthleteForEvent("SCI106", "女子1500米", "女");
+    sm.registerAthleteForEvent("SCI106", "女子4x100米接力", "女");
+
+    sm.addAthleteToUnit("理学院", "SCI107", "夏PP", "女");
+    sm.registerAthleteForEvent("SCI107", "女子铅球", "女");
+    sm.registerAthleteForEvent("SCI107", "女子标枪", "女");
+
+    sm.addAthleteToUnit("理学院", "SCI108", "侯QQ", "女");
+    sm.registerAthleteForEvent("SCI108", "女子三级跳远", "女");
+    sm.registerAthleteForEvent("SCI108", "女子4x100米接力", "女");
+
     // 4. 为所有项目记录成绩并计分
     std::cout << "\n正在录入和处理成绩...\n";
 
@@ -845,6 +993,92 @@ void loadSampleData(SportsMeet& sm) {
     sm.recordResult("女子400米", "女", "SCI103", 61.2);
     sm.recordResult("女子400米", "女", "SCI104", 60.9);
     sm.processScoresForEvent("女子400米", "女");
+    
+    // --- 新增项目成绩 ---
+    
+    // --- 男子200米 ---
+    sm.recordResult("男子200米", "男", "CS009", 22.3);
+    sm.recordResult("男子200米", "男", "FL003", 22.1);
+    sm.recordResult("男子200米", "男", "ME006", 22.5);
+    sm.recordResult("男子200米", "男", "SCI005", 22.0);
+    sm.processScoresForEvent("男子200米", "男");
+    
+    // --- 男子400米 ---
+    sm.recordResult("男子400米", "男", "CS010", 50.2);
+    sm.recordResult("男子400米", "男", "FL004", 49.8);
+    sm.recordResult("男子400米", "男", "ME007", 50.5);
+    sm.recordResult("男子400米", "男", "SCI006", 49.4);
+    sm.processScoresForEvent("男子400米", "男");
+    
+    // --- 男子跳远 ---
+    sm.recordResult("男子跳远", "男", "CS009", 7.10);
+    sm.recordResult("男子跳远", "男", "FL005", 7.25);
+    sm.recordResult("男子跳远", "男", "ME008", 7.15);
+    sm.recordResult("男子跳远", "男", "SCI007", 7.20);
+    sm.processScoresForEvent("男子跳远", "男");
+    
+    // --- 男子三级跳远 ---
+    sm.recordResult("男子三级跳远", "男", "CS011", 15.30);
+    sm.recordResult("男子三级跳远", "男", "FL005", 15.45);
+    sm.recordResult("男子三级跳远", "男", "ME009", 15.20);
+    sm.recordResult("男子三级跳远", "男", "SCI007", 15.35);
+    sm.processScoresForEvent("男子三级跳远", "男");
+    
+    // --- 男子标枪 ---
+    sm.recordResult("男子标枪", "男", "CS012", 65.8);
+    sm.recordResult("男子标枪", "男", "FL006", 67.2);
+    sm.recordResult("男子标枪", "男", "ME009", 64.5);
+    sm.recordResult("男子标枪", "男", "SCI008", 66.3);
+    sm.processScoresForEvent("男子标枪", "男");
+    
+    // --- 男子4x100米接力 ---
+    sm.recordResult("男子4x100米接力", "男", "CS010", 42.3);  // 使用一个队员ID代表整个团队
+    sm.recordResult("男子4x100米接力", "男", "FL003", 42.1);
+    sm.recordResult("男子4x100米接力", "男", "ME006", 42.7);
+    sm.recordResult("男子4x100米接力", "男", "SCI005", 41.9);
+    sm.processScoresForEvent("男子4x100米接力", "男");
+    
+    // --- 女子200米 ---
+    sm.recordResult("女子200米", "女", "CS105", 24.8);
+    sm.recordResult("女子200米", "女", "FL105", 24.5);
+    sm.recordResult("女子200米", "女", "ME103", 24.9);
+    sm.recordResult("女子200米", "女", "SCI105", 24.4);
+    sm.processScoresForEvent("女子200米", "女");
+    
+    // --- 女子1500米 ---
+    sm.recordResult("女子1500米", "女", "CS106", 285.3);  // 4:45.3
+    sm.recordResult("女子1500米", "女", "FL106", 283.1);  // 4:43.1
+    sm.recordResult("女子1500米", "女", "ME104", 284.5);  // 4:44.5
+    sm.recordResult("女子1500米", "女", "SCI106", 282.8); // 4:42.8
+    sm.processScoresForEvent("女子1500米", "女");
+    
+    // --- 女子铅球 ---
+    sm.recordResult("女子铅球", "女", "CS107", 14.2);
+    sm.recordResult("女子铅球", "女", "FL106", 14.5);
+    sm.recordResult("女子铅球", "女", "ME105", 14.8);
+    sm.recordResult("女子铅球", "女", "SCI107", 13.9);
+    sm.processScoresForEvent("女子铅球", "女");
+    
+    // --- 女子三级跳远 ---
+    sm.recordResult("女子三级跳远", "女", "CS108", 13.5);
+    sm.recordResult("女子三级跳远", "女", "FL107", 13.8);
+    sm.recordResult("女子三级跳远", "女", "ME106", 13.3);
+    sm.recordResult("女子三级跳远", "女", "SCI108", 13.6);
+    sm.processScoresForEvent("女子三级跳远", "女");
+    
+    // --- 女子标枪 ---
+    sm.recordResult("女子标枪", "女", "CS107", 52.3);
+    sm.recordResult("女子标枪", "女", "FL108", 53.1);
+    sm.recordResult("女子标枪", "女", "ME105", 51.8);
+    sm.recordResult("女子标枪", "女", "SCI107", 52.7);
+    sm.processScoresForEvent("女子标枪", "女");
+    
+    // --- 女子4x100米接力 ---
+    sm.recordResult("女子4x100米接力", "女", "CS105", 48.2);  // 使用一个队员ID代表整个团队
+    sm.recordResult("女子4x100米接力", "女", "FL105", 47.8);
+    sm.recordResult("女子4x100米接力", "女", "ME103", 48.5);
+    sm.recordResult("女子4x100米接力", "女", "SCI105", 48.0);
+    sm.processScoresForEvent("女子4x100米接力", "女");
     
     std::cout << "\n示例数据加载完毕。\n";
 }
